@@ -1,6 +1,8 @@
 package com.search.robots.database.entity;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -8,10 +10,14 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.search.robots.beans.view.vo.AdvShow;
 import com.search.robots.beans.view.vo.AdvUserRenew;
+import com.search.robots.config.Constants;
 import com.search.robots.database.enums.adv.AdvPositionEnum;
 import com.search.robots.database.enums.adv.AdvSource;
 import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.enums.adv.AdvTypeEnum;
+import com.search.robots.helper.DecimalHelper;
+import com.search.robots.helper.StrHelper;
+import com.search.robots.helper.TimeHelper;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -20,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 用户广告购买记录实体
@@ -114,7 +121,16 @@ public class AdvUser {
 
     /** 创建时间 **/
     private LocalDateTime createdAt;
-    
+
+
+    public String getAdvContent() {
+        return StrUtil.isBlank(this.advContent) ? "未配置❌" : this.advContent;
+    }
+
+    public String getAdvUrl() {
+        return StrUtil.isBlank(this.advUrl) ? "未配置❌" : this.advUrl;
+    }
+
     public static AdvUser buildAdvUserDefault(User user, AdvLibrary library, AdvPrice price) {
         LocalDateTime now = LocalDateTime.now();
         return new AdvUser()
@@ -128,7 +144,7 @@ public class AdvUser {
                 .setSource(price.getSource())
                 .setPriceMonth(price.getMonthlyPrice())
                 .setCurrency(price.getCurrency())
-                .setAdvStatus(AdvStatus.UNDER_APPROVAL)
+                .setAdvStatus(AdvStatus.UN_START)
                 .setEffectiveTime(now)
                 .setExpirationTime(now.plusMonths(1))
                 .setAdvSource(AdvSource.BUY)
@@ -140,4 +156,56 @@ public class AdvUser {
                 .setCreatedAt(now);
     }
 
+
+    public String buildAdvUserPaymentText() {
+        String renewText = buildRenewRecordsText(this);
+        String showDetailText = buildShowDetailText(this);
+        return StrUtil.format(Constants.KEYWORD_PAYMENT_TEXT,
+                StrHelper.specialLong(this.getId()),
+                StrHelper.specialResult(this.getAdvType().getDesc()),
+                StrHelper.specialResult(this.getKeyword()),
+                Objects.isNull(this.getRanking()) ? "无" : StrHelper.specialResult(String.valueOf(this.getRanking())),
+                DecimalHelper.decimalParse(this.getPriceMonth()),
+                renewText,
+                StrHelper.specialResult(this.getAdvStatus().getDesc()),
+                TimeHelper.format(this.getEffectiveTime()),
+                TimeHelper.format(this.getExpirationTime()),
+                StrHelper.specialResult(this.getAdvSource().getDesc()),
+                StrHelper.specialResult(this.getAdvContent()),
+                StrHelper.specialResult(this.getAdvUrl()),
+                StrHelper.specialLong(this.getShowCount()),
+                showDetailText
+        );
+    }
+
+    private String buildRenewRecordsText(AdvUser advUser) {
+        List<AdvUserRenew> renews = advUser.getUserRenews();
+        if (CollUtil.isEmpty(renews)) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder().append("续订记录：\n");
+        for (AdvUserRenew renew : renews) {
+            sb.append("   ")
+                    .append(StrHelper.specialResult(renew.getTime()))
+                    .append("：")
+                    .append(StrHelper.specialResult(renew.getPrice()))
+                    .append("$\n");
+        }
+        return "\n" + sb.toString().trim();
+    }
+
+    private String buildShowDetailText(AdvUser advUser) {
+        List<AdvShow> advShows = advUser.getAdvShow();
+        if (CollUtil.isEmpty(advShows)) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (AdvShow show : advShows) {
+            sb.append("   ").append(StrHelper.specialResult(show.getDate()))
+                    .append("：")
+                    .append(StrHelper.specialLong(show.getTotalShow()))
+                    .append("\n");
+        }
+        return "\n" + sb.toString().trim();
+    }
 }

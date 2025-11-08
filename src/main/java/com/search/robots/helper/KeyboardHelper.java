@@ -34,12 +34,29 @@ import java.util.*;
  */
 public class KeyboardHelper {
 
+    public static InlineKeyboardMarkup buildPymentKeywordKeyboard (Long userAdvId, String prev, Long libraryId) {
+        return InlineKeyboardMarkup.builder().keyboard(List.of(
+                row(buttonText("\uD83D\uDD04优先续订", "three#my_adv#priority_renewal#" + userAdvId)),
+                row(buttonText("\uD83D\uDFE2开始推广", "three#my_adv#start_promotion#" + userAdvId)),
+                row(buttonText("✏️修改广告标题", "three#my_adv#edit_title#" + userAdvId), buttonText("✏️修改广告链接", "three#my_adv#edit_link#" + userAdvId)),
+                row(buttonText("⬅️返回关键词列表", "one#query_keyword#" + prev + "#" + libraryId)),
+                row(buttonText("⬅️返回我的广告", "two#self_adv"))
+        )).build();
+    }
+
+
+    public static InlineKeyboardMarkup buildKeywordSoldKeyboard (String prev, Long libraryId) {
+        return InlineKeyboardMarkup.builder().keyboard(List.of(
+                row(buttonText("⬅️返回关键词列表", "one#query_keyword#" + prev + "#" + libraryId)),
+                row(buttonText("⬅️返回我的广告", "two#self_adv"))
+        )).build();
+    }
 
     public static InlineKeyboardMarkup buildToBuyKeywordKeyboard(Long priceId, Long libraryId, String prev) {
         List<InlineKeyboardRow> rows = new ArrayList<>(2);
         rows.add(
                 row(buttonText("⬅️返回", "one#query_keyword#" + prev + "#" + libraryId),
-                buttonText("✅确认支付", "three#adv_payment_2#" + prev + "#" + priceId))
+                buttonText("✅确认支付", "three#do_payment_keyword#" + prev + "#" + priceId))
         );
         return InlineKeyboardMarkup.builder().keyboard(rows).build();
     }
@@ -59,32 +76,42 @@ public class KeyboardHelper {
                 .toList();
 
         rows.add(row(buttonText("👇关键词排行", "ignore")));
-        rankPrices.forEach(price -> rows.add(createPriceButtonRow(price, data)));
+        rankPrices.forEach(price -> {
+            String icon = price.getAdvPosition().getIcon();
+            String formattedPrice = DecimalHelper.decimalParse(price.getMonthlyPrice());
+            String priceText = icon + formattedPrice + "$/月";
+
+            boolean isSold = Boolean.TRUE.equals(price.getIsSold());
+            String callback = isSold
+                    ? "two#sold#" + data + "#" + price.getId()
+                    : "two#to_buy#" + data + "#" + price.getId();
+            rows.add(row(
+                    buttonText(priceText, callback),
+                    buttonText(isSold ? "已被购买" : "购买", callback)
+            ));
+        });
 
 
         rows.add(row(buttonText("👇关键词专页", "ignore")));
-        pagePrices.forEach(price -> rows.add(createPriceButtonRow(price, data)));
+        pagePrices.forEach(price -> {
+            String formattedPrice = DecimalHelper
+                    .decimalParse(price.getMonthlyPrice());
+            String icon = price.getAdvPosition().getIcon();
+            String priceText = icon + formattedPrice + "$/月";
+
+            boolean isSold = Boolean.TRUE.equals(price.getIsSold());
+            String callback = "two#special_page";
+            rows.add(row(
+                    buttonText(priceText, callback),
+                    buttonText(isSold ? "已被购买" : "购买", callback)
+            ));
+        });
 
         rows.add(row(
                 buttonText("🔍相关热搜词", "one#hotsearch"),
                 buttonText("⬅️返回", "one#keyword_rank")
         ));
         return InlineKeyboardMarkup.builder().keyboard(rows).build();
-    }
-
-    private static InlineKeyboardRow createPriceButtonRow(AdvPrice price, String data) {
-        String icon = price.getAdvPosition().getIcon();
-        String formattedPrice = DecimalHelper.decimalParse(price.getMonthlyPrice());
-        String priceText = icon + formattedPrice + "$/月";
-
-        boolean isSold = Boolean.TRUE.equals(price.getIsSold());
-        String callback = isSold
-            ? "two#sold#" + data + "#" + price.getId()
-            : "two#to_buy#" + data + "#" + price.getId();
-        return row(
-            buttonText(priceText, callback),
-            buttonText(isSold ? "已被购买" : "购买", callback)
-        );
     }
 
     public static InlineKeyboardMarkup buildBrandPageKeyboard() {
@@ -108,7 +135,7 @@ public class KeyboardHelper {
         List<InlineKeyboardRow> rows = new ArrayList<>(2);
         rows.add(
                 row(buttonText("⬅️返回", "one#" + prev),
-                buttonText("✅确认支付", "three#adv_payment#" + prev + "#" + price))
+                buttonText("✅确认支付", "three#do_payment_button#" + prev + "#" + price))
         );
         return InlineKeyboardMarkup.builder().keyboard(rows).build();
     }

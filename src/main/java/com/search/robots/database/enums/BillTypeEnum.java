@@ -1,6 +1,7 @@
 package com.search.robots.database.enums;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,4 +30,21 @@ public enum BillTypeEnum {
     private final int code;
     private final String desc;
 
+
+    public static BillTypeEnum ofData (String data) {
+        BillTypeEnum bt = null;
+        if (StrUtil.equals(data, "keyword_page")) {
+            bt = BillTypeEnum.BUY_KEYWORD_PAGE_RANK;
+        }
+        else if (StrUtil.equals(data, "keyword_rank")) {
+            bt = BillTypeEnum.BUY_KEYWORD_RANK;
+        }
+        if (StrUtil.equals(data, "top_link")) {
+            bt = BillTypeEnum.BUY_TOP_LINK;
+        }
+        else if (StrUtil.equals(data, "bottom_button")) {
+            bt = BillTypeEnum.BUY_BOTTOM_BUTTON;
+        }
+        return bt;
+    }
 }

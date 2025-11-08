@@ -15,10 +15,10 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum AdvStatus {
 
-    UNDER_APPROVAL(0, "审批中"),
-    UN_START(1, "未开始"),
-    PROMOTION_ING(2, "推广中"),
-    PAUSE_ING(3, "暂停中"),
+    UN_START(0, "未开始❌"),
+    UNDER_APPROVAL(1, "审批中⏳"),
+    PROMOTION_ING(2, "推广中⏳"),
+    PAUSE_ING(3, "暂停中\uD83D\uDFE2"),
     THE_END(4, "已结束")
     ;
 

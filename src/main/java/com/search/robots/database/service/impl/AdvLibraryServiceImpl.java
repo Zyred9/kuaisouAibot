@@ -70,6 +70,21 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
     }
 
     @Override
+    public AdvLibrary getByIdWithPrices(Long libraryId) {
+        if (Objects.isNull(libraryId)) {
+            return null;
+        }
+        AdvLibrary library = this.baseMapper.selectById(libraryId);
+        if (Objects.isNull(library)) {
+            return null;
+        }
+        library.setPriceList(
+                this.advPriceService.listEnabledByLibraryId(libraryId)
+        );
+        return library;
+    }
+
+    @Override
     public List<AdvLibrary> getByKeywordsWithPrices(List<String> keywords) {
         if (CollUtil.isEmpty(keywords)) {
             return CollUtil.newArrayList();

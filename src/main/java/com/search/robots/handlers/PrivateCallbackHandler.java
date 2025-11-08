@@ -6,8 +6,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.search.robots.beans.cache.CommonCache;
 import com.search.robots.beans.view.DialogueCtx;
-import com.search.robots.beans.view.vo.AdvShow;
-import com.search.robots.beans.view.vo.AdvUserRenew;
 import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
 import com.search.robots.database.entity.*;
@@ -24,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
@@ -288,9 +285,10 @@ public class PrivateCallbackHandler extends AbstractHandler {
             return editMarkdown(message, detailIncludedText, markup);
         }
 
-        // 点击支付 three#adv_payment#<showCount>_<price>
-        if (StrUtil.equals(command.get(1), "adv_payment")) {
+        // 顶部链接和底部按钮展示次数购买
+        if (StrUtil.equals(command.get(1), "do_payment_button")) {
             String prev = command.get(2);
+            BillTypeEnum bt = BillTypeEnum.ofData(prev);
 
             List<String> priceList = StrUtil.split(command.get(3), "_");
             int showCount = Integer.parseInt(priceList.get(0));
@@ -299,62 +297,53 @@ public class PrivateCallbackHandler extends AbstractHandler {
             User user = this.userService.user(callbackQuery.getFrom());
             java.math.BigDecimal need = new java.math.BigDecimal(price);
 
-            BillTypeEnum bt = null;
-            if (StrUtil.equals(prev, "top_link")) {
-                bt = BillTypeEnum.BUY_TOP_LINK;
+            if (this.processorUserRealBalance(message, user, need, bt)) {
+                return null;
             }
-            else if (StrUtil.equals(prev, "bottom_button")) {
-                bt = BillTypeEnum.BUY_BOTTOM_BUTTON;
-            }
-            String okText = "扣款成功✅ 已支付 " + DecimalHelper.decimalParse(need) + "$，套餐展示次数 " + showCount + " 次。";
-            return this.processorPayment(message, user, need, showCount, config, bt, okText);
+            InlineKeyboardMarkup markup = KeyboardHelper.buildAdvertisingKeyboard();
+            return editMarkdown(message, config.getAdvertisingMarkdown(), markup);
         }
 
-        if (StrUtil.equals(command.get(1), "adv_payment_2")) {
+        // 关键词购买支付
+        if (StrUtil.equals(command.get(1), "do_payment_keyword")) {
             String prev = command.get(2);
+            BillTypeEnum bt = BillTypeEnum.ofData(prev);
             long priceId = Long.parseLong(command.get(3));
             User user = this.userService.user(callbackQuery.getFrom());
 
             AdvPrice price = this.advPriceService.getById(priceId);
+            this.processorUserRealBalance(message, user, price.getMonthlyPrice(), bt);
+
             AdvLibrary library = this.advLibraryService.getById(price.getLibraryId());
-
-            BillTypeEnum bt = null;
-             if (StrUtil.equals(prev, "keyword_page")) {
-                 bt = BillTypeEnum.BUY_KEYWORD_PAGE_RANK;
-            }
-            else if (StrUtil.equals(prev, "keyword_rank")) {
-                 bt = BillTypeEnum.BUY_KEYWORD_RANK;
-            }
-
             price.setIsSold(Boolean.TRUE);
             this.advPriceService.updateById(price);
 
             AdvUser advUser = AdvUser.buildAdvUserDefault(user, library, price);
             this.advUserService.save(advUser);
-            String okText = "扣款成功✅ 已支付 " + DecimalHelper.decimalParse(price.getMonthlyPrice()) + "$，套餐展示时间 " + 1 + "个月。";
-            return this.processorPayment(message, user, price.getMonthlyPrice(), 30, config, bt, okText);
+
+            String advUserPaymentText = advUser.buildAdvUserPaymentText();
+            InlineKeyboardMarkup markup = KeyboardHelper.buildPymentKeywordKeyboard(advUser.getUserId(), prev, library.getId());
+            return editMarkdownV2(message, advUserPaymentText, markup);
         }
 
         return null;
     }
 
-    private EditMessageText processorPayment(Message message, User user, BigDecimal need, int showCount, Config config, BillTypeEnum bt, String okText) {
+    private boolean processorUserRealBalance(Message message, User user, BigDecimal need, BillTypeEnum bt) {
         BigDecimal balance = user.getBalance();
 
         if (balance == null || balance.compareTo(need) < 0) {
             InlineKeyboardMarkup kb = KeyboardHelper.buildAdvPaymentLackKeyboard();
-            return editMarkdown(message, "余额不足，请充值❗️", kb);
+            AsyncSender.async(editMarkdown(message, "余额不足，请充值❗️", kb));
+            return true;
         }
 
         user.setBalance(balance.subtract(need));
         this.userService.updateById(user);
 
-        Bill bill = Bill.buildAdvPaymentBill(user, need, showCount, bt);
+        Bill bill = Bill.buildAdvPaymentBill(user, need, bt);
         this.billService.save(bill);
-
-        AsyncSender.async(ok(message, okText));
-        InlineKeyboardMarkup markup = KeyboardHelper.buildAdvertisingKeyboard();
-        return editMarkdown(message, config.getAdvertisingMarkdown(), markup);
+        return false;
     }
 
     private BotApiMethod<?> processorLevelTwo(CallbackQuery callbackQuery, Message message, List<String> command) {
@@ -378,8 +367,10 @@ public class PrivateCallbackHandler extends AbstractHandler {
                 return answerAlert(callbackQuery, "未找到该广告购买记录!");
             }
             
-            String resultText = buildAdvUserPaymentText(advUser);
-            return editMarkdownV2(message, resultText);
+            String resultText = advUser.buildAdvUserPaymentText();
+            InlineKeyboardMarkup markup = KeyboardHelper
+                    .buildKeywordSoldKeyboard(command.get(2), advUser.getLibraryId());
+            return editMarkdownV2(message, resultText, markup);
         }
         
         // 处理购买按钮点击
@@ -535,6 +526,11 @@ public class PrivateCallbackHandler extends AbstractHandler {
             );
 
         }
+        // 专页购买
+        if (StrUtil.equals(command.get(1), "special_page")) {
+            Config config = configService.queryConfig();
+            return ok(message, StrUtil.format("关键词专页购买帮助 @{}", config.getCustomUsername()));
+        }
         return null;
     }
 
@@ -675,74 +671,9 @@ public class PrivateCallbackHandler extends AbstractHandler {
         // 关键词
         if (StrUtil.equals(command.get(1), "query_keyword")) {
             long libraryId = Long.parseLong(command.get(3));
-            AdvLibrary library = this.advLibraryService.getById(libraryId);
+            AdvLibrary library = this.advLibraryService.getByIdWithPrices(libraryId);
             return this.privateChatHandler.processorQueryKeyword(message, library, command.get(2));
         }
         return null;
-    }
-
-    private String buildAdvUserPaymentText(AdvUser advUser) {
-        String renewText = buildRenewRecordsText(advUser);
-        String showDetailText = buildShowDetailText(advUser);
-        
-        return StrUtil.format(Constants.KEYWORD_PAYMENT_TEXT,
-                StrHelper.specialLong(advUser.getId()),
-                StrHelper.specialResult(advUser.getAdvType().getDesc()),
-                StrHelper.specialResult(advUser.getKeyword()),
-                Objects.isNull(advUser.getRanking()) ? "无" : StrHelper.specialResult(String.valueOf(advUser.getRanking())),
-                DecimalHelper.decimalParse(advUser.getPriceMonth()),
-                renewText,
-                StrHelper.specialResult(advUser.getAdvStatus().getDesc()),
-                TimeHelper.format(advUser.getEffectiveTime()),
-                TimeHelper.format(advUser.getExpirationTime()),
-                StrHelper.specialResult(advUser.getAdvSource().getDesc()),
-                StrHelper.specialResult(advUser.getAdvContent()),
-                StrHelper.specialResult(advUser.getAdvUrl()),
-                StrHelper.specialLong(advUser.getShowCount()),
-                showDetailText
-        );
-    }
-
-    /**
-     * 构建续订记录文本
-     *
-     * @param advUser 用户广告购买记录
-     * @return 续订记录文本，每行一条记录
-     */
-    private String buildRenewRecordsText(AdvUser advUser) {
-        List<AdvUserRenew> renews = advUser.getUserRenews();
-        if (CollUtil.isEmpty(renews)) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder().append("续订记录：\n");
-        for (AdvUserRenew renew : renews) {
-            sb.append("   ")
-                .append(StrHelper.specialResult(renew.getTime()))
-                .append("：")
-                .append(StrHelper.specialResult(renew.getPrice()))
-                .append("$\n");
-        }
-        return "\n" + sb.toString().trim();
-    }
-
-    /**
-     * 构建展现详情文本
-     *
-     * @param advUser 用户广告购买记录
-     * @return 展现详情文本，每行一天的统计
-     */
-    private String buildShowDetailText(AdvUser advUser) {
-        List<AdvShow> advShows = advUser.getAdvShow();
-        if (CollUtil.isEmpty(advShows)) {
-            return "无";
-        }
-        StringBuilder sb = new StringBuilder();
-        for (AdvShow show : advShows) {
-            sb.append("   ").append(StrHelper.specialResult(show.getDate()))
-              .append("：")
-              .append(StrHelper.specialLong(show.getTotalShow()))
-              .append("\n");
-        }
-        return sb.toString().trim();
     }
 }

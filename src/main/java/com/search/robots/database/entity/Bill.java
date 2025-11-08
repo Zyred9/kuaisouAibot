@@ -48,18 +48,17 @@ public class Bill {
     /**
      * 构建广告扣费账单记录（如顶部链接/底部按钮购买等）
      */
-    public static Bill buildAdvPaymentBill(User user, BigDecimal need, int showCount, BillTypeEnum type) {
+    public static Bill buildAdvPaymentBill(User user, BigDecimal need, BillTypeEnum type) {
         LocalDateTime now = LocalDateTime.now();
         String billNo = String.valueOf(com.search.robots.helper.TimeHelper.getTimestamp(now));
-        String desc = "广告扣费-套餐：" + showCount + "次，价格：" + DecimalHelper.decimalParse(need) + "$";
         return new Bill()
                 .setUserId(user.getUserId())
                 .setUsername(user.getUsername())
                 .setNickname(user.getNickname())
                 .setBillNo(billNo)
                 .setType(type)
+                .setDescription("")
                 .setAmount(need.negate())
-                .setDescription(desc)
                 .setCreateTime(now);
     }
 

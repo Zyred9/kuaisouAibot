@@ -49,7 +49,7 @@ public interface AdvLibraryService extends IService<AdvLibrary> {
      * @return 广告库实体(priceList已填充), 不存在返回null
      */
     AdvLibrary getByKeywordWithPrices(String keyword, String data);
-
+    AdvLibrary getByIdWithPrices(Long libraryId);
     /**
      * 批量查询多个关键词及其价格配置
      * <pre>
@@ -96,4 +96,6 @@ public interface AdvLibraryService extends IService<AdvLibrary> {
      * @return 价格配置列表
      */
     List<AdvPrice> getPriceListByLibraryId(Long libraryId);
+
+
 }

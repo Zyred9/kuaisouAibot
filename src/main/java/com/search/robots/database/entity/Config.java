@@ -92,6 +92,9 @@ public class Config {
     /** 充值提示文本：点击充值按钮后展示的Markdown文案，支持包含充值说明、到账时间、注意事项等。 **/
     private String rechargeTipMarkdown;
 
+    /** 客服 **/
+    private String customUsername;
+
     public static Config buildDefault(Long chatId) {
         return new Config()
                 .setChatId(chatId)
