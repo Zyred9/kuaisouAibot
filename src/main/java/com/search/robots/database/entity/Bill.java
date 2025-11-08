@@ -1,0 +1,85 @@
+package com.search.robots.database.entity;
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.search.robots.config.Constants;
+import com.search.robots.database.enums.BillTypeEnum;
+import com.search.robots.helper.DecimalHelper;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * 热搜词每日记录实体类
+ * 对应数据库表 t_hot_search_daily
+ */
+@Setter
+@Getter
+@Accessors(chain = true)
+@TableName("t_bill")
+public class Bill {
+
+    @TableId(value = "id", type = IdType.AUTO)
+    private Long id;
+
+    private Long userId;
+    private String username;
+    private String nickname;
+
+    /** 账单编号 **/
+    private String billNo;
+    /** 账单类型 **/
+    private BillTypeEnum type;
+    /** 金额 **/
+    private BigDecimal amount;
+    /** 描述 **/
+    private String description;
+    /** 创建时间 **/
+    private LocalDateTime createTime;
+
+    /**
+     * 构建广告扣费账单记录（如顶部链接/底部按钮购买等）
+     */
+    public static Bill buildAdvPaymentBill(User user, BigDecimal need, int showCount, int price, BillTypeEnum type) {
+        LocalDateTime now = LocalDateTime.now();
+        String billNo = String.valueOf(com.search.robots.helper.TimeHelper.getTimestamp(now));
+        String desc = "广告扣费-套餐：" + showCount + "次，价格：" + price + "$";
+        return new Bill()
+                .setUserId(user.getUserId())
+                .setUsername(user.getUsername())
+                .setNickname(user.getNickname())
+                .setBillNo(billNo)
+                .setType(type)
+                .setAmount(need.negate())
+                .setDescription(desc)
+                .setCreateTime(now);
+    }
+
+    public static String buildBillText (List<Bill> bills) {
+        if (CollUtil.isEmpty(bills)){
+            return "暂无记录";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Bill bill : bills) {
+            sb.append(bill.buildTextLine()).append("\n");
+        }
+        return sb.toString();
+    }
+
+    // 20251102010226|奖励|0.015|审批通过✅
+    public String buildTextLine() {
+        return StrUtil.format(Constants.SELF_BILL_LINE_TEXT,
+                this.billNo, this.type.getDesc(),
+                DecimalHelper.standardSymbol(this.amount),
+                this.description
+                );
+    }
+}

@@ -1,0 +1,77 @@
+package com.search.robots.database.entity;
+
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.search.robots.database.enums.adv.AdvPositionEnum;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/**
+ * 广告价格实体
+ * <pre>
+ * 存储不同位置、来源的价格配置
+ * 支持价格版本管理和历史追溯
+ * 
+ * 使用示例:
+ * AdvPrice price = new AdvPrice()
+ *     .setLibraryId(1L)
+ *     .setAdvPosition(AdvPositionEnum.RANK_1)
+ *     .setSource("direct")
+ *     .setRanking(1)
+ *     .setMonthlyPrice(new BigDecimal("999.00"))
+ *     .setCurrency("CNY")
+ *     .setStatus(1);
+ * </pre>
+ *
+ * @author zyred
+ * @since 1.0
+ */
+@Setter
+@Getter
+@Accessors(chain = true)
+@TableName("t_adv_price")
+public class AdvPrice {
+
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    
+    /** 关联广告库ID **/
+    private Long libraryId;
+    
+    /** 广告位置枚举 **/
+    private AdvPositionEnum advPosition;
+    
+    /** 来源类型(direct/related) **/
+    private String source;
+    
+    /** 具体排名(仅榜单位置有效,1-10) **/
+    private Integer ranking;
+    
+    /** 月费价格 **/
+    private BigDecimal monthlyPrice;
+    
+    /** 货币单位(默认CNY) **/
+    private String currency;
+    
+    /** 价格版本(用于历史追溯) **/
+    private Integer version;
+    
+    /** 状态(1-启用,0-停用) **/
+    private Integer status;
+    
+    /** 备注说明 **/
+    private String remark;
+    
+    /** 创建时间 **/
+    private LocalDateTime createdAt;
+    
+    /** 更新时间 **/
+    private LocalDateTime updatedAt;
+
+}
