@@ -64,15 +64,19 @@ public class AdvPriceServiceImpl extends ServiceImpl<AdvPriceMapper, AdvPrice> i
     @Override
     public List<AdvPrice> listEnabledByLibraryId(Long libraryId) {
         if (Objects.isNull(libraryId)) {
-            return CollUtil.newArrayList();
+            return selectDefault();
         }
-        return this.baseMapper.selectList(
+        List<AdvPrice> result = this.baseMapper.selectList(
                 Wrappers.<AdvPrice>lambdaQuery()
                         .eq(AdvPrice::getLibraryId, libraryId)
                         .eq(AdvPrice::getStatus, 1)
                         .orderByAsc(AdvPrice::getAdvPosition)
                         .orderByAsc(AdvPrice::getRanking)
         );
+        if (CollUtil.isEmpty(result)) {
+            result = this.selectDefault();
+        }
+        return result;
     }
 
     @Override
@@ -85,6 +89,16 @@ public class AdvPriceServiceImpl extends ServiceImpl<AdvPriceMapper, AdvPrice> i
                         .in(AdvPrice::getLibraryId, libraryIds)
                         .eq(AdvPrice::getStatus, 1)
                         .orderByAsc(AdvPrice::getLibraryId)
+                        .orderByAsc(AdvPrice::getAdvPosition)
+                        .orderByAsc(AdvPrice::getRanking)
+        );
+    }
+
+    private List<AdvPrice> selectDefault () {
+        return this.baseMapper.selectList(
+                Wrappers.<AdvPrice>lambdaQuery()
+                        .eq(AdvPrice::getLibraryId, 0L)
+                        .eq(AdvPrice::getStatus, 1)
                         .orderByAsc(AdvPrice::getAdvPosition)
                         .orderByAsc(AdvPrice::getRanking)
         );

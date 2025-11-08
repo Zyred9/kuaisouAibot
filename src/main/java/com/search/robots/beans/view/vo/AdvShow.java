@@ -5,7 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.time.LocalDate;
+
 
 /**
  * 广告展现统计VO
@@ -25,7 +25,7 @@ import java.time.LocalDate;
 public class AdvShow {
 
     /** 统计日期 **/
-    private LocalDate date;
+    private String date;
     
     /** 直接搜索展现次数 **/
     private Long directShow;

@@ -65,6 +65,9 @@ public class AdvPrice {
     /** 状态(1-启用,0-停用) **/
     private Integer status;
     
+    /** 是否已售出(0-未售出,1-已售出) **/
+    private Integer isSold;
+    
     /** 备注说明 **/
     private String remark;
     

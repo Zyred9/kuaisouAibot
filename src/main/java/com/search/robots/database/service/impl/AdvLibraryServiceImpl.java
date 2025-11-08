@@ -52,15 +52,15 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
         AdvLibrary library = this.baseMapper.selectOne(
                 Wrappers.<AdvLibrary>lambdaQuery()
                         .eq(AdvLibrary::getKeyword, keyword)
+                        .orderByDesc(AdvLibrary::getShowCount)
                         .last("LIMIT 1")
         );
         if (Objects.isNull(library)) {
-            return null;
+            library = new AdvLibrary();
         }
-        // 2) 再根据关键词ID查询其价格信息(仅启用)
-        List<AdvPrice> prices = advPriceService.listEnabledByLibraryId(library.getId());
-        // 3) 组装到非持久化字段 priceList
-        library.setPriceList(prices);
+        library.setPriceList(
+                this.advPriceService.listEnabledByLibraryId(library.getId())
+        );
         return library;
     }
 
@@ -94,13 +94,20 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
         return this.baseMapper.selectList(
                 Wrappers.<AdvLibrary>lambdaQuery()
                         .orderByDesc(AdvLibrary::getShowCount)
-                        .last("LIMIT " + Math.min(limit, 100))
+                        .last("LIMIT " + Math.min(limit, 40))
         );
     }
 
     @Override
     public List<AdvLibrary> getHotKeywordsWithPrices(int limit) {
-        return this.baseMapper.selectHotKeywordsWithPrices(Math.min(limit, 100));
+        // 1) 先获取热门关键词列表
+        List<AdvLibrary> hotKeywords = getHotKeywords(limit);
+        if (CollUtil.isEmpty(hotKeywords)) {
+            return hotKeywords;
+        }
+        // 2) 提取关键词列表，批量查询价格信息
+        List<String> keywords = hotKeywords.stream().map(AdvLibrary::getKeyword).toList();
+        return getByKeywordsWithPrices(keywords);
     }
 
     @Override

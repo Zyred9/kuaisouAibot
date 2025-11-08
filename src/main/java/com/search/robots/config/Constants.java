@@ -274,7 +274,7 @@ public interface Constants {
             """;
 
     String KEYWORD_QUERY_TEXT = """
-            🔑 关键词：少妇
+            🔑 关键词：{}
             
             近期 直接搜索次数 与 关联搜索次数 与 搜索人数：
             {}
@@ -288,9 +288,7 @@ public interface Constants {
             💡关键词专页：当用户搜索相关内容时，将再次发送您的专属推广页，精准引流，效果立竿见影！效果参考：[点我查看专页效果](https://t.me/{}?start=query_5b-r5pCc)
             """;
 
-    String KEYWORD_QUERY_OF_DAY_TEXT = """
-            {}：直接：`{}`， 关联：`{}` ， 人数：`{}`
-            """;
+    String KEYWORD_QUERY_OF_DAY_TEXT = "{}：直接：`{}`， 关联：`{}` ， 人数：`{}`";
 }
 
 

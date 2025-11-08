@@ -9,6 +9,9 @@ import com.search.robots.beans.view.KeyboardTransfer;
 import com.search.robots.database.entity.HotSearch;
 import com.search.robots.database.entity.Included;
 import com.search.robots.database.entity.User;
+import com.search.robots.database.entity.AdvPrice;
+import com.search.robots.database.entity.AdvLibrary;
+import com.search.robots.database.enums.adv.AdvPositionEnum;
 import com.search.robots.database.enums.Included.IncludedNewUserEnum;
 import com.search.robots.database.enums.Included.IncludedSearchPriorityEnum;
 import com.search.robots.database.enums.Included.IncludedSearchTypeEnum;
@@ -22,13 +25,83 @@ import java.util.*;
 
 /**
  * <p>
- *
- * </p>
+ * 键盘助手类
+ * <pre>
+ * 提供各种场景下的键盘按钮配置
+ * 支持广告购买、关键词查询等功能按钮
+ * </pre>
  *
  * @author admin
  * @since v 0.0.1
  */
 public class KeyboardHelper {
+    public static InlineKeyboardMarkup buildKeywordQueryKeyboard(String keyword, List<AdvPrice> priceList) {
+        List<InlineKeyboardRow> rows = new ArrayList<>();
+        
+        // 如果价格列表为空，使用空列表
+        if (CollUtil.isEmpty(priceList)) {
+            priceList = new ArrayList<>();
+        }
+        
+        // 分离榜单位置(1-7)和专页位置(101-102)
+        List<AdvPrice> rankPrices = new ArrayList<>();
+        List<AdvPrice> pagePrices = new ArrayList<>();
+        
+        for (AdvPrice price : priceList) {
+            if (price.getAdvPosition().isRankPosition()) {
+                rankPrices.add(price);
+            } else if (price.getAdvPosition().isPagePosition()) {
+                pagePrices.add(price);
+            }
+        }
+        
+        rankPrices.sort((p1, p2) -> p2.getMonthlyPrice().compareTo(p1.getMonthlyPrice()));
+        pagePrices.sort((p1, p2) -> Integer.compare(p1.getAdvPosition().getCode(), p2.getAdvPosition().getCode()));
+        
+        rows.add(row(buttonText("👇关键词排行", "ingnor")));
+        
+        for (AdvPrice price : rankPrices) {
+            String priceText = price.getAdvPosition().getIcon() + " " + DecimalHelper.decimalParse(price.getMonthlyPrice()) + "$/月";
+            String callbackData = "kw_buy#" + keyword + "#" + price.getId();
+            
+            // 判断是否已售出
+            boolean isSold = price.getIsSold() != null && price.getIsSold() == 1;
+            String buyButtonText = isSold ? "已被购买" : "购买";
+            String buyButtonCallback = isSold ? "ignore" : callbackData;
+            
+            rows.add(row(
+                buttonText(priceText, "kw_price_info#" + price.getId()),
+                buttonText(buyButtonText, buyButtonCallback)
+            ));
+        }
+        
+        if (CollUtil.isNotEmpty(pagePrices)) {
+            rows.add(row(buttonText("👇关键词专页", "ingnor")));
+            
+            for (AdvPrice price : pagePrices) {
+                String priceText = price.getAdvPosition().getIcon() + DecimalHelper.decimalParse(price.getMonthlyPrice()) + "$/月";
+                String callbackData = "kw_buy#" + keyword + "#" + price.getId();
+                
+                // 判断是否已售出
+                boolean isSold = price.getIsSold() != null && price.getIsSold() == 1;
+                String buyButtonText = isSold ? "已被购买" : "购买";
+                String buyButtonCallback = isSold ? "ignore" : callbackData;
+                
+                rows.add(row(
+                    buttonText(priceText, "kw_price_info#" + price.getId()),
+                    buttonText(buyButtonText, buyButtonCallback)
+                ));
+            }
+        }
+        
+        // 添加底部功能按钮
+        rows.add(row(
+            buttonText("🔍相关热搜词", "one#hotsearch"),
+            buttonText("⬅️返回", "one#advertising")
+        ));
+        
+        return InlineKeyboardMarkup.builder().keyboard(rows).build();
+    }
 
     public static InlineKeyboardMarkup buildBrandPageKeyboard() {
         return InlineKeyboardMarkup.builder()
