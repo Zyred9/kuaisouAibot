@@ -32,7 +32,7 @@ public class TimeHelper {
         if (Objects.isNull(time)) {
             return null;
         }
-        return StrHelper.specialResult(TimeHelper.formatV2(time));
+        return StrHelper.specialResult(TimeHelper.format(time));
     }
 
 

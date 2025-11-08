@@ -1,10 +1,13 @@
 package com.search.robots.database.entity;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.search.robots.config.Constants;
 import com.search.robots.database.enums.adv.AdvPositionEnum;
+import com.search.robots.helper.DecimalHelper;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -77,4 +80,10 @@ public class AdvPrice {
     /** 更新时间 **/
     private LocalDateTime updatedAt;
 
+
+    public String buildToBuyText(AdvLibrary library) {
+        return StrUtil.format(Constants.TO_BUY_KEYWORD_TEXT,
+                library.getKeyword(), this.ranking,
+                DecimalHelper.decimalParse(this.monthlyPrice));
+    }
 }

@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.search.robots.config.Constants;
 import com.search.robots.database.enums.BillTypeEnum;
 import com.search.robots.helper.DecimalHelper;
+import com.search.robots.helper.StrHelper;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -79,7 +80,7 @@ public class Bill {
         return StrUtil.format(Constants.SELF_BILL_LINE_TEXT,
                 this.billNo, this.type.getDesc(),
                 DecimalHelper.standardSymbol(this.amount),
-                this.description
-                );
+                StrHelper.specialResult(this.description)
+        );
     }
 }

@@ -289,6 +289,14 @@ public interface Constants {
             """;
 
     String KEYWORD_QUERY_OF_DAY_TEXT = "{}：直接：`{}`， 关联：`{}` ， 人数：`{}`";
+
+    String TO_BUY_KEYWORD_TEXT = """
+            📣支付确认
+            
+            关键词：`{}`
+            排名：`{}`
+            支付金额：`{}$`
+            """;
 }
 
 

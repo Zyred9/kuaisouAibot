@@ -35,74 +35,126 @@ import java.util.*;
  * @since v 0.0.1
  */
 public class KeyboardHelper {
+
+
+    /**
+     * 构建关键词查询键盘
+     * <pre>
+     * 布局结构:
+     * - 关键词排行区(榜单位置1-7,按价格从高到低)
+     * - 关键词专页区(专页位置101-102,按code排序)
+     * - 底部功能按钮
+     * 
+     * 每行两个按钮: 价格信息 | 购买/已购买
+     * </pre>
+     *
+     * @param keyword 关键词
+     * @param priceList 价格配置列表
+     * @return 内联键盘标记
+     */
     public static InlineKeyboardMarkup buildKeywordQueryKeyboard(String keyword, List<AdvPrice> priceList) {
+        if (CollUtil.isEmpty(priceList)) {
+            priceList = Collections.emptyList();
+        }
+
         List<InlineKeyboardRow> rows = new ArrayList<>();
         
-        // 如果价格列表为空，使用空列表
-        if (CollUtil.isEmpty(priceList)) {
-            priceList = new ArrayList<>();
-        }
+        // 分离并排序榜单位置和专页位置
+        List<AdvPrice> rankPrices = filterAndSortRankPrices(priceList);
+        List<AdvPrice> pagePrices = filterAndSortPagePrices(priceList);
         
-        // 分离榜单位置(1-7)和专页位置(101-102)
-        List<AdvPrice> rankPrices = new ArrayList<>();
-        List<AdvPrice> pagePrices = new ArrayList<>();
+        // 添加关键词排行区
+        addRankSection(rows, rankPrices);
         
-        for (AdvPrice price : priceList) {
-            if (price.getAdvPosition().isRankPosition()) {
-                rankPrices.add(price);
-            } else if (price.getAdvPosition().isPagePosition()) {
-                pagePrices.add(price);
-            }
-        }
-        
-        rankPrices.sort((p1, p2) -> p2.getMonthlyPrice().compareTo(p1.getMonthlyPrice()));
-        pagePrices.sort((p1, p2) -> Integer.compare(p1.getAdvPosition().getCode(), p2.getAdvPosition().getCode()));
-        
-        rows.add(row(buttonText("👇关键词排行", "ingnor")));
-        
-        for (AdvPrice price : rankPrices) {
-            String priceText = price.getAdvPosition().getIcon() + " " + DecimalHelper.decimalParse(price.getMonthlyPrice()) + "$/月";
-            
-            // 判断是否已售出
-            boolean isSold = price.getIsSold() != null && price.getIsSold() == 1;
-            String buyButtonText = isSold ? "已被购买" : "购买";
-            String buyButtonCallback = isSold 
-                ? "two#sold#" + price.getId() 
-                : "two#to_buy#" + price.getId();
-            
-            rows.add(row(
-                buttonText(priceText, "kw_price_info#" + price.getId()),
-                buttonText(buyButtonText, buyButtonCallback)
-            ));
-        }
-        
-        if (CollUtil.isNotEmpty(pagePrices)) {
-            rows.add(row(buttonText("👇关键词专页", "ingnor")));
-            
-            for (AdvPrice price : pagePrices) {
-                String priceText = price.getAdvPosition().getIcon() + DecimalHelper.decimalParse(price.getMonthlyPrice()) + "$/月";
-                
-                // 判断是否已售出
-                boolean isSold = price.getIsSold() != null && price.getIsSold() == 1;
-                String buyButtonText = isSold ? "已被购买" : "购买";
-                String buyButtonCallback = isSold 
-                    ? "two#sold#" + price.getId() 
-                    : "two#to_buy#" + price.getId();
-                
-                rows.add(row(
-                    buttonText(priceText, "kw_price_info#" + price.getId()),
-                    buttonText(buyButtonText, buyButtonCallback)
-                ));
-            }
-        }
+        // 添加关键词专页区
+        addPageSection(rows, pagePrices);
         
         // 添加底部功能按钮
+        addBottomButtons(rows);
+        
+        return InlineKeyboardMarkup.builder().keyboard(rows).build();
+    }
+
+    /**
+     * 过滤并排序榜单位置价格(按价格从高到低)
+     */
+    private static List<AdvPrice> filterAndSortRankPrices(List<AdvPrice> priceList) {
+        return priceList.stream()
+            .filter(price -> price.getAdvPosition().isRankPosition())
+            .sorted((p1, p2) -> p2.getMonthlyPrice().compareTo(p1.getMonthlyPrice()))
+            .toList();
+    }
+
+    /**
+     * 过滤并排序专页位置价格(按code排序)
+     */
+    private static List<AdvPrice> filterAndSortPagePrices(List<AdvPrice> priceList) {
+        return priceList.stream()
+            .filter(price -> price.getAdvPosition().isPagePosition())
+            .sorted((p1, p2) -> Integer.compare(p1.getAdvPosition().getCode(), p2.getAdvPosition().getCode()))
+            .toList();
+    }
+
+    /**
+     * 添加关键词排行区
+     */
+    private static void addRankSection(List<InlineKeyboardRow> rows, List<AdvPrice> rankPrices) {
+        if (CollUtil.isEmpty(rankPrices)) {
+            return;
+        }
+        
+        rows.add(row(buttonText("👇关键词排行", "ignore")));
+        rankPrices.forEach(price -> rows.add(createPriceButtonRow(price)));
+    }
+
+    /**
+     * 添加关键词专页区
+     */
+    private static void addPageSection(List<InlineKeyboardRow> rows, List<AdvPrice> pagePrices) {
+        if (CollUtil.isEmpty(pagePrices)) {
+            return;
+        }
+        
+        rows.add(row(buttonText("👇关键词专页", "ignore")));
+        pagePrices.forEach(price -> rows.add(createPriceButtonRow(price)));
+    }
+
+    /**
+     * 创建价格按钮行(价格信息 | 购买/已购买)
+     */
+    private static InlineKeyboardRow createPriceButtonRow(AdvPrice price) {
+        String priceText = buildPriceText(price);
+        String priceInfoCallback = "kw_price_info#" + price.getId();
+        
+        boolean isSold = Objects.nonNull(price.getIsSold()) && price.getIsSold() == 1;
+        String buyButtonText = isSold ? "已被购买" : "购买";
+        String buyButtonCallback = isSold 
+            ? "two#sold#" + price.getId() 
+            : "two#to_buy#" + price.getId();
+        
+        return row(
+            buttonText(priceText, priceInfoCallback),
+            buttonText(buyButtonText, buyButtonCallback)
+        );
+    }
+
+    /**
+     * 构建价格文本(icon + 价格 + 单位)
+     */
+    private static String buildPriceText(AdvPrice price) {
+        String icon = price.getAdvPosition().getIcon();
+        String formattedPrice = DecimalHelper.decimalParse(price.getMonthlyPrice());
+        return icon + " " + formattedPrice + "$/月";
+    }
+
+    /**
+     * 添加底部功能按钮
+     */
+    private static void addBottomButtons(List<InlineKeyboardRow> rows) {
         rows.add(row(
             buttonText("🔍相关热搜词", "one#hotsearch"),
             buttonText("⬅️返回", "one#advertising")
         ));
-        
-        return InlineKeyboardMarkup.builder().keyboard(rows).build();
     }
 
     public static InlineKeyboardMarkup buildBrandPageKeyboard() {
@@ -484,12 +536,12 @@ public class KeyboardHelper {
         return markup;
     }
 
-
     /*
         设置广告#-1002344866985#15:30
         &内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容内容
         &24小时客服#https://t.me/|24小时客服#https://t.me/$24小时客服#https://t.me/
     */
+
     public static void main(String[] args) {
         String key = "&交流群#https://t.me/DevelopBotAny668";
         String s = parseKeyboard(key);
@@ -573,6 +625,5 @@ public class KeyboardHelper {
     public static String[] arr (String ... k) {
         return k;
     }
-
 
 }
