@@ -119,6 +119,10 @@ public class AdvUser {
     /** 广告7天的展示(实时更新) **/
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<AdvShow> advShow;
+    
+    /** 购买时展现轨迹快照 **/
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<AdvShow> advShowSnapshot;
 
     /** 续订记录 **/
     @TableField(typeHandler = JacksonTypeHandler.class)
@@ -127,17 +131,55 @@ public class AdvUser {
     /** 创建时间 **/
     private LocalDateTime createdAt;
     
+    /** 更新时间 **/
+    private LocalDateTime updatedAt;
 
-    public static AdvUser buildAdvUserDefault(User user, AdvLibrary library, AdvPrice price, ) {
+    /**
+     * 构建默认的广告用户记录
+     * <pre>
+     * 用于用户购买广告时创建初始记录
+     * 无法获取的字段使用默认值:
+     * - advStatus: 审批中(0)
+     * - autoRenew: false
+     * - showCount: 0
+     * - currency: CNY
+     * </pre>
+     *
+     * @param user 用户信息
+     * @param library 广告库信息
+     * @param price 价格配置
+     * @return 默认的AdvUser对象
+     */
+    public static AdvUser buildAdvUserDefault(User user, AdvLibrary library, AdvPrice price) {
+        LocalDateTime now = LocalDateTime.now();
+        
         return new AdvUser()
                 .setUserId(user.getUserId())
                 .setLibraryId(library.getId())
                 .setPriceId(price.getId())
+                .setPrice(price.getMonthlyPrice())
                 .setKeyword(library.getKeyword())
-                .setAdvType()
+                .setAdvType(library.getAdvType())
                 .setAdvPosition(price.getAdvPosition())
                 .setRanking(price.getRanking())
-                .setSource()
+                .setSource(price.getSource())
+                .setPriceMonth(price.getMonthlyPrice())
+                .setCurrency(price.getCurrency())
+                .setShowCountSnapshot(library.getShowCount())
+                .setAdvStatus(AdvStatus.PENDING)
+                .setEffectiveTime(now)
+                .setExpirationTime(now.plusMonths(1))
+                .setAdvSource(AdvSource.USER_BUY)
+                .setBillNo(null)
+                .setAutoRenew(false)
+                .setAdvContent(null)
+                .setAdvUrl(null)
+                .setShowCount(0L)
+                .setAdvShow(null)
+                .setAdvShowSnapshot(library.getShow7d())
+                .setUserRenews(null)
+                .setCreatedAt(now)
+                .setUpdatedAt(now);
     }
 
 }

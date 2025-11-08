@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS t_user_adv (
     user_id BIGINT NOT NULL COMMENT '用户ID',
     library_id BIGINT COMMENT '关联广告库ID',
     price_id BIGINT COMMENT '关联价格ID',
+    price DECIMAL(10,2) COMMENT '购买的价格',
     keyword VARCHAR(255) COMMENT '关键词快照',
     adv_type INT COMMENT '广告类型快照',
     adv_position INT COMMENT '广告位置枚举(1-10榜单,101直接专页,102关联专页)',
