@@ -18,6 +18,7 @@ import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -61,9 +62,6 @@ public class AdvUser {
     /** 关联价格ID(关联t_adv_price,购买时的价格配置) **/
     private Long priceId;
 
-    /** 购买的价格 **/
-    private BigDecimal price;
-    
     /** 关键词快照(冗余,避免JOIN) **/
     private String keyword;
     
@@ -85,9 +83,6 @@ public class AdvUser {
     /** 货币单位 **/
     private String currency;
     
-    /** 购买时的展现量快照(用于展示购买决策依据) **/
-    private Long showCountSnapshot;
-    
     /** 广告状态 **/
     private AdvStatus advStatus;
     
@@ -99,14 +94,7 @@ public class AdvUser {
     
     /** 购买来源 **/
     private AdvSource advSource;
-    
-    /** 账单号(关联t_bill) **/
-    private String billNo;
-    
-    /** 是否自动续费 **/
-    private Boolean autoRenew;
 
-    // 广告展示配置
     /** 广告文本 **/
     private String advContent;
     
@@ -120,44 +108,19 @@ public class AdvUser {
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<AdvShow> advShow;
     
-    /** 购买时展现轨迹快照 **/
-    @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<AdvShow> advShowSnapshot;
-
     /** 续订记录 **/
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<AdvUserRenew> userRenews;
-    
+
     /** 创建时间 **/
     private LocalDateTime createdAt;
     
-    /** 更新时间 **/
-    private LocalDateTime updatedAt;
-
-    /**
-     * 构建默认的广告用户记录
-     * <pre>
-     * 用于用户购买广告时创建初始记录
-     * 无法获取的字段使用默认值:
-     * - advStatus: 审批中(0)
-     * - autoRenew: false
-     * - showCount: 0
-     * - currency: CNY
-     * </pre>
-     *
-     * @param user 用户信息
-     * @param library 广告库信息
-     * @param price 价格配置
-     * @return 默认的AdvUser对象
-     */
     public static AdvUser buildAdvUserDefault(User user, AdvLibrary library, AdvPrice price) {
         LocalDateTime now = LocalDateTime.now();
-        
         return new AdvUser()
                 .setUserId(user.getUserId())
                 .setLibraryId(library.getId())
                 .setPriceId(price.getId())
-                .setPrice(price.getMonthlyPrice())
                 .setKeyword(library.getKeyword())
                 .setAdvType(library.getAdvType())
                 .setAdvPosition(price.getAdvPosition())
@@ -165,21 +128,16 @@ public class AdvUser {
                 .setSource(price.getSource())
                 .setPriceMonth(price.getMonthlyPrice())
                 .setCurrency(price.getCurrency())
-                .setShowCountSnapshot(library.getShowCount())
-                .setAdvStatus(AdvStatus.PENDING)
+                .setAdvStatus(AdvStatus.UNDER_APPROVAL)
                 .setEffectiveTime(now)
                 .setExpirationTime(now.plusMonths(1))
-                .setAdvSource(AdvSource.USER_BUY)
-                .setBillNo(null)
-                .setAutoRenew(false)
-                .setAdvContent(null)
-                .setAdvUrl(null)
+                .setAdvSource(AdvSource.BUY)
+                .setAdvContent("")
+                .setAdvUrl("")
                 .setShowCount(0L)
-                .setAdvShow(null)
-                .setAdvShowSnapshot(library.getShow7d())
-                .setUserRenews(null)
-                .setCreatedAt(now)
-                .setUpdatedAt(now);
+                .setAdvShow(Collections.emptyList())
+                .setUserRenews(Collections.emptyList())
+                .setCreatedAt(now);
     }
 
 }

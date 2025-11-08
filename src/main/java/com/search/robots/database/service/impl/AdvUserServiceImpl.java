@@ -57,7 +57,6 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
         
         return this.baseMapper.selectList(
                 Wrappers.<AdvUser>lambdaQuery()
-                        .eq(AdvUser::getAutoRenew, true)
                         .eq(AdvUser::getAdvStatus, AdvStatus.PROMOTION_ING)
                         .between(AdvUser::getExpirationTime, now, threeDaysLater)
                         .orderByAsc(AdvUser::getExpirationTime)

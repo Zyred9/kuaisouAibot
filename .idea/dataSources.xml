@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="jdbc:mysql://127.0.0.1:3306/kuaisou_ai_bot?useUnicode=true&amp;characterEncoding=utf8&amp;autoReconnect=true&amp;serverTimezone=Asia/Shanghai&amp;useSSL=false&amp;nullCatalogMeansCurrent=true" group="Debug Session BotFrameworkApplication" uuid="c878ef56-cec8-4ab3-8530-758569dc17ba">
+    <data-source source="LOCAL" name="jdbc:mysql://127.0.0.1:3306/kuaisou_ai_bot?useUnicode=true&amp;characterEncoding=utf8&amp;autoReconnect=true&amp;serverTimezone=Asia/Shanghai&amp;useSSL=false&amp;nullCatalogMeansCurrent=true" group="Debug Session BotFrameworkApplication" uuid="dce334ae-cd1f-4955-9d61-d666a1038079">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
       <imported>true</imported>
