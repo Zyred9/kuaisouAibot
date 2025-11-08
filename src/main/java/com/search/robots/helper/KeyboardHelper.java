@@ -62,12 +62,13 @@ public class KeyboardHelper {
         
         for (AdvPrice price : rankPrices) {
             String priceText = price.getAdvPosition().getIcon() + " " + DecimalHelper.decimalParse(price.getMonthlyPrice()) + "$/月";
-            String callbackData = "kw_buy#" + keyword + "#" + price.getId();
             
             // 判断是否已售出
             boolean isSold = price.getIsSold() != null && price.getIsSold() == 1;
             String buyButtonText = isSold ? "已被购买" : "购买";
-            String buyButtonCallback = isSold ? "ignore" : callbackData;
+            String buyButtonCallback = isSold 
+                ? "two#sold#" + price.getId() 
+                : "two#to_buy#" + price.getId();
             
             rows.add(row(
                 buttonText(priceText, "kw_price_info#" + price.getId()),
@@ -80,12 +81,13 @@ public class KeyboardHelper {
             
             for (AdvPrice price : pagePrices) {
                 String priceText = price.getAdvPosition().getIcon() + DecimalHelper.decimalParse(price.getMonthlyPrice()) + "$/月";
-                String callbackData = "kw_buy#" + keyword + "#" + price.getId();
                 
                 // 判断是否已售出
                 boolean isSold = price.getIsSold() != null && price.getIsSold() == 1;
                 String buyButtonText = isSold ? "已被购买" : "购买";
-                String buyButtonCallback = isSold ? "ignore" : callbackData;
+                String buyButtonCallback = isSold 
+                    ? "two#sold#" + price.getId() 
+                    : "two#to_buy#" + price.getId();
                 
                 rows.add(row(
                     buttonText(priceText, "kw_price_info#" + price.getId()),

@@ -53,6 +53,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
     private final IncludedService includedService;
     private final HotSearchService hotSearchService;
     private final ExhibitionService exhibitionService;
+    private final AdvPriceService advPriceService;
 
     @Override
     public boolean support(Update update) {
@@ -316,6 +317,69 @@ public class PrivateCallbackHandler extends AbstractHandler {
     }
 
     private BotApiMethod<?> processorLevelTwo(CallbackQuery callbackQuery, Message message, List<String> command) {
+        // 处理已售出按钮点击
+        if (StrUtil.equals(command.get(1), "sold")) {
+            Long priceId = Long.parseLong(command.get(2));
+            AdvPrice price = this.advPriceService.getById(priceId);
+            
+            if (Objects.isNull(price)) {
+                return ok(message, "价格信息不存在");
+            }
+            
+            String soldInfo = StrUtil.format(
+                "该广告位已被购买✅
+
+" +
+                "位置: {}
+" +
+                "价格: {}$/月
+" +
+                "状态: 已售出",
+                price.getAdvPosition().getDesc(),
+                DecimalHelper.decimalParse(price.getMonthlyPrice())
+            );
+            
+            return ok(message, soldInfo);
+        }
+        
+        // 处理购买按钮点击
+        if (StrUtil.equals(command.get(1), "to_buy")) {
+            Long priceId = Long.parseLong(command.get(2));
+            AdvPrice price = this.advPriceService.getById(priceId);
+            
+            if (Objects.isNull(price)) {
+                return ok(message, "价格信息不存在");
+            }
+            
+            // 检查是否已售出
+            if (price.getIsSold() != null && price.getIsSold() == 1) {
+                return ok(message, "该广告位已被购买,请选择其他位置");
+            }
+            
+            User user = this.userService.user(callbackQuery.getFrom());
+            
+            String buyInfo = StrUtil.format(
+                "购买广告位信息
+
+" +
+                "位置: {}
+" +
+                "价格: {}$/月
+" +
+                "您的余额: {}$
+
+" +
+                "确认购买吗?",
+                price.getAdvPosition().getDesc(),
+                DecimalHelper.decimalParse(price.getMonthlyPrice()),
+                DecimalHelper.decimalParse(user.getBalance())
+            );
+            
+            // TODO: 添加确认购买的键盘,实现购买流程
+            InlineKeyboardMarkup keyboard = KeyboardHelper.buildSingleBackKeyboard("one#advertising");
+            return editMarkdown(message, buyInfo, keyboard);
+        }
+        
         // 回到我的
         if (StrUtil.equals(command.get(1), "self")) {
             // 删除缓存
