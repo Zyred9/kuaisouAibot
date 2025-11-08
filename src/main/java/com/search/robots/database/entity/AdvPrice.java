@@ -69,7 +69,7 @@ public class AdvPrice {
     private Integer status;
     
     /** 是否已售出(0-未售出,1-已售出) **/
-    private Integer isSold;
+    private Boolean isSold;
     
     /** 备注说明 **/
     private String remark;
@@ -82,7 +82,7 @@ public class AdvPrice {
 
 
     public String buildToBuyText(AdvLibrary library) {
-        return StrUtil.format(Constants.TO_BUY_KEYWORD_TEXT,
+        return StrUtil.format(Constants.TO_BUY_ADV_TEXT,
                 library.getKeyword(), this.ranking,
                 DecimalHelper.decimalParse(this.monthlyPrice));
     }

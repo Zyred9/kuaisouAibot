@@ -31,4 +31,12 @@ public class CommonCache {
         CACHE.remove(userId);
     }
 
+
+
+
+    private static final Map<Long, String> CACHE_DATA = new ConcurrentHashMap<>();
+    public static void putData(Long userId, String data) {CACHE_DATA.put(userId, data);}
+    public static String getData(Long userId) {
+        return CACHE_DATA.remove(userId);
+    }
 }

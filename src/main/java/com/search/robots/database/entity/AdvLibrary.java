@@ -14,6 +14,7 @@ import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -62,4 +63,15 @@ public class AdvLibrary {
     /** 价格配置列表(非持久化字段,关联查询时填充) **/
     @TableField(exist = false)
     private List<AdvPrice> priceList;
+
+    public static AdvLibrary buildDefaultLibrary (String keyword, AdvTypeEnum type) {
+        return new AdvLibrary()
+                .setAdvType(type)
+                .setKeyword(keyword)
+                .setPrice(BigDecimal.ZERO)
+                .setShowCount(0L)
+                .setCreateTime(LocalDateTime.now())
+                .setUpdatedAt(LocalDateTime.now())
+                .setShow7d(Collections.emptyList());
+    }
 }

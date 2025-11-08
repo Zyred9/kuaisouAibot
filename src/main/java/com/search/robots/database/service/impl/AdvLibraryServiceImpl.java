@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.search.robots.database.entity.AdvLibrary;
 import com.search.robots.database.entity.AdvPrice;
+import com.search.robots.database.enums.adv.AdvTypeEnum;
 import com.search.robots.database.mapper.AdvLibraryMapper;
 import com.search.robots.database.service.AdvLibraryService;
 import com.search.robots.database.service.AdvPriceService;
@@ -44,11 +45,10 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
     }
 
     @Override
-    public AdvLibrary getByKeywordWithPrices(String keyword) {
+    public AdvLibrary getByKeywordWithPrices(String keyword, String data) {
         if (StrUtil.isBlank(keyword)) {
             return null;
         }
-        // 1) 先查询关键词实体
         AdvLibrary library = this.baseMapper.selectOne(
                 Wrappers.<AdvLibrary>lambdaQuery()
                         .eq(AdvLibrary::getKeyword, keyword)
@@ -56,11 +56,16 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
                         .last("LIMIT 1")
         );
         if (Objects.isNull(library)) {
-            library = new AdvLibrary();
+            AdvLibrary newLibrary = AdvLibrary.buildDefaultLibrary(keyword, AdvTypeEnum.of(data));
+            this.baseMapper.insert(newLibrary);
+            List<AdvPrice> advPrices = this.advPriceService.saveTheLibraryPrice(newLibrary);
+            newLibrary.setPriceList(advPrices);
+            library = newLibrary;
+        } else {
+            library.setPriceList(
+                    this.advPriceService.listEnabledByLibraryId(library.getId())
+            );
         }
-        library.setPriceList(
-                this.advPriceService.listEnabledByLibraryId(library.getId())
-        );
         return library;
     }
 

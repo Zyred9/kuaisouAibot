@@ -33,9 +33,9 @@ public interface AdvLibraryService extends IService<AdvLibrary> {
      * 一次性查询返回:
      * - 广告库基础信息
      * - priceList填充所有启用的价格配置
-     * 
+     *
      * 查询效率: 单次SQL,无N+1问题
-     * 
+     *
      * 使用示例:
      * AdvLibrary library = advLibraryService.getByKeywordWithPrices("Java");
      * if (Objects.nonNull(library)) {
@@ -45,9 +45,10 @@ public interface AdvLibraryService extends IService<AdvLibrary> {
      * </pre>
      *
      * @param keyword 关键词
-     * @return 广告库实体(priceList已填充),不存在返回null
+     * @param data
+     * @return 广告库实体(priceList已填充), 不存在返回null
      */
-    AdvLibrary getByKeywordWithPrices(String keyword);
+    AdvLibrary getByKeywordWithPrices(String keyword, String data);
 
     /**
      * 批量查询多个关键词及其价格配置

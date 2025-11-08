@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.search.robots.beans.view.vo.AdvShow;
+import com.search.robots.beans.view.vo.AdvUserRenew;
 import com.search.robots.database.enums.adv.AdvPositionEnum;
 import com.search.robots.database.enums.adv.AdvSource;
 import com.search.robots.database.enums.adv.AdvStatus;
@@ -59,6 +60,9 @@ public class AdvUser {
     
     /** 关联价格ID(关联t_adv_price,购买时的价格配置) **/
     private Long priceId;
+
+    /** 购买的价格 **/
+    private BigDecimal price;
     
     /** 关键词快照(冗余,避免JOIN) **/
     private String keyword;
@@ -115,15 +119,25 @@ public class AdvUser {
     /** 广告7天的展示(实时更新) **/
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<AdvShow> advShow;
-    
-    /** 购买时展现轨迹快照(JSON,记录当时的7日展现) **/
+
+    /** 续订记录 **/
     @TableField(typeHandler = JacksonTypeHandler.class)
-    private List<AdvShow> advShowSnapshot;
+    private List<AdvUserRenew> userRenews;
     
     /** 创建时间 **/
     private LocalDateTime createdAt;
     
-    /** 更新时间 **/
-    private LocalDateTime updatedAt;
+
+    public static AdvUser buildAdvUserDefault(User user, AdvLibrary library, AdvPrice price, ) {
+        return new AdvUser()
+                .setUserId(user.getUserId())
+                .setLibraryId(library.getId())
+                .setPriceId(price.getId())
+                .setKeyword(library.getKeyword())
+                .setAdvType()
+                .setAdvPosition(price.getAdvPosition())
+                .setRanking(price.getRanking())
+                .setSource()
+    }
 
 }

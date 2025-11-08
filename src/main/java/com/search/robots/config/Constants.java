@@ -255,12 +255,12 @@ public interface Constants {
             总充值：{}，注册时间：`{}`
             """;
 
-    String TOP_LINK_BUTTON_BUY_TEXT = """
-            📣支付确认
+    String TO_BUY_TEXT = """
+            📣*支付确认*
             
-            类型：{}
-            展现次数：`{}万次`
-            支付金额：`{}$`
+            *类型*：{}
+            *展现次数*：`{}万次`
+            *支付金额*：`{}$`
             """;
 
     String SELF_ADV_TEXT = """
@@ -290,12 +290,12 @@ public interface Constants {
 
     String KEYWORD_QUERY_OF_DAY_TEXT = "{}：直接：`{}`， 关联：`{}` ， 人数：`{}`";
 
-    String TO_BUY_KEYWORD_TEXT = """
-            📣支付确认
+    String TO_BUY_ADV_TEXT = """
+            📣*支付确认*
             
-            关键词：`{}`
-            排名：`{}`
-            支付金额：`{}$`
+            *类型*：{}
+            *排名*：`{}`
+            *支付金额*：`{}$`
             """;
 }
 

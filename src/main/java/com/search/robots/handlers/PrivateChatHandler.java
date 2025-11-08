@@ -1,20 +1,15 @@
 package com.search.robots.handlers;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.search.robots.beans.cache.CommonCache;
 import com.search.robots.beans.chat.ChatQueryHandler;
 import com.search.robots.beans.view.DialogueCtx;
 import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
-import com.search.robots.database.entity.AdvLibrary;
-import com.search.robots.database.entity.AdvPrice;
-import com.search.robots.database.entity.Config;
-import com.search.robots.database.entity.HotSearch;
-import com.search.robots.database.entity.Included;
-import com.search.robots.database.entity.User;
+import com.search.robots.database.entity.*;
 import com.search.robots.database.enums.Dialogue;
 import com.search.robots.database.enums.SearchPeriodEnum;
 import com.search.robots.database.service.*;
@@ -213,67 +208,59 @@ public class PrivateChatHandler extends AbstractHandler{
         }
 
         // 处理 /kw 关键词 命令
-        if (StrUtil.startWith(text, "/kw ")) {
+        if (StrUtil.startWith(text, "/kw")) {
+            String data = CommonCache.getData(message.getFrom().getId());
+            if (StrUtil.isBlank(data)) {
+                data = "keyword_rank"; // 默认就是排行榜
+            }
+
             String keyword = StrUtil.subAfter(text, " ", true);
             if (StrUtil.isBlank(keyword)) {
                 return markdown(message, "请提供关键词，例如：/kw 数据");
             }
 
             // 获取关键词数据
-            AdvLibrary library = this.advLibraryService.getByKeywordWithPrices(keyword);
+            AdvLibrary library = this.advLibraryService.getByKeywordWithPrices(keyword, data);
             if (Objects.isNull(library)) {
                 return markdown(message, "未找到关键词：" + keyword);
             }
-
-            StringBuilder dailyStats = new StringBuilder();
-            long totalShowCount = library.getShowCount() != null ? library.getShowCount() : 0;
-            
-            if (CollUtil.isNotEmpty(library.getShow7d())) {
-                for (var showData : library.getShow7d()) {
-                    String dayText = StrUtil.format(Constants.KEYWORD_QUERY_OF_DAY_TEXT,
-                        showData.getDate(),
-                        showData.getDirectShow() != null ? showData.getDirectShow().toString() : "0",
-                        showData.getRelatedShow() != null ? showData.getRelatedShow().toString() : "0",
-                        showData.getUniqueUser() != null ? showData.getUniqueUser().toString() : "0");
-                    dailyStats.append(dayText).append("\n");
-                }
-            } else {
-                dailyStats.append(buildZeroDailyStats());
-            }
-
-            String responseText = StrUtil.format(Constants.KEYWORD_QUERY_TEXT,
-                keyword,                                    // 关键词
-                dailyStats.toString(),                      // 每日统计数据
-                totalShowCount > 0 ? String.valueOf(totalShowCount / 30) : "0",  // 每天展示（总展现/30天）
-                String.valueOf(totalShowCount)               // 一个月展示
-            );
-            InlineKeyboardMarkup keyboard = KeyboardHelper.buildKeywordQueryKeyboard(keyword, library.getPriceList());
-            return markdown(message, responseText, keyboard);
+            return this.processorQueryKeyword(message, library, data);
         }
 
         return null;
     }
 
-    /**
-     * 构建零数据的每日统计信息
-     * <pre>
-     * 生成最近7天的零数据统计，用于：
-     * - 关键词不存在时的默认展示
-     * - 关键词存在但无历史数据时的展示
-     * </pre>
-     *
-     * @return 7天零数据的统计字符串
-     */
-    private StringBuilder buildZeroDailyStats() {
+    public BotApiMethod<?> processorQueryKeyword(Message message, AdvLibrary library, String data) {
+
         StringBuilder dailyStats = new StringBuilder();
-        for (int i = 6; i >= 0; i--) {
-            String date = DateUtil.yesterday()
-                    .offset(DateField.DAY_OF_YEAR, -i).toString("yyyy-MM-dd");
-            String dayText = StrUtil.format(Constants.KEYWORD_QUERY_OF_DAY_TEXT,
-                    date, "0", "0", "0");
-            dailyStats.append(dayText).append("\n");
+        long totalShowCount = library.getShowCount() != null ? library.getShowCount() : 0;
+
+        if (CollUtil.isNotEmpty(library.getShow7d())) {
+            for (var showData : library.getShow7d()) {
+                String dayText = StrUtil.format(Constants.KEYWORD_QUERY_OF_DAY_TEXT,
+                        showData.getDate(),
+                        showData.getDirectShow() != null ? showData.getDirectShow().toString() : "0",
+                        showData.getRelatedShow() != null ? showData.getRelatedShow().toString() : "0",
+                        showData.getUniqueUser() != null ? showData.getUniqueUser().toString() : "0");
+                dailyStats.append(dayText).append("\n");
+            }
+        } else {
+            for (int i = 6; i >= 0; i--) {
+                String date = DateUtil.yesterday()
+                        .offset(DateField.DAY_OF_YEAR, -i).toString("yyyy-MM-dd");
+                String dayText = StrUtil.format(Constants.KEYWORD_QUERY_OF_DAY_TEXT,
+                        date, "0", "0", "0");
+                dailyStats.append(dayText).append("\n");
+            }
         }
-        return dailyStats;
+        String responseText = StrUtil.format(Constants.KEYWORD_QUERY_TEXT,
+                library.getKeyword(),
+                dailyStats.toString(),
+                totalShowCount > 0 ? String.valueOf(totalShowCount / 30) : "0",
+                String.valueOf(totalShowCount)
+        );
+        InlineKeyboardMarkup keyboard = KeyboardHelper.buildKeywordQueryKeyboard(library.getPriceList(), data);
+        return markdown(message, responseText, keyboard);
     }
 
     private void processorStartWith(Message message) {

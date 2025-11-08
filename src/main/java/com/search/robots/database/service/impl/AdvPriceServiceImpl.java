@@ -3,12 +3,15 @@ package com.search.robots.database.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.search.robots.database.entity.AdvLibrary;
 import com.search.robots.database.entity.AdvPrice;
 import com.search.robots.database.enums.adv.AdvPositionEnum;
 import com.search.robots.database.mapper.AdvPriceMapper;
 import com.search.robots.database.service.AdvPriceService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -92,6 +95,22 @@ public class AdvPriceServiceImpl extends ServiceImpl<AdvPriceMapper, AdvPrice> i
                         .orderByAsc(AdvPrice::getAdvPosition)
                         .orderByAsc(AdvPrice::getRanking)
         );
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<AdvPrice> saveTheLibraryPrice(AdvLibrary newLibrary) {
+        List<AdvPrice> advPrices = this.selectDefault();
+
+        for (AdvPrice price : advPrices) {
+            price.setId(null);
+            price.setLibraryId(newLibrary.getId());
+            price.setCreatedAt(LocalDateTime.now());
+            price.setUpdatedAt(LocalDateTime.now());
+            price.setRemark("");
+        }
+        this.batchInsert(advPrices);
+        return advPrices;
     }
 
     private List<AdvPrice> selectDefault () {

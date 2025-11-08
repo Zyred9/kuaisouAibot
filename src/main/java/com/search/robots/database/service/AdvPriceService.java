@@ -1,6 +1,7 @@
 package com.search.robots.database.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.search.robots.database.entity.AdvLibrary;
 import com.search.robots.database.entity.AdvPrice;
 import com.search.robots.database.enums.adv.AdvPositionEnum;
 
@@ -41,4 +42,6 @@ public interface AdvPriceService extends IService<AdvPrice> {
      * 批量查询多个库ID的启用价格配置(一次性查询,避免N+1)
      */
     List<AdvPrice> listEnabledByLibraryIds(List<Long> libraryIds);
+
+    List<AdvPrice> saveTheLibraryPrice(AdvLibrary newLibrary);
 }
