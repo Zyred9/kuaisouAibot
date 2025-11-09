@@ -15,6 +15,8 @@ import com.search.robots.database.enums.Included.IncludedNewUserEnum;
 import com.search.robots.database.enums.Included.IncludedSearchPriorityEnum;
 import com.search.robots.database.enums.Included.IncludedSearchTypeEnum;
 import com.search.robots.database.enums.SearchPeriodEnum;
+import com.search.robots.database.enums.adv.AdvStatus;
+import com.search.robots.database.enums.adv.AdvTypeEnum;
 import com.search.robots.database.service.*;
 import com.search.robots.helper.*;
 import com.search.robots.sender.AsyncSender;
@@ -326,6 +328,56 @@ public class PrivateCallbackHandler extends AbstractHandler {
             return editMarkdownV2(message, advUserPaymentText, markup);
         }
 
+        // 我的广告
+        if (StrUtil.equals(command.get(1), "my_adv")) {
+            if (StrUtil.equalsAny(command.get(2), "edit_title", "edit_link")) {
+                long userAdvId = Long.parseLong(command.get(4));
+                boolean title = StrUtil.equals(command.get(2), "edit_title");
+                if (title) {
+                    DialogueCtx ctx = new DialogueCtx(Dialogue.INPUT_ADV_TITLE, userAdvId, command.get(3));
+                    CommonCache.putDialogue(callbackQuery.getFrom().getId(), ctx);
+                    return reply(message, "请回复新的标题（特殊表情自动去除）:");
+                }
+                DialogueCtx ctx = new DialogueCtx(Dialogue.INPUT_ADV_LINK, userAdvId);
+                CommonCache.putDialogue(callbackQuery.getFrom().getId(), ctx);
+                return reply(message, "请回复新的链接:");
+            }
+        }
+
+        if (StrUtil.equals(command.get(1), "my_adv")) {
+            // 优先续订
+            if (StrUtil.equals(command.get(2), "priority_renewal")) {
+                long advUserId = Long.parseLong(command.get(2));
+                AdvUser advUser = this.advUserService.getById(advUserId);
+                // 判断今天和目标时间是否大于5天
+                if (TimeHelper.isMoreThanDays(advUser.getExpirationTime(), 5)) {
+                    return answerAlert(callbackQuery, "关键词广告可在到期前 5 天内续订，目前尚未进入续订时间，请稍后再试。");
+                }
+                // TODO 无法知道优先续订的流程
+            }
+
+            // 开始推广
+            if (StrUtil.equals(command.get(2), "start_promotion")) {
+                long advUserId = Long.parseLong(command.get(3));
+                AdvUser advUser = this.advUserService.getById(advUserId);
+
+                if (StrUtil.isBlank(advUser.getAdvContent()) || StrUtil.isBlank(advUser.getAdvUrl())) {
+                    return answerAlert(callbackQuery, "请先补充广告内的配置");
+                }
+                if (Objects.equals(advUser.getAdvStatus(), AdvStatus.PROMOTION_ING)) {
+                    advUser.setAdvStatus(AdvStatus.PAUSE_ING);
+                } else {
+                    advUser.setAdvStatus(AdvStatus.PROMOTION_ING);
+                }
+
+                this.advUserService.updateById(advUser);
+                InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
+                return editMarkdownV2(message, advUser.buildAdvUserPaymentText(), markup);
+            }
+
+
+        }
+
         return null;
     }
 
@@ -368,8 +420,18 @@ public class PrivateCallbackHandler extends AbstractHandler {
             }
             
             String resultText = advUser.buildAdvUserPaymentText();
-            InlineKeyboardMarkup markup = KeyboardHelper
-                    .buildKeywordSoldKeyboard(command.get(2), advUser.getLibraryId());
+
+            InlineKeyboardMarkup markup;
+            if (Objects.equals(callbackQuery.getFrom().getId(), advUser.getUserId())
+                    && !Objects.equals(advUser.getAdvStatus(), AdvStatus.THE_END)) {
+                markup = KeyboardHelper.buildPymentKeywordKeyboard(
+                        advUser.getId(), command.get(2), advUser.getLibraryId()
+                );
+            } else {
+                markup = KeyboardHelper
+                        .buildKeywordSoldKeyboard(command.get(2), advUser.getLibraryId());
+            }
+
             return editMarkdownV2(message, resultText, markup);
         }
         
@@ -524,12 +586,36 @@ public class PrivateCallbackHandler extends AbstractHandler {
                     0, 0, 0,
                     config.getTutorialUrl(), config.getCommunityName()
             );
+            String position = StrHelper.collGet(command, 2, "0");
+            String status = StrHelper.collGet(command, 3, "0");
+            int current = StrHelper.collGet(command, 4, 1);
 
+            AdvTypeEnum advType = AdvTypeEnum.of(position);
+            AdvStatus advStatus = AdvStatus.of(position);
+
+            Page<AdvUser> userPage = this.advUserService.selfPage(current, callbackQuery.getFrom().getId(), advType, advStatus);
+            InlineKeyboardMarkup markup = KeyboardHelper.buildSelfAdvKeyboard(position, status, userPage);
+            return editMarkdown(message, format, markup);
         }
         // 专页购买
         if (StrUtil.equals(command.get(1), "special_page")) {
             Config config = configService.queryConfig();
             return ok(message, StrUtil.format("关键词专页购买帮助 @{}", config.getCustomUsername()));
+        }
+
+        // 用户广告详情
+        if (StrUtil.equals(command.get(1), "user_adv_detail")) {
+            Long advUserId = Long.parseLong(command.get(2));
+            // 通过 priceId 查询购买该广告位的用户记录
+            AdvUser advUser = this.advUserService.getById(advUserId);
+            if (Objects.isNull(advUser)) {
+                return answerAlert(callbackQuery, "未找到该广告购买记录!");
+            }
+
+            InlineKeyboardMarkup markup = KeyboardHelper.buildPymentKeywordKeyboard(
+                    advUser.getId(), command.get(2), advUser.getLibraryId()
+            );
+            return editMarkdownV2(message, advUser.buildAdvUserPaymentText(), markup);
         }
         return null;
     }

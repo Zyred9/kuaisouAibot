@@ -56,7 +56,7 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
                         .last("LIMIT 1")
         );
         if (Objects.isNull(library)) {
-            AdvLibrary newLibrary = AdvLibrary.buildDefaultLibrary(keyword, AdvTypeEnum.of(data));
+            AdvLibrary newLibrary = AdvLibrary.buildDefaultLibrary(keyword, AdvTypeEnum.ofData(data));
             this.baseMapper.insert(newLibrary);
             List<AdvPrice> advPrices = this.advPriceService.saveTheLibraryPrice(newLibrary);
             newLibrary.setPriceList(advPrices);

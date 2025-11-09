@@ -1,8 +1,12 @@
 package com.search.robots.database.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.search.robots.beans.view.vo.adv.AdvUserAudit;
 import com.search.robots.database.entity.AdvUser;
 import com.search.robots.database.enums.adv.AdvStatus;
+import com.search.robots.database.enums.adv.AdvTypeEnum;
+import lombok.NonNull;
 
 import java.util.List;
 
@@ -31,4 +35,8 @@ public interface AdvUserService extends IService<AdvUser> {
      * 查询需要自动续费的广告
      */
     List<AdvUser> listAutoRenewAds();
+
+    void auditAdvUser(AdvUserAudit audit);
+
+    Page<AdvUser> selfPage(int current, Long userId, AdvTypeEnum type, AdvStatus status);
 }

@@ -62,6 +62,8 @@ public class AdvUser {
     
     /** 关联用户ID **/
     private Long userId;
+    /*** 用户名 **/
+    private String username;
     
     /** 关联广告库ID(冗余存储,便于追溯源数据) **/
     private Long libraryId;
@@ -104,9 +106,14 @@ public class AdvUser {
 
     /** 广告文本 **/
     private String advContent;
-    
     /** 广告链接 **/
     private String advUrl;
+
+    // 状态为审批的中，则需要展示
+    /** 变更后广告文本 **/
+    private String tempContent;
+    /** 变更后广告链接 **/
+    private String tempUrl;
     
     /** 当前实时展现次数(运行期间累加) **/
     private Long showCount;
@@ -135,6 +142,7 @@ public class AdvUser {
         LocalDateTime now = LocalDateTime.now();
         return new AdvUser()
                 .setUserId(user.getUserId())
+                .setUsername(user.getUsername())
                 .setLibraryId(library.getId())
                 .setPriceId(price.getId())
                 .setKeyword(library.getKeyword())
@@ -173,9 +181,21 @@ public class AdvUser {
                 StrHelper.specialResult(this.getAdvSource().getDesc()),
                 StrHelper.specialResult(this.getAdvContent()),
                 StrHelper.specialResult(this.getAdvUrl()),
+                this.updateContentText(),
                 StrHelper.specialLong(this.getShowCount()),
                 showDetailText
         );
+    }
+
+    private String updateContentText() {
+        if (Objects.equals(this.advStatus, AdvStatus.UNDER_APPROVAL)) {
+            String resultText = """
+                    \n\\=\\=\\=变更
+                    新广告文本：`{}`
+                    新广告链接：`{}`""";
+            return StrUtil.format(resultText, StrHelper.specialResult(this.tempContent), StrHelper.specialResult(this.tempUrl));
+        }
+        return "";
     }
 
     private String buildRenewRecordsText(AdvUser advUser) {
@@ -207,5 +227,22 @@ public class AdvUser {
                     .append("\n");
         }
         return "\n" + sb.toString().trim();
+    }
+
+    public String buildButtonName() {
+        boolean noSetting = StrUtil.isBlank(this.advContent);
+        return this.advType.getPrefix() + ":" +
+                StrHelper.buildSymbolName("|", keyword, noSetting ? "未配置" : this.advContent, this.advStatus.getDesc());
+    }
+
+    public String buildUpdateText(String customUsername) {
+        boolean equals = Objects.equals(this.advStatus, AdvStatus.APPROVAL_PASS);
+        String title = equals ? "✅广告审批通过" : "❌广告审拒绝";
+        return StrUtil.format(Constants.ADV_USER_AUDIT_SUCCESS_TEXT,
+                this.userId, this.username, this.id,
+                this.getAdvContent(), this.getAdvUrl(),
+                this.getTempContent(), this.getTempUrl(),
+                title, customUsername
+        );
     }
 }

@@ -5,9 +5,9 @@ import com.search.robots.database.enums.Included.IncludedSearchTypeEnum;
 import com.search.robots.database.enums.SearchPeriodEnum;
 
 import java.security.SecureRandom;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -18,6 +18,22 @@ import java.util.regex.Pattern;
  * @since v 0.0.1
  */
 public class StrHelper {
+
+    public static int collGet(List<String> coll, int idx, int defaultVal) {
+        try {
+            return Integer.parseInt(coll.get(idx));
+        } catch (Exception ex) {
+            return defaultVal;
+        }
+    }
+
+    public static String collGet(List<String> coll, int idx, String defaultVal) {
+        try {
+            return coll.get(idx);
+        } catch (Exception ex) {
+            return defaultVal;
+        }
+    }
 
     public static String hit (String name, boolean hit) {
         if (hit) {
@@ -38,6 +54,14 @@ public class StrHelper {
             return name + "✅";
         }
         return name;
+    }
+
+    public static String buildName (Object ... values) {
+        return StrUtil.join("#", values);
+    }
+
+    public static String buildSymbolName (String symbol, Object ... values) {
+        return StrUtil.join(symbol, values);
     }
 
     public static String nickname (String first, String last) {

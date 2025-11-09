@@ -19,6 +19,7 @@ public class DialogueCtx {
 
     private Dialogue dialogue;
     private Long businessId;
+    private String mark;
 
     public DialogueCtx (Dialogue dialogue) {
         this.dialogue = dialogue;
@@ -27,5 +28,11 @@ public class DialogueCtx {
     public DialogueCtx (Dialogue dialogue, Long businessId) {
         this.dialogue = dialogue;
         this.businessId = businessId;
+    }
+
+    public DialogueCtx (Dialogue dialogue, Long businessId, String mark) {
+        this.dialogue = dialogue;
+        this.businessId = businessId;
+        this.mark = mark;
     }
 }

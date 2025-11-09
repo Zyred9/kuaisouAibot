@@ -12,6 +12,7 @@ import com.search.robots.config.Constants;
 import com.search.robots.database.entity.*;
 import com.search.robots.database.enums.Dialogue;
 import com.search.robots.database.enums.SearchPeriodEnum;
+import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.service.*;
 import com.search.robots.helper.DecimalHelper;
 import com.search.robots.helper.KeyboardHelper;
@@ -49,6 +50,7 @@ public class PrivateChatHandler extends AbstractHandler{
     private final UserService userService;
     private final BotProperties properties;
     private final ConfigService configService;
+    private final AdvUserService advUserService;
     private final IncludedService includedService;
     private final AdvPriceService advPriceService;
     private final HotSearchService hotSearchService;
@@ -190,12 +192,48 @@ public class PrivateChatHandler extends AbstractHandler{
                 Config config = this.configService.queryConfig();
 
                 InlineKeyboardMarkup markup = KeyboardHelper.buildTargetedSearchKeyboard(included, includeList);
-                return markdown(message, included.buildDetailIncludedText(this.properties.groupStart(), config), markup);
+                result = markdown(message, included.buildDetailIncludedText(this.properties.groupStart(), config), markup);
+            }
+
+            // 输入广告标题和链接
+            if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_TITLE)
+                    || Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_LINK)) {
+                int length = message.getText().length();
+
+                if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_TITLE)) {
+                    if (length < 2 || length > 25) {
+                        return ok(message, "广告文本长度限制2-25字，请再次发送：");
+                    }
+                }
+
+                Long businessId = dialogueCtx.getBusinessId();
+                AdvUser advUser = this.advUserService.getById(businessId);
+                if (Objects.isNull(advUser)) {
+                    return null;
+                }
+
+                if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_TITLE)) {
+                    advUser.setTempContent(message.getText());
+                } else {
+                    advUser.setTempUrl(message.getText());
+                }
+                advUser.setAdvStatus(AdvStatus.UNDER_APPROVAL);
+                this.advUserService.updateById(advUser);
+                String advUserPaymentText = advUser.buildAdvUserPaymentText();
+                InlineKeyboardMarkup markup = KeyboardHelper
+                        .buildPymentKeywordKeyboard(advUser.getId(),
+                                dialogueCtx.getMark(), advUser.getLibraryId());
+                return markdownV2(message, advUserPaymentText, markup);
             }
 
             CommonCache.removeDialogue(message.getFrom().getId());
             return result;
         }
+
+
+//        this
+
+
 
         return null;
     }

@@ -6,14 +6,13 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.search.robots.beans.view.ButtonTransfer;
 import com.search.robots.beans.view.KeyboardTransfer;
-import com.search.robots.database.entity.AdvPrice;
-import com.search.robots.database.entity.HotSearch;
-import com.search.robots.database.entity.Included;
-import com.search.robots.database.entity.User;
+import com.search.robots.database.entity.*;
 import com.search.robots.database.enums.Included.IncludedNewUserEnum;
 import com.search.robots.database.enums.Included.IncludedSearchPriorityEnum;
 import com.search.robots.database.enums.Included.IncludedSearchTypeEnum;
 import com.search.robots.database.enums.SearchPeriodEnum;
+import com.search.robots.database.enums.adv.AdvStatus;
+import com.search.robots.database.enums.adv.AdvTypeEnum;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -34,13 +33,76 @@ import java.util.*;
  */
 public class KeyboardHelper {
 
+    public static InlineKeyboardMarkup buildAuditAfterKeyboard(AdvUser advUser) {
+        return InlineKeyboardMarkup.builder().keyboardRow(
+                row(buttonText(advUser.buildButtonName(), "two#user_adv_detail#" + advUser.getId()))
+        ).build();
+    }
+
+    public static InlineKeyboardMarkup buildSelfAdvKeyboard (String position, String status, Page<AdvUser> page) {
+        String buttonPrefix = "two#self_adv";
+        List<InlineKeyboardRow> rows = new ArrayList<>();
+        rows.add(row(
+                buttonText(StrHelper.hit("全部", StrUtil.equals(position, "0")), StrHelper.buildName(buttonPrefix, "0", status, page.getCurrent())),
+                buttonText(AdvTypeEnum.BUY_KEYWORD_RANK.buildName(position), StrHelper.buildName(buttonPrefix, "3", status, page.getCurrent())),
+                buttonText(AdvTypeEnum.BUY_KEYWORD_PAGE_RANK.buildName(position), StrHelper.buildName(buttonPrefix, "4", status, page.getCurrent())),
+                buttonText(AdvTypeEnum.BUY_BRAND_PAGE_RANK.buildName(position), StrHelper.buildName(buttonPrefix, "5", status, page.getCurrent())),
+                buttonText(AdvTypeEnum.BUY_TOP_LINK.buildName(position), StrHelper.buildName(buttonPrefix, "1", status, page.getCurrent())),
+                buttonText(AdvTypeEnum.BUY_BOTTOM_BUTTON.buildName(position), StrHelper.buildName(buttonPrefix, "2", status, page.getCurrent()))
+        ));
+        rows.add(row(
+                buttonText(StrHelper.hit("全部", StrUtil.equals(status, "0")), StrHelper.buildName(buttonPrefix, position, "0", page.getCurrent())),
+                buttonText(AdvStatus.UN_START.buildName(status), StrHelper.buildName(buttonPrefix, position, "1", page.getCurrent())),
+                buttonText(AdvStatus.PROMOTION_ING.buildName(status), StrHelper.buildName(buttonPrefix, position, "4", page.getCurrent())),
+                buttonText(AdvStatus.PAUSE_ING.buildName(status), StrHelper.buildName(buttonPrefix, position, "5", page.getCurrent())),
+                buttonText(AdvStatus.THE_END.buildName(status), StrHelper.buildName(buttonPrefix, position, "6", page.getCurrent())),
+                buttonText(AdvStatus.UNDER_APPROVAL.buildName(status), StrHelper.buildName(buttonPrefix, position, "2", page.getCurrent()))
+        ));
+
+        for (AdvUser record : page.getRecords()) {
+            String callbackData = StrHelper.buildName("two#user_adv_detail", record.getId());
+            rows.add(row(buttonText(record.buildButtonName(), callbackData)));
+        }
+        if (page.hasNext() || page.hasPrevious()) {
+            InlineKeyboardRow pageRow = new InlineKeyboardRow();
+            if (page.hasPrevious()) {
+                String prev =  StrHelper.buildName(buttonPrefix, position, status, (page.getCurrent() + 1));
+                pageRow.add(buttonText("上一页", prev));
+            }
+            if (page.hasNext()) {
+                String next =  StrHelper.buildName(buttonPrefix, position, status, (page.getCurrent() - 1));
+                pageRow.add(buttonText("下一页", next));
+            }
+            rows.add(pageRow);
+        }
+        rows.add(row(buttonText("⬅️返回", "one#self_adv_center")));
+        return InlineKeyboardMarkup.builder().keyboard(rows).build();
+    }
+
     public static InlineKeyboardMarkup buildPymentKeywordKeyboard (Long userAdvId, String prev, Long libraryId) {
         return InlineKeyboardMarkup.builder().keyboard(List.of(
                 row(buttonText("\uD83D\uDD04优先续订", "three#my_adv#priority_renewal#" + userAdvId)),
                 row(buttonText("\uD83D\uDFE2开始推广", "three#my_adv#start_promotion#" + userAdvId)),
-                row(buttonText("✏️修改广告标题", "three#my_adv#edit_title#" + userAdvId), buttonText("✏️修改广告链接", "three#my_adv#edit_link#" + userAdvId)),
+                row(buttonText("✏️修改广告标题", "three#my_adv#edit_title#" + prev + "#" + userAdvId), buttonText("✏️修改广告链接", "three#my_adv#edit_link#" + prev + "#" + userAdvId)),
                 row(buttonText("⬅️返回关键词列表", "one#query_keyword#" + prev + "#" + libraryId)),
-                row(buttonText("⬅️返回我的广告", "two#self_adv"))
+                row(buttonText("⬅️返回我的广告", "two#self_adv#0#0#1"))
+        )).build();
+    }
+
+
+    public static InlineKeyboardMarkup buildAdvUserDetailKeyboard (AdvUser advUser) {
+        String prev = AdvTypeEnum.dataOf(advUser.getAdvType());
+        String name = Objects.equals(advUser.getAdvStatus(), AdvStatus.PROMOTION_ING) ?
+                "\uD83D\uDFE0暂停推广" : "\uD83D\uDFE2开始推广";
+        InlineKeyboardButton button = buttonText(name, "three#my_adv#start_promotion#" + advUser.getId());
+
+        return InlineKeyboardMarkup.builder().keyboard(List.of(
+                row(buttonText("\uD83D\uDD04优先续订", "three#my_adv#priority_renewal#" + advUser.getId())),
+                row(button),
+                row(buttonText("✏️修改广告标题", "three#my_adv#edit_title#" + prev + "#" + advUser.getId()),
+                        buttonText("✏️修改广告链接", "three#my_adv#edit_link#" + prev + "#" + advUser.getId())),
+                row(buttonText("⬅️返回关键词列表", "one#query_keyword#" + prev + "#" + advUser.getLibraryId())),
+                row(buttonText("⬅️返回我的广告", "two#self_adv#0#0#1"))
         )).build();
     }
 
@@ -48,7 +110,7 @@ public class KeyboardHelper {
     public static InlineKeyboardMarkup buildKeywordSoldKeyboard (String prev, Long libraryId) {
         return InlineKeyboardMarkup.builder().keyboard(List.of(
                 row(buttonText("⬅️返回关键词列表", "one#query_keyword#" + prev + "#" + libraryId)),
-                row(buttonText("⬅️返回我的广告", "two#self_adv"))
+                row(buttonText("⬅️返回我的广告", "two#self_adv#0#0#1"))
         )).build();
     }
 
@@ -142,7 +204,7 @@ public class KeyboardHelper {
 
     public static InlineKeyboardMarkup buildAdvCenterKeyboard(String communityName) {
         List<InlineKeyboardRow> rows = new ArrayList<>(6);
-        rows.add(row(buttonText("\uD83D\uDC64我的广告", "two#self_adv")));
+        rows.add(row(buttonText("\uD83D\uDC64我的广告", "two#self_adv#0#0#1")));
         rows.add(row(buttonText("\uD83D\uDCB0充值", "two#adv_recharge")));
         rows.add(row(buttonUrl("\uD83D\uDC65交流群", "https://t.me/" + communityName)));
         rows.add(row(buttonText("⬅️返回", "one#advertising")));

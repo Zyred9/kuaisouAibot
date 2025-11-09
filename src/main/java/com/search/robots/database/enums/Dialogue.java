@@ -21,6 +21,10 @@ public enum Dialogue {
     INPUT_WITHDRAWAL_AMOUNT(1),
     INPUT_TARGETED_SEARCH(2),
 
+    // 等待输入广告标题
+    INPUT_ADV_TITLE(3),
+    // 等待输入广告链接
+    INPUT_ADV_LINK(4)
     ;
 
 

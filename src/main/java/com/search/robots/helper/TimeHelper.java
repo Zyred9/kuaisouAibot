@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -19,6 +20,21 @@ import java.util.regex.Pattern;
  * @since v 0.0.1
  */
 public class TimeHelper {
+
+    /**
+     * 判断目标时间是否距离当前时间超过指定天数
+     *
+     * @param targetTime 目标时间
+     * @param days       判断天数（例如 5 表示超过 5 天）
+     * @return true 表示目标时间距离现在超过指定天数
+     */
+    public static boolean isMoreThanDays(LocalDateTime targetTime, long days) {
+        if (targetTime == null) {
+            return false;
+        }
+        long diff = ChronoUnit.DAYS.between(LocalDateTime.now(), targetTime);
+        return diff > days;
+    }
 
     public static List<LocalDate> ofSevenDays () {
         List<LocalDate> days = new ArrayList<>(7);
