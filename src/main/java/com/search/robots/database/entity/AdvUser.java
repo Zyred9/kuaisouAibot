@@ -57,6 +57,8 @@ import java.util.Objects;
 @TableName(value = "t_user_adv", autoResultMap = true)
 public class AdvUser {
 
+    public final static String KEYWORD_ADV_USER = "search:keyword:user:";
+
     @TableId(type = IdType.AUTO)
     private Long id;
     
@@ -80,7 +82,7 @@ public class AdvUser {
     /** 广告位置枚举 **/
     private AdvPositionEnum advPosition;
     
-    /** 具体排名(榜单位置时有效,1-10) **/
+    /** 具体排名(榜单位置时有效,1-7) **/
     private Integer ranking;
     
     /** 来源类型(direct/related) **/

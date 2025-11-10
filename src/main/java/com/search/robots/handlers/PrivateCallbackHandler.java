@@ -32,10 +32,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * <p>
@@ -364,10 +361,17 @@ public class PrivateCallbackHandler extends AbstractHandler {
                 if (StrUtil.isBlank(advUser.getAdvContent()) || StrUtil.isBlank(advUser.getAdvUrl())) {
                     return answerAlert(callbackQuery, "请先补充广告内的配置");
                 }
+
+                String key = AdvUser.KEYWORD_ADV_USER + advUser.getKeyword();
+                Set<String> ids = RedisHelper.sMembers(key);
                 if (Objects.equals(advUser.getAdvStatus(), AdvStatus.PROMOTION_ING)) {
                     advUser.setAdvStatus(AdvStatus.PAUSE_ING);
+                    if (CollUtil.isNotEmpty(ids)) {
+                        RedisHelper.sRemove(key, String.valueOf(advUser.getId()));
+                    }
                 } else {
                     advUser.setAdvStatus(AdvStatus.PROMOTION_ING);
+                    RedisHelper.sAdd(key, String.valueOf(advUser.getId()));
                 }
 
                 this.advUserService.updateById(advUser);

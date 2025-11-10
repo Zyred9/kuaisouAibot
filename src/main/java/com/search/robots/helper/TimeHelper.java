@@ -51,13 +51,27 @@ public class TimeHelper {
         return StrHelper.specialResult(TimeHelper.format(time));
     }
 
+    public static String formatV2_ (LocalDateTime time) {
+        if (Objects.isNull(time)) {
+            return null;
+        }
+        return StrHelper.specialResult(TimeHelper.format(time, "MM-dd HH:mm:ss"));
+    }
 
+
+
+    public static String format(LocalDateTime time, String pattener) {
+        if (Objects.isNull(time)) {
+            return null;
+        }
+        return time.format(DateTimeFormatter.ofPattern(pattener));
+    }
 
     public static String format(LocalDateTime time) {
         if (Objects.isNull(time)) {
             return null;
         }
-        return time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        return format(time, "yyyy-MM-dd HH:mm:ss");
     }
 
     public static long getTimestamp(LocalDateTime time) {

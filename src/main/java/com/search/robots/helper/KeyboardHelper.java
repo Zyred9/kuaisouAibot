@@ -6,6 +6,8 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.search.robots.beans.view.ButtonTransfer;
 import com.search.robots.beans.view.KeyboardTransfer;
+import com.search.robots.beans.view.vo.search.SearchBean;
+import com.search.robots.config.Constants;
 import com.search.robots.database.entity.*;
 import com.search.robots.database.enums.Included.IncludedNewUserEnum;
 import com.search.robots.database.enums.Included.IncludedSearchPriorityEnum;
@@ -13,6 +15,8 @@ import com.search.robots.database.enums.Included.IncludedSearchTypeEnum;
 import com.search.robots.database.enums.SearchPeriodEnum;
 import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.enums.adv.AdvTypeEnum;
+import com.search.robots.database.enums.content.SourceTypeEnum;
+import com.search.robots.database.enums.content.SortEnum;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -32,6 +36,67 @@ import java.util.*;
  * @since v 0.0.1
  */
 public class KeyboardHelper {
+
+
+    /**
+     *
+     * @param st            资源类型
+     * @param current       当前分页
+     * @param filter        是否过滤18
+     * @param sort          排序
+     * @param bot           机器人名字
+     * @param beans         查询结果
+     * @return              按钮
+     */
+    public static InlineKeyboardMarkup buildSearchResultKeyboard(String st, int current, Boolean filter, SortEnum sort,
+                                                                 String bot, org.springframework.data.domain.Page<SearchBean> beans,
+                                                                 long timestamp) {
+        List<InlineKeyboardRow> rows = new ArrayList<>(2);
+
+        // 第一排
+        InlineKeyboardRow sourceRow = new InlineKeyboardRow();
+        for (SourceTypeEnum type : SourceTypeEnum.keyboards()) {
+            String name = type.getIcon();
+            if (StrUtil.equals(st, type.getCode())) {
+                name = SourceTypeEnum.FLUSH.getIcon();
+            }
+            sourceRow.add(
+                buttonText(name, StrHelper.buildName("search", type.getCode(),
+                        current, filter, sort.getCode(), timestamp))
+            );
+        }
+        rows.add(sourceRow);
+
+        // 有浏览量、时长、最新的
+        InlineKeyboardRow viewsRow = new InlineKeyboardRow();
+        if (CollUtil.contains(SourceTypeEnum.views(), st)) {
+            for (SortEnum value : SortEnum.keyboards()) {
+                String name = value.getIcon();
+                if (Objects.equals(sort, value)) {
+                    name = SortEnum.EMPTY.getIcon();
+                }
+                viewsRow.add(
+                        buttonText(name, StrHelper.buildName("search", st,
+                                current, filter, value.getCode(), timestamp))
+                );
+            }
+        }
+        rows.add(viewsRow);
+
+        InlineKeyboardRow optionRow = new InlineKeyboardRow();
+        // 购买广告
+        optionRow.add(buttonUrl("购买广告", StrUtil.format(Constants.START_AD_CENTER, bot)));
+        optionRow.add(buttonText("\uD83D\uDD1E过滤", StrHelper.buildName("search", st, current, !filter, sort.getDesc(), timestamp)));
+
+        if (beans.hasPrevious()) {
+            optionRow.add(buttonText("上一页", StrHelper.buildName("search", st, (current - 1), filter, sort.getDesc(), timestamp)));
+        }
+        if (beans.hasNext()) {
+            optionRow.add(buttonText("下一页", StrHelper.buildName("search", st, (current + 1), filter, sort.getDesc(), timestamp)));
+        }
+        rows.add(optionRow);
+        return InlineKeyboardMarkup.builder().keyboard(rows).build();
+    }
 
     public static InlineKeyboardMarkup buildAuditAfterKeyboard(AdvUser advUser) {
         return InlineKeyboardMarkup.builder().keyboardRow(

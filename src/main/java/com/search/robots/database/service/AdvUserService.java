@@ -39,4 +39,6 @@ public interface AdvUserService extends IService<AdvUser> {
     void auditAdvUser(AdvUserAudit audit);
 
     Page<AdvUser> selfPage(int current, Long userId, AdvTypeEnum type, AdvStatus status);
+
+    String buildCurrent(String keyword);
 }

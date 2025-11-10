@@ -7,18 +7,23 @@ import cn.hutool.core.util.StrUtil;
 import com.search.robots.beans.cache.CommonCache;
 import com.search.robots.beans.chat.ChatQueryHandler;
 import com.search.robots.beans.view.DialogueCtx;
+import com.search.robots.beans.view.vo.search.SearchBean;
 import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
 import com.search.robots.database.entity.*;
 import com.search.robots.database.enums.Dialogue;
 import com.search.robots.database.enums.SearchPeriodEnum;
 import com.search.robots.database.enums.adv.AdvStatus;
+import com.search.robots.database.enums.content.SortEnum;
 import com.search.robots.database.service.*;
 import com.search.robots.helper.DecimalHelper;
 import com.search.robots.helper.KeyboardHelper;
+import com.search.robots.helper.RedisHelper;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.jni.Library;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
@@ -49,6 +54,7 @@ public class PrivateChatHandler extends AbstractHandler{
 
     private final UserService userService;
     private final BotProperties properties;
+    private final SearchService searchService;
     private final ConfigService configService;
     private final AdvUserService advUserService;
     private final IncludedService includedService;
@@ -231,11 +237,27 @@ public class PrivateChatHandler extends AbstractHandler{
         }
 
 
-//        this
+        // -------------------- 处理搜索 --------------------//
+        StringBuilder sb = new StringBuilder();
+        String advText = this.advUserService.buildCurrent(message.getText());
+        if (StrUtil.isNotEmpty(advText)) {
+            sb.append(advText).append("~\n");
+        }
 
-
-
-        return null;
+        Page<SearchBean> searchResult = Page.empty();
+        Boolean exists = RedisHelper.hExists(AdvLibrary.ADV_LIBRARY_KEY, message.getText());
+        if (exists) {
+            searchResult = this.searchService.search(message.getText());
+            searchResult.forEach(a -> sb.append(a.buildLineText()));
+        } else {
+            sb.append("关键词暂未收录\n");
+        }
+        InlineKeyboardMarkup markup = KeyboardHelper.buildSearchResultKeyboard(
+                "", 1, false, SortEnum.EMPTY,
+                this.properties.getBotUsername(), searchResult,
+                System.currentTimeMillis()
+        );
+        return markdown(message, sb.toString(), markup);
     }
 
     private BotApiMethod<?> processorKeyword(Message message) {

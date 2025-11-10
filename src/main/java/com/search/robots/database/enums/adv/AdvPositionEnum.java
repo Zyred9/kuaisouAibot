@@ -51,4 +51,6 @@ public enum AdvPositionEnum {
     public boolean isPagePosition() {
         return code >= 101;
     }
+
+
 }

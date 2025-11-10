@@ -108,4 +108,46 @@ public class StrHelper {
         }
         return sb.toString();
     }
+
+    public static Integer parseTimeToSeconds(String timeStr) {
+        if (StrUtil.isBlank(timeStr)) {
+            return null;
+        }
+
+        try {
+            String cleanTime = timeStr.trim();
+            String[] parts = cleanTime.split(":");
+            if (parts.length == 1) {
+                return Integer.parseInt(parts[0]);
+            } else if (parts.length == 2) {
+                int minutes = Integer.parseInt(parts[0]);
+                int seconds = Integer.parseInt(parts[1]);
+                return minutes * 60 + seconds;
+            } else if (parts.length == 3) {
+                int hours = Integer.parseInt(parts[0]);
+                int minutes = Integer.parseInt(parts[1]);
+                int seconds = Integer.parseInt(parts[2]);
+                return hours * 3600 + minutes * 60 + seconds;
+            }
+            return null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    public static String formatSecondsToTime(Integer seconds) {
+        if (Objects.isNull(seconds) || seconds < 0) {
+            return "";
+        }
+
+        int hours = seconds / 3600;
+        int minutes = (seconds % 3600) / 60;
+        int secs = seconds % 60;
+
+        if (hours > 0) {
+            return String.format("%02d:%02d:%02d", hours, minutes, secs);
+        } else {
+            return String.format("%02d:%02d", minutes, secs);
+        }
+    }
 }

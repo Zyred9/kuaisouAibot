@@ -1,6 +1,5 @@
 package com.search.robots.database.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -10,8 +9,10 @@ import com.search.robots.database.enums.adv.AdvTypeEnum;
 import com.search.robots.database.mapper.AdvLibraryMapper;
 import com.search.robots.database.service.AdvLibraryService;
 import com.search.robots.database.service.AdvPriceService;
+import com.search.robots.helper.RedisHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
@@ -33,39 +34,50 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
     private final AdvPriceService advPriceService;
 
     @Override
-    public AdvLibrary getByKeyword(String keyword) {
-        if (StrUtil.isBlank(keyword)) {
-            return null;
-        }
-        return this.baseMapper.selectOne(
-                Wrappers.<AdvLibrary>lambdaQuery()
-                        .eq(AdvLibrary::getKeyword, keyword)
-                        .last("LIMIT 1")
-        );
+    @Transactional(rollbackFor = Exception.class)
+    public AdvLibrary buildDefault(String keyword, String data) {
+        AdvLibrary newLibrary = AdvLibrary.buildDefaultLibrary(keyword, AdvTypeEnum.ofData(data));
+        this.baseMapper.insert(newLibrary);
+
+        List<AdvPrice> advPrices = this.advPriceService.saveTheLibraryPrice(newLibrary);
+        newLibrary.setPriceList(advPrices);
+
+        RedisHelper.hPut(AdvLibrary.ADV_LIBRARY_KEY, keyword, String.valueOf(newLibrary.getId()));
+        return newLibrary;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public AdvLibrary getByKeywordWithPrices(String keyword, String data) {
+        // 参数校验
         if (StrUtil.isBlank(keyword)) {
             return null;
         }
-        AdvLibrary library = this.baseMapper.selectOne(
-                Wrappers.<AdvLibrary>lambdaQuery()
-                        .eq(AdvLibrary::getKeyword, keyword)
-                        .orderByDesc(AdvLibrary::getShowCount)
-                        .last("LIMIT 1")
-        );
-        if (Objects.isNull(library)) {
-            AdvLibrary newLibrary = AdvLibrary.buildDefaultLibrary(keyword, AdvTypeEnum.ofData(data));
-            this.baseMapper.insert(newLibrary);
-            List<AdvPrice> advPrices = this.advPriceService.saveTheLibraryPrice(newLibrary);
-            newLibrary.setPriceList(advPrices);
-            library = newLibrary;
-        } else {
-            library.setPriceList(
-                    this.advPriceService.listEnabledByLibraryId(library.getId())
-            );
+        AdvLibrary library = null;
+        if (RedisHelper.hExists(AdvLibrary.ADV_LIBRARY_KEY, keyword)) {
+            try {
+                String libraryIdStr = RedisHelper.hGet(AdvLibrary.ADV_LIBRARY_KEY, keyword);
+                if (StrUtil.isNotBlank(libraryIdStr)) {
+                    long libraryId = Long.parseLong(libraryIdStr);
+                    library = this.baseMapper.selectById(libraryId);
+                    if (Objects.isNull(library)) {
+                        RedisHelper.hDelete(AdvLibrary.ADV_LIBRARY_KEY, keyword);
+                    }
+                }
+            } catch (NumberFormatException e) {
+                RedisHelper.hDelete(AdvLibrary.ADV_LIBRARY_KEY, keyword);
+            }
         }
+        if (Objects.isNull(library)) {
+            library = this.selectByKeyword(keyword);
+        }
+        if (Objects.isNull(library)) {
+            return this.buildDefault(keyword, data);
+        }
+        if (Objects.nonNull(library.getId())) {
+            library.setPriceList(this.advPriceService.listEnabledByLibraryId(library.getId()));
+        }
+        
         return library;
     }
 
@@ -74,67 +86,23 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
         if (Objects.isNull(libraryId)) {
             return null;
         }
+        
         AdvLibrary library = this.baseMapper.selectById(libraryId);
-        if (Objects.isNull(library)) {
-            return null;
+        if (Objects.nonNull(library) && Objects.nonNull(library.getId())) {
+            library.setPriceList(this.advPriceService.listEnabledByLibraryId(library.getId()));
         }
-        library.setPriceList(
-                this.advPriceService.listEnabledByLibraryId(libraryId)
-        );
+        
         return library;
     }
 
-    @Override
-    public List<AdvLibrary> getByKeywordsWithPrices(List<String> keywords) {
-        if (CollUtil.isEmpty(keywords)) {
-            return CollUtil.newArrayList();
-        }
-        // 1) 一次性查询所有关键词实体
-        List<AdvLibrary> libraries = this.baseMapper.selectList(
-                Wrappers.<AdvLibrary>lambdaQuery()
-                        .in(AdvLibrary::getKeyword, keywords)
-        );
-        if (CollUtil.isEmpty(libraries)) {
-            return libraries;
-        }
-        // 2) 收集所有libraryId,一次性批量查询所有价格(避免N+1)
-        List<Long> libraryIds = libraries.stream().map(AdvLibrary::getId).toList();
-        List<AdvPrice> allPrices = advPriceService.listEnabledByLibraryIds(libraryIds);
-        if (CollUtil.isEmpty(allPrices)) {
-            return libraries;
-        }
-        // 3) 按libraryId分组价格,再填充回各实体
-        var pricesByLibraryId = allPrices.stream().collect(java.util.stream.Collectors.groupingBy(AdvPrice::getLibraryId));
-        libraries.forEach(lib -> lib.setPriceList(pricesByLibraryId.getOrDefault(lib.getId(), CollUtil.newArrayList())));
-        return libraries;
-    }
 
-    @Override
-    public List<AdvLibrary> getHotKeywords(int limit) {
-        return this.baseMapper.selectList(
+    private AdvLibrary selectByKeyword (String keyword) {
+        return this.baseMapper.selectOne(
                 Wrappers.<AdvLibrary>lambdaQuery()
+                        .eq(AdvLibrary::getKeyword, keyword)
                         .orderByDesc(AdvLibrary::getShowCount)
-                        .last("LIMIT " + Math.min(limit, 40))
+                        .last("LIMIT 1")
         );
     }
 
-    @Override
-    public List<AdvLibrary> getHotKeywordsWithPrices(int limit) {
-        // 1) 先获取热门关键词列表
-        List<AdvLibrary> hotKeywords = getHotKeywords(limit);
-        if (CollUtil.isEmpty(hotKeywords)) {
-            return hotKeywords;
-        }
-        // 2) 提取关键词列表，批量查询价格信息
-        List<String> keywords = hotKeywords.stream().map(AdvLibrary::getKeyword).toList();
-        return getByKeywordsWithPrices(keywords);
-    }
-
-    @Override
-    public List<AdvPrice> getPriceListByLibraryId(Long libraryId) {
-        if (Objects.isNull(libraryId)) {
-            return CollUtil.newArrayList();
-        }
-        return advPriceService.listEnabledByLibraryId(libraryId);
-    }
 }

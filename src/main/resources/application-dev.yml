@@ -32,3 +32,7 @@ spring:
     username: root
     password: root
     url: jdbc:mysql://127.0.0.1:3306/kuaisou_ai_bot?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Shanghai&useSSL=false&nullCatalogMeansCurrent=true
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
