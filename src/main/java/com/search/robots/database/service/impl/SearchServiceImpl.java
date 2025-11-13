@@ -3,6 +3,7 @@ package com.search.robots.database.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.search.robots.beans.view.vo.search.SearchBean;
+import com.search.robots.database.enums.content.SortEnum;
 import com.search.robots.database.enums.content.SourceTypeEnum;
 import com.search.robots.database.mapper.SearchRepository;
 import com.search.robots.database.service.SearchService;
@@ -39,7 +40,7 @@ public class SearchServiceImpl implements SearchService {
     private final ElasticsearchRestTemplate elasticsearchTemplate;
 
     @Override
-    public Page<SearchBean> search(String text, SourceTypeEnum type, int current) {
+    public Page<SearchBean> search(String text, SourceTypeEnum type, int current, SortEnum sort) {
         if (StrUtil.isBlank(text)) {
             return Page.empty();
         }
@@ -63,9 +64,16 @@ public class SearchServiceImpl implements SearchService {
         }
 
         // 构建分页对象(只按分数降序排序,暂时去掉时间排序)
-        PageRequest pageRequest = PageRequest.of(current, PAGE_SIZE, 
-                Sort.by(Sort.Direction.DESC, "_score")
-                    .and(Sort.by(Sort.Direction.DESC, "collectTime")));
+        Sort orders;
+        if (Objects.nonNull(sort) && !Objects.equals(sort, SortEnum.EMPTY)) {
+            orders = Sort.by(Sort.Direction.DESC, "_score")
+                    .and(Sort.by(Sort.Direction.DESC, sort.getFields()));
+        } else {
+            orders = Sort.by(Sort.Direction.DESC, "_score")
+                    .and(Sort.by(Sort.Direction.DESC, "collectTime"));
+        }
+
+        PageRequest pageRequest = PageRequest.of(current, PAGE_SIZE, orders);
 
         // 构建查询对象
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()

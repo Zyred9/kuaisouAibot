@@ -18,10 +18,10 @@ import java.util.Arrays;
 @AllArgsConstructor
 public enum SortEnum {
 
-    TIMES("0", "时长", "\uD83D\uDD58"),
-    VIEWS("1", "浏览量", "\uD83C\uDFA6"),
-    LATEST("2", "最新", "\uD83C\uDD95"),
-    EMPTY("100", "综合", "♻️"),
+    EMPTY("0", "综合", "♻️", null),
+    TIMES("1", "时长", "\uD83D\uDD58", "times"),
+    VIEWS("2", "浏览量", "\uD83C\uDFA6", "views"),
+    LATEST("3", "最新", "\uD83C\uDD95", "collectTime"),
     ;
 
 
@@ -29,6 +29,7 @@ public enum SortEnum {
     private final String code;
     private final String desc;
     private final String icon;
+    private final String fields;
 
     private static final SortEnum[] KEYBOARDS = new SortEnum[]{TIMES, VIEWS, LATEST};
     public static SortEnum[] keyboards (){

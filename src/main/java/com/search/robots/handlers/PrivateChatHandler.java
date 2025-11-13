@@ -15,11 +15,9 @@ import com.search.robots.database.enums.Dialogue;
 import com.search.robots.database.enums.SearchPeriodEnum;
 import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.enums.content.SortEnum;
-import com.search.robots.database.enums.content.SourceTypeEnum;
 import com.search.robots.database.service.*;
 import com.search.robots.helper.DecimalHelper;
 import com.search.robots.helper.KeyboardHelper;
-import com.search.robots.helper.RedisHelper;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,10 +53,10 @@ public class PrivateChatHandler extends AbstractHandler{
     private final UserService userService;
     private final BotProperties properties;
     private final SearchService searchService;
+    private final SearchHandler searchHandler;
     private final ConfigService configService;
     private final AdvUserService advUserService;
     private final IncludedService includedService;
-    private final AdvPriceService advPriceService;
     private final HotSearchService hotSearchService;
     private final ChatQueryHandler chatQueryHandler;
     private final AdvLibraryService advLibraryService;
@@ -238,24 +236,7 @@ public class PrivateChatHandler extends AbstractHandler{
 
 
         // -------------------- 处理搜索 --------------------//
-        StringBuilder sb = new StringBuilder();
-        String advText = this.advUserService.buildCurrent(message.getText());
-        if (StrUtil.isNotEmpty(advText)) {
-            sb.append(advText).append("~\n");
-        }
-
-        Page<SearchBean> searchResult = this.searchService.search(message.getText(), null, 0);
-        if (!searchResult.isEmpty()) {
-            searchResult.forEach(a -> sb.append(a.buildLineText()));
-        } else {
-            sb.append("关键词暂未收录\n");
-        }
-        InlineKeyboardMarkup markup = KeyboardHelper.buildSearchResultKeyboard(
-                "", 0, false, SortEnum.EMPTY,
-                this.properties.getBotUsername(), searchResult,
-                message.getText()
-        );
-        return markdownV2(message, sb.toString(), markup);
+        return this.searchHandler.processorDefaultSearch(message);
     }
 
     private BotApiMethod<?> processorKeyword(Message message) {

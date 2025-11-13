@@ -81,7 +81,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
         }
 
         if (StrUtil.equals(command.get(0), "search")) {
-            return this.searchHandler.processorSearch(callbackQuery, message, command);
+            return this.searchHandler.processorCallbackSearch(callbackQuery, message, command);
         }
 
         // 第一层

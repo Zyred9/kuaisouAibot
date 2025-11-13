@@ -52,11 +52,7 @@ public class SearchRobot implements SpringLongPollingBot, MultiThreadUpdateConsu
                 if (this.properties.isLogs()) {
                     log.info("回复：{}", JSONUtil.toJsonStr(message));
                 }
-
-                Serializable result = this.telegramClient.execute(message);
-                if (this.properties.isLogs()) {
-                    log.info("响应：{}", JSONUtil.toJsonStr(result));
-                }
+                this.telegramClient.execute(message);
             }
         } catch (TelegramApiException e) {
             log.error("【同步消息异常】消息内容：{} \n 异常消息：{}",

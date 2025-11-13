@@ -2,6 +2,7 @@ package com.search.robots.database.service;
 
 
 import com.search.robots.beans.view.vo.search.SearchBean;
+import com.search.robots.database.enums.content.SortEnum;
 import com.search.robots.database.enums.content.SourceTypeEnum;
 import org.springframework.data.domain.Page;
 
@@ -21,6 +22,6 @@ public interface SearchService {
      * @param current 当前页码(从0开始)
      * @return 分页搜索结果(按collectTime降序)
      */
-    Page<SearchBean> search(String text, SourceTypeEnum type, int current);
+    Page<SearchBean> search(String text, SourceTypeEnum type, int current, SortEnum sort);
 
 }
