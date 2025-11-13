@@ -1,7 +1,10 @@
 package com.search.robots.database.enums.content;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -30,6 +33,7 @@ public enum SourceTypeEnum {
     ;
 
 
+    @JsonValue
     @EnumValue
     private final String code;
     private final String desc;
@@ -43,5 +47,15 @@ public enum SourceTypeEnum {
     }
     public static Set<String> views () {
         return VIEWS;
+    }
+
+    @JsonCreator
+    public static SourceTypeEnum fromCode(String code) {
+        for (SourceTypeEnum type : SourceTypeEnum.values()) {
+            if (StrUtil.equals(type.code, code)) {
+                return type;
+            }
+        }
+        return null;
     }
  }

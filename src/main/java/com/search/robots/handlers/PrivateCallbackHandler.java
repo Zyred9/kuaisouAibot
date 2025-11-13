@@ -50,6 +50,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
     private final BillService billService;
     private final UserService userService;
     private final BotProperties properties;
+    private final SearchHandler searchHandler;
     private final ConfigService configService;
     private final AdvUserService advUserService;
     private final AdvPriceService advPriceService;
@@ -77,6 +78,10 @@ public class PrivateCallbackHandler extends AbstractHandler {
 
         if (this.properties.isLogs()) {
             log.info("[回调] {}", text);
+        }
+
+        if (StrUtil.equals(command.get(0), "search")) {
+            return this.searchHandler.processorSearch(callbackQuery, message, command);
         }
 
         // 第一层

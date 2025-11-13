@@ -40,7 +40,7 @@ public class KeyboardHelper {
 
     /**
      *
-     * @param st            资源类型
+     * @param hitType       资源类型
      * @param current       当前分页
      * @param filter        是否过滤18
      * @param sort          排序
@@ -48,36 +48,36 @@ public class KeyboardHelper {
      * @param beans         查询结果
      * @return              按钮
      */
-    public static InlineKeyboardMarkup buildSearchResultKeyboard(String st, int current, Boolean filter, SortEnum sort,
+    public static InlineKeyboardMarkup buildSearchResultKeyboard(String hitType, int current, Boolean filter, SortEnum sort,
                                                                  String bot, org.springframework.data.domain.Page<SearchBean> beans,
-                                                                 long timestamp) {
+                                                                 String keyword) {
         List<InlineKeyboardRow> rows = new ArrayList<>(2);
 
         // 第一排
         InlineKeyboardRow sourceRow = new InlineKeyboardRow();
         for (SourceTypeEnum type : SourceTypeEnum.keyboards()) {
             String name = type.getIcon();
-            if (StrUtil.equals(st, type.getCode())) {
+            if (StrUtil.equals(hitType, type.getCode())) {
                 name = SourceTypeEnum.FLUSH.getIcon();
             }
             sourceRow.add(
                 buttonText(name, StrHelper.buildName("search", type.getCode(),
-                        current, filter, sort.getCode(), timestamp))
+                        current, filter, sort.getCode(), keyword))
             );
         }
         rows.add(sourceRow);
 
         // 有浏览量、时长、最新的
         InlineKeyboardRow viewsRow = new InlineKeyboardRow();
-        if (CollUtil.contains(SourceTypeEnum.views(), st)) {
+        if (CollUtil.contains(SourceTypeEnum.views(), hitType)) {
             for (SortEnum value : SortEnum.keyboards()) {
                 String name = value.getIcon();
                 if (Objects.equals(sort, value)) {
                     name = SortEnum.EMPTY.getIcon();
                 }
                 viewsRow.add(
-                        buttonText(name, StrHelper.buildName("search", st,
-                                current, filter, value.getCode(), timestamp))
+                        buttonText(name, StrHelper.buildName("search", hitType,
+                                current, filter, value.getCode(), keyword))
                 );
             }
         }
@@ -86,13 +86,13 @@ public class KeyboardHelper {
         InlineKeyboardRow optionRow = new InlineKeyboardRow();
         // 购买广告
         optionRow.add(buttonUrl("购买广告", StrUtil.format(Constants.START_AD_CENTER, bot)));
-        optionRow.add(buttonText("\uD83D\uDD1E过滤", StrHelper.buildName("search", st, current, !filter, sort.getDesc(), timestamp)));
+        optionRow.add(buttonText("\uD83D\uDD1E过滤", StrHelper.buildName("search", hitType, current, !filter, sort.getDesc(), keyword)));
 
         if (beans.hasPrevious()) {
-            optionRow.add(buttonText("上一页", StrHelper.buildName("search", st, (current - 1), filter, sort.getDesc(), timestamp)));
+            optionRow.add(buttonText("上一页", StrHelper.buildName("search", hitType, (current - 1), filter, sort.getDesc(), keyword)));
         }
         if (beans.hasNext()) {
-            optionRow.add(buttonText("下一页", StrHelper.buildName("search", st, (current + 1), filter, sort.getDesc(), timestamp)));
+            optionRow.add(buttonText("下一页", StrHelper.buildName("search", hitType, (current + 1), filter, sort.getDesc(), keyword)));
         }
         rows.add(optionRow);
         return InlineKeyboardMarkup.builder().keyboard(rows).build();

@@ -1,9 +1,12 @@
 package com.search.robots.database.enums.content;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import java.util.Arrays;
 
 /**
  *
@@ -30,5 +33,12 @@ public enum SortEnum {
     private static final SortEnum[] KEYBOARDS = new SortEnum[]{TIMES, VIEWS, LATEST};
     public static SortEnum[] keyboards (){
         return KEYBOARDS;
+    }
+
+    public static SortEnum of(String code) {
+        return Arrays.stream(SortEnum.values())
+                .filter(a -> StrUtil.equals(a.code, code))
+                .findFirst()
+                .orElse(null);
     }
 }

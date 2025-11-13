@@ -15,6 +15,7 @@ import com.search.robots.database.enums.Dialogue;
 import com.search.robots.database.enums.SearchPeriodEnum;
 import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.enums.content.SortEnum;
+import com.search.robots.database.enums.content.SourceTypeEnum;
 import com.search.robots.database.service.*;
 import com.search.robots.helper.DecimalHelper;
 import com.search.robots.helper.KeyboardHelper;
@@ -22,7 +23,6 @@ import com.search.robots.helper.RedisHelper;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.jni.Library;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
@@ -229,7 +229,7 @@ public class PrivateChatHandler extends AbstractHandler{
                 InlineKeyboardMarkup markup = KeyboardHelper
                         .buildPymentKeywordKeyboard(advUser.getId(),
                                 dialogueCtx.getMark(), advUser.getLibraryId());
-                return markdownV2(message, advUserPaymentText, markup);
+                result = markdownV2(message, advUserPaymentText, markup);
             }
 
             CommonCache.removeDialogue(message.getFrom().getId());
@@ -244,20 +244,18 @@ public class PrivateChatHandler extends AbstractHandler{
             sb.append(advText).append("~\n");
         }
 
-        Page<SearchBean> searchResult = Page.empty();
-        Boolean exists = RedisHelper.hExists(AdvLibrary.ADV_LIBRARY_KEY, message.getText());
-        if (exists) {
-            searchResult = this.searchService.search(message.getText());
+        Page<SearchBean> searchResult = this.searchService.search(message.getText(), null, 0);
+        if (!searchResult.isEmpty()) {
             searchResult.forEach(a -> sb.append(a.buildLineText()));
         } else {
             sb.append("关键词暂未收录\n");
         }
         InlineKeyboardMarkup markup = KeyboardHelper.buildSearchResultKeyboard(
-                "", 1, false, SortEnum.EMPTY,
+                "", 0, false, SortEnum.EMPTY,
                 this.properties.getBotUsername(), searchResult,
-                System.currentTimeMillis()
+                message.getText()
         );
-        return markdown(message, sb.toString(), markup);
+        return markdownV2(message, sb.toString(), markup);
     }
 
     private BotApiMethod<?> processorKeyword(Message message) {

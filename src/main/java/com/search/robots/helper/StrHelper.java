@@ -5,7 +5,6 @@ import com.search.robots.database.enums.Included.IncludedSearchTypeEnum;
 import com.search.robots.database.enums.SearchPeriodEnum;
 
 import java.security.SecureRandom;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 

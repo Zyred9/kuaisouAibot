@@ -4,16 +4,12 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.search.robots.database.entity.Bill;
-import com.search.robots.database.entity.User;
 import com.search.robots.database.mapper.BillMapper;
-import com.search.robots.database.mapper.UserMapper;
 import com.search.robots.database.service.BillService;
-import com.search.robots.database.service.UserService;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * <p>

@@ -1,8 +1,6 @@
 package com.search.robots.helper;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -49,6 +47,11 @@ public class TimeHelper {
             return null;
         }
         return StrHelper.specialResult(TimeHelper.format(time));
+    }
+
+    public static String formatV2_ (long timestamp) {
+        Instant instant = Instant.ofEpochMilli(timestamp);
+        return TimeHelper.formatV2_(LocalDateTime.ofInstant(instant, ZoneId.systemDefault()));
     }
 
     public static String formatV2_ (LocalDateTime time) {

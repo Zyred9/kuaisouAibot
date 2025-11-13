@@ -12,6 +12,7 @@ import com.search.robots.helper.StrHelper;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import com.search.robots.helper.TimeHelper;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -50,7 +51,7 @@ public class Bill {
      */
     public static Bill buildAdvPaymentBill(User user, BigDecimal need, BillTypeEnum type) {
         LocalDateTime now = LocalDateTime.now();
-        String billNo = String.valueOf(com.search.robots.helper.TimeHelper.getTimestamp(now));
+        String billNo = String.valueOf(TimeHelper.getTimestamp(now));
         return new Bill()
                 .setUserId(user.getUserId())
                 .setUsername(user.getUsername())

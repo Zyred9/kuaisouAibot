@@ -2,9 +2,6 @@ package com.search.robots.database.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.search.robots.database.entity.AdvLibrary;
-import com.search.robots.database.entity.AdvPrice;
-
-import java.util.List;
 
 /**
  * 广告库Service

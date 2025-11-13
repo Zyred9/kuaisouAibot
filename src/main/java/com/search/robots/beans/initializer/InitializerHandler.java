@@ -1,9 +1,7 @@
 package com.search.robots.beans.initializer;
 
 import com.search.robots.config.BotProperties;
-import com.search.robots.database.entity.Config;
 import com.search.robots.database.service.ConfigService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.User;

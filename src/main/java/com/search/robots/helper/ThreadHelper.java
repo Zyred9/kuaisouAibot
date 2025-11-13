@@ -36,7 +36,7 @@ public class ThreadHelper {
     }
 
     @SneakyThrows
-    public static void sleepMs(int time) {
+    public static void sleepMs(long time) {
         TimeUnit.MILLISECONDS.sleep(time);
     }
 }

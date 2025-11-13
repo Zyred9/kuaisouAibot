@@ -1,7 +1,6 @@
 package com.search.robots.beans.view.vo.adv;
 
 
-import com.search.robots.database.enums.adv.AdvStatus;
 import lombok.Getter;
 import lombok.Setter;
 

@@ -1,14 +1,12 @@
 package com.search.robots.database.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.search.robots.beans.view.vo.adv.AdvUserAudit;
 import com.search.robots.database.entity.AdvUser;
 import com.search.robots.database.entity.Config;
-import com.search.robots.database.enums.adv.AdvPositionEnum;
 import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.enums.adv.AdvTypeEnum;
 import com.search.robots.database.mapper.AdvUserMapper;
@@ -23,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
-import java.sql.Wrapper;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
