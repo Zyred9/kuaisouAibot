@@ -7,21 +7,18 @@ import cn.hutool.core.util.StrUtil;
 import com.search.robots.beans.cache.CommonCache;
 import com.search.robots.beans.chat.ChatQueryHandler;
 import com.search.robots.beans.view.DialogueCtx;
-import com.search.robots.beans.view.vo.search.SearchBean;
 import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
 import com.search.robots.database.entity.*;
 import com.search.robots.database.enums.Dialogue;
 import com.search.robots.database.enums.SearchPeriodEnum;
 import com.search.robots.database.enums.adv.AdvStatus;
-import com.search.robots.database.enums.content.SortEnum;
 import com.search.robots.database.service.*;
 import com.search.robots.helper.DecimalHelper;
 import com.search.robots.helper.KeyboardHelper;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
@@ -73,12 +70,23 @@ public class PrivateChatHandler extends AbstractHandler{
         Message message = update.getMessage();
         String text = message.getText();
 
+        if (this.properties.isLogs()) {
+            log.info("[文本] {}", text);
+        }
+
         if (StrUtil.equals(text, "/start")) {
             return this.processorStart(message);
         }
 
         if (StrUtil.startWith(text, "/start")) {
-            this.processorStartWith(message);
+            List<String> commands = StrUtil.split(text, " ");
+            if (StrUtil.equals(commands.get(1), "reply")) {
+                SearchPeriodEnum hit = SearchPeriodEnum.fromHit(SearchPeriodEnum.LAST_3_DAYS.getCode());
+                List<HotSearch> keywords = this.hotSearchService.keywords(hit);
+                InlineKeyboardMarkup markup = KeyboardHelper.buildHotSearchKeyboard(keywords, hit);
+                return markdownReply(message, "近期热门搜索排行榜", markup);
+            }
+            this.processorStartWith(message, commands);
         }
 
         if (StrUtil.equals(text, "语法")) {
@@ -302,10 +310,7 @@ public class PrivateChatHandler extends AbstractHandler{
         return markdown(message, responseText, keyboard);
     }
 
-    private void processorStartWith(Message message) {
-        String text = message.getText();
-        List<String> commands = StrUtil.split(text, " ");
-
+    private void processorStartWith(Message message, List<String> commands) {
         String code = commands.get(1);
         List<String> split = StrUtil.split(code, "_");
 

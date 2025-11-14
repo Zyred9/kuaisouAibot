@@ -8,6 +8,7 @@ import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.enums.adv.AdvTypeEnum;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * 用户广告购买记录Service
@@ -40,4 +41,11 @@ public interface AdvUserService extends IService<AdvUser> {
     Page<AdvUser> selfPage(int current, Long userId, AdvTypeEnum type, AdvStatus status);
 
     String buildCurrent(String keyword);
+
+    /**
+     * 广告展示次数
+     * @param userAdvIds    用户id
+     * @param direct        是否直接展示
+     */
+    void incr(Set<Long> userAdvIds, boolean direct);
 }

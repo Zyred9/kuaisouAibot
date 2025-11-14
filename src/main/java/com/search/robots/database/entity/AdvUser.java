@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.search.robots.beans.view.vo.AdvButton;
 import com.search.robots.beans.view.vo.AdvShow;
 import com.search.robots.beans.view.vo.AdvUserRenew;
 import com.search.robots.config.Constants;
@@ -28,29 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * 用户广告购买记录实体
- * <pre>
- * 采用冗余设计和关联设计相结合:
- * - 冗余关键词、展现等信息,避免频繁JOIN
- * - priceId关联价格表,保证价格数据的准确性和可追溯性
- * - 支持自动续费和账单关联
- * 
- * 使用示例:
- * AdvUser userAdv = new AdvUser()
- *     .setUserId(123L)
- *     .setLibraryId(456L)
- *     .setPriceId(789L)
- *     .setKeyword("AI机器人")
- *     .setAdvType(AdvTypeEnum.BUY_KEYWORD_RANK)
- *     .setAdvPosition(AdvPositionEnum.RANK_1)
- *     .setRanking(1)
- *     .setAutoRenew(true);
- * </pre>
- *
- * @author zyred
- * @since 1.0
- */
 @Setter
 @Getter
 @Accessors(chain = true)
@@ -102,6 +80,9 @@ public class AdvUser {
     
     /** 失效时间 **/
     private LocalDateTime expirationTime;
+
+    /** 失效次数 */
+    private Long expirationCount;
     
     /** 购买来源 **/
     private AdvSource advSource;
@@ -140,7 +121,11 @@ public class AdvUser {
         return StrUtil.isBlank(this.advUrl) ? "未配置❌" : this.advUrl;
     }
 
-    public static AdvUser buildAdvUserDefault(User user, AdvLibrary library, AdvPrice price) {
+    /**
+     * 构建关键词用户广告
+     * @return  用户广告
+     */
+    public static AdvUser buildKeywordAdvUserDefault(User user, AdvLibrary library, AdvPrice price) {
         LocalDateTime now = LocalDateTime.now();
         return new AdvUser()
                 .setUserId(user.getUserId())
@@ -160,6 +145,34 @@ public class AdvUser {
                 .setAdvSource(AdvSource.BUY)
                 .setAdvContent("")
                 .setAdvUrl("")
+                .setShowCount(0L)
+                .setAdvShow(Collections.emptyList())
+                .setUserRenews(Collections.emptyList())
+                .setCreatedAt(now);
+    }
+
+    public static AdvUser buildAdvUserDefault (User user, AdvButton advButton, AdvTypeEnum advType) {
+        LocalDateTime now = LocalDateTime.now();
+        return new AdvUser()
+                .setUserId(user.getUserId())
+                .setUsername(user.getUsername())
+                .setPriceId(null)
+                .setKeyword("")
+                .setAdvType(advType)
+                .setAdvPosition(null)
+                .setRanking(0)
+                .setSource("direct")
+                .setPriceMonth(advButton.getAmount())
+                .setCurrency("USDT")
+                .setAdvStatus(AdvStatus.UN_START)
+                .setEffectiveTime(now)
+                .setExpirationTime(null)
+                .setExpirationCount(advButton.getShowNumber().longValue())
+                .setAdvSource(AdvSource.BUY)
+                .setAdvContent("")
+                .setAdvUrl("")
+                .setTempContent("")
+                .setTempUrl("")
                 .setShowCount(0L)
                 .setAdvShow(Collections.emptyList())
                 .setUserRenews(Collections.emptyList())

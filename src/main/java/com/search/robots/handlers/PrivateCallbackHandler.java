@@ -322,7 +322,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
             price.setIsSold(Boolean.TRUE);
             this.advPriceService.updateById(price);
 
-            AdvUser advUser = AdvUser.buildAdvUserDefault(user, library, price);
+            AdvUser advUser = AdvUser.buildKeywordAdvUserDefault(user, library, price);
             this.advUserService.save(advUser);
 
             String advUserPaymentText = advUser.buildAdvUserPaymentText();
@@ -383,8 +383,6 @@ public class PrivateCallbackHandler extends AbstractHandler {
                 InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
                 return editMarkdownV2(message, advUser.buildAdvUserPaymentText(), markup);
             }
-
-
         }
 
         return null;

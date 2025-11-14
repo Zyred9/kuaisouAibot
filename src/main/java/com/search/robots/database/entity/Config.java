@@ -1,9 +1,13 @@
 package com.search.robots.database.entity;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.search.robots.beans.view.ButtonTransfer;
+import com.search.robots.beans.view.KeyboardTransfer;
+import com.search.robots.beans.view.vo.AdvButton;
 import com.search.robots.config.Constants;
 import com.search.robots.helper.StrHelper;
 import lombok.Getter;
@@ -11,6 +15,9 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -132,4 +139,45 @@ public class Config {
         return StrUtil.format(Constants.INVITATION_PRE_TEXT, activity,
                 botUsername, normalCode, botUsername, advCode);
     }
+
+
+    public List<AdvButton> parseAdvButton(boolean top) {
+        String buttonJson = top ? topLinkPackage : bottomButtonPackage;
+        String tag = top ? "top_link" : "bottom_button";
+
+        if (StrUtil.isEmpty(buttonJson)) {
+            return null;
+        }
+
+        List<AdvButton> buttons = new ArrayList<>();
+        KeyboardTransfer transfer = JSONUtil.toBean(buttonJson, KeyboardTransfer.class);
+
+        List<List<ButtonTransfer>> keyboard = transfer.getKeyboard();
+        for (List<ButtonTransfer> transfers : keyboard) {
+            ButtonTransfer buttonTransfer = transfers.get(0);
+
+            if (StrUtil.isNotBlank(buttonTransfer.getCallback_data())) {
+                String callbackData = buttonTransfer.getCallback_data();
+                if (StrUtil.contains(callbackData, tag)) {
+
+                    List<String> split = StrUtil.split(callbackData, "#");
+                    String last = split.get(split.size() - 1);
+
+
+                    int[] ints = StrHelper.parseCallbackNumbers(last);
+
+                    if (Objects.nonNull(ints)) {
+                        AdvButton button = new AdvButton();
+                        button.setAmount(BigDecimal.valueOf(ints[0]));
+                        button.setShowNumber(BigDecimal.valueOf(ints[1]));
+                        button.setName(buttonTransfer.getText());
+
+                        buttons.add(button);
+                    }
+                }
+            }
+        }
+        return buttons;
+    }
 }
+

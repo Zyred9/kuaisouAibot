@@ -7,6 +7,7 @@ import com.search.robots.config.BotProperties;
 import com.search.robots.database.enums.content.SortEnum;
 import com.search.robots.database.enums.content.SourceTypeEnum;
 import com.search.robots.database.service.AdvUserService;
+import com.search.robots.database.service.HotSearchService;
 import com.search.robots.database.service.SearchService;
 import com.search.robots.helper.KeyboardHelper;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
@@ -35,12 +37,12 @@ public class SearchHandler extends AbstractHandler {
     private final BotProperties properties;
     private final SearchService searchService;
     private final AdvUserService advUserService;
+    private final HotSearchService hotSearchService;
 
     @Override
     public boolean support(Update update) {
         return false;
     }
-
     @Override
     protected BotApiMethod<?> execute(Update update) {
         return null;
@@ -53,23 +55,8 @@ public class SearchHandler extends AbstractHandler {
      * @return              结果
      */
     public BotApiMethod<?> processorDefaultSearch(Message message) {
-        StringBuilder sb = new StringBuilder();
-        String advText = this.advUserService.buildCurrent(message.getText());
-        if (StrUtil.isNotEmpty(advText)) {
-            sb.append(advText).append("~\n");
-        }
-        Page<SearchBean> searchResult = this.searchService.search(message.getText(), null, 0, null);
-        if (!searchResult.isEmpty()) {
-            searchResult.forEach(a -> sb.append(a.buildLineText()));
-        } else {
-            sb.append("关键词暂未收录\n");
-        }
-        InlineKeyboardMarkup markup = KeyboardHelper.buildSearchResultKeyboard(
-                "", 0, false, SortEnum.EMPTY,
-                this.properties.getBotUsername(), searchResult,
-                message.getText()
-        );
-        return markdownV2(message, sb.toString(), markup);
+        return this.doSearch(message, "", message.getText(),
+                null, 0, SortEnum.EMPTY, Boolean.FALSE);
     }
 
 
@@ -97,17 +84,33 @@ public class SearchHandler extends AbstractHandler {
         SortEnum sort = SortEnum.of(command.get(4));
         String keyword = command.get(5);
 
+        return this.doSearch(message, command.get(1), keyword, sourceType, current, sort, filter);
+    }
+
+
+
+    private EditMessageText doSearch(Message message, String hitType, String keyword,
+                                     SourceTypeEnum sourceType, int current, SortEnum sort, Boolean filter) {
 
         StringBuilder sb = new StringBuilder();
+        String advText = this.advUserService.buildCurrent(message.getText());
+        if (StrUtil.isNotEmpty(advText)) {
+            sb.append(advText).append("~\n");
+        }
+
         Page<SearchBean> search = this.searchService.search(keyword, sourceType, current, sort);
         if (!search.isEmpty()) {
             search.forEach(a -> sb.append(a.buildLineText()));
+            String hottest = this.hotSearchService.hottest();
+            if (StrUtil.isNotBlank(hottest)) {
+                sb.append(hottest);
+            }
         } else {
             sb.append("关键词暂未收录\n");
         }
 
         InlineKeyboardMarkup markup = KeyboardHelper.buildSearchResultKeyboard(
-                command.get(1), current, filter, sort, this.properties.getBotUsername(), search, keyword
+                hitType, current, filter, sort, this.properties.getBotUsername(), search, keyword
         );
         return editMarkdownV2(message, sb.toString(), markup);
     }

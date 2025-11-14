@@ -149,4 +149,55 @@ public class StrHelper {
             return String.format("%02d:%02d", minutes, secs);
         }
     }
+
+    // 编码为十六进制
+    public static String encode(String text) {
+        StringBuilder hex = new StringBuilder();
+        for (byte b : text.getBytes()) {
+            hex.append(String.format("%02x", b));
+        }
+        return hex.toString();
+    }
+
+    // 解码
+    public static String decode(String hex) {
+        byte[] bytes = new byte[hex.length() / 2];
+        for (int i = 0; i < bytes.length; i++) {
+            int index = i * 2;
+            bytes[i] = (byte) Integer.parseInt(hex.substring(index, index + 2), 16);
+        }
+        return new String(bytes);
+    }
+
+    /**
+     * 解析 callback_data 中的数值部分
+     * 
+     * @param callbackData 格式: "300_600" (展示次数_价格)
+     * @return int数组 [展示次数, 价格]，解析失败返回null
+     * 
+     * @example
+     * parseCallbackNumbers("300_600") -> [300, 600]
+     * parseCallbackNumbers("1200_1800") -> [1200, 1800]
+     * parseCallbackNumbers("invalid") -> null
+     */
+    public static int[] parseCallbackNumbers(String callbackData) {
+        if (StrUtil.isBlank(callbackData)) {
+            return null;
+        }
+
+        try {
+            String[] parts = callbackData.split("_");
+            if (parts.length != 2) {
+                return null;
+            }
+
+            int showNumber = Integer.parseInt(parts[0].trim());  // 展示次数
+            int amount = Integer.parseInt(parts[1].trim());      // 价格
+
+            return new int[]{showNumber, amount};
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
 }

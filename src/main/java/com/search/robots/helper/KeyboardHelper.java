@@ -89,10 +89,10 @@ public class KeyboardHelper {
         optionRow.add(buttonText("\uD83D\uDD1E过滤", StrHelper.buildName("search", hitType, current, !filter, sort.getCode(), keyword)));
 
         if (beans.hasPrevious()) {
-            optionRow.add(buttonText("➡️上一页", StrHelper.buildName("search", hitType, (current - 1), filter, sort.getCode(), keyword)));
+            optionRow.add(buttonText("⬅️上一页", StrHelper.buildName("search", hitType, (current - 1), filter, sort.getCode(), keyword)));
         }
         if (beans.hasNext()) {
-            optionRow.add(buttonText("⬅️下一页", StrHelper.buildName("search", hitType, (current + 1), filter, sort.getCode(), keyword)));
+            optionRow.add(buttonText("➡️下一页", StrHelper.buildName("search", hitType, (current + 1), filter, sort.getCode(), keyword)));
         }
         rows.add(optionRow);
         return InlineKeyboardMarkup.builder().keyboard(rows).build();

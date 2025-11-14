@@ -20,15 +20,13 @@ import java.time.LocalDateTime;
 @TableName("t_hot_search")
 public class HotSearch {
 
+    public static final String HOT_SEARCH_KEY = "search:keyword:hot_search";
+
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
-
     private String keyword;
-
     private Integer searchCount;
-
     private LocalDate searchDay;
-
     private LocalDateTime createTime;
 
 

@@ -2,11 +2,12 @@ package com.search.robots.database.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.search.robots.beans.view.AsyncBean;
 import com.search.robots.beans.view.vo.search.SearchBean;
 import com.search.robots.database.enums.content.SortEnum;
 import com.search.robots.database.enums.content.SourceTypeEnum;
-import com.search.robots.database.mapper.SearchRepository;
 import com.search.robots.database.service.SearchService;
+import com.search.robots.handlers.AsyncTaskHandler;
 import lombok.RequiredArgsConstructor;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -88,6 +89,9 @@ public class SearchServiceImpl implements SearchService {
         List<SearchBean> content = searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
                 .collect(Collectors.toList());
+
+        // 热搜词收录
+        AsyncTaskHandler.async(AsyncBean.kw(text));
 
         // 返回分页结果
         return new PageImpl<>(content, pageRequest, searchHits.getTotalHits());

@@ -1,12 +1,17 @@
 package com.search.robots.database.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.search.robots.config.BotProperties;
 import com.search.robots.database.entity.HotSearch;
 import com.search.robots.database.enums.SearchPeriodEnum;
 import com.search.robots.database.mapper.HotSearchMapper;
 import com.search.robots.database.service.HotSearchService;
+import com.search.robots.helper.RedisHelper;
+import com.search.robots.helper.StrHelper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -14,6 +19,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -25,7 +31,10 @@ import java.util.stream.Collectors;
  * @since v 0.0.1
  */
 @Service
+@RequiredArgsConstructor
 public class HotSearchServiceImpl extends ServiceImpl<HotSearchMapper, HotSearch> implements HotSearchService {
+
+    private final BotProperties properties;
 
     @Override
     public void search(String keyword) {
@@ -89,5 +98,35 @@ public class HotSearchServiceImpl extends ServiceImpl<HotSearchMapper, HotSearch
         }
         List<HotSearch> search = this.baseMapper.keywords(startDate, endDate, LIMIT_COUNT);
         return CollUtil.isEmpty(search) ? Collections.emptyList() : search;
+    }
+
+    @Override
+    public String hottest() {
+
+        String currentHotSearch = RedisHelper.get(HotSearch.HOT_SEARCH_KEY);
+        if (StrUtil.isNotBlank(currentHotSearch)) {
+            return currentHotSearch;
+        }
+
+        List<HotSearch> searches = this.baseMapper.selectList(
+                Wrappers.<HotSearch>lambdaQuery()
+                        .orderByDesc(HotSearch::getSearchCount)
+                        .last(" limit 8")
+        );
+        if (CollUtil.isEmpty(searches)) {
+            return null;
+        }
+
+        String start = this.properties.botStart();
+        StringBuilder sb = new StringBuilder("**> [热搜：](").append(start).append("reply)");
+        for (HotSearch search : searches) {
+            String encode = StrHelper.encode(search.getKeyword());
+            sb.append(" ").append("[").append(search.getKeyword()).append("](")
+                    .append(start).append("query_").append(encode).append(")");
+        }
+        currentHotSearch = sb.toString();
+
+        RedisHelper.setEx(HotSearch.HOT_SEARCH_KEY, currentHotSearch, 1, TimeUnit.HOURS);
+        return currentHotSearch;
     }
 }

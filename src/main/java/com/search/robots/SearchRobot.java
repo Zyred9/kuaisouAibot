@@ -20,7 +20,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import javax.annotation.Resource;
-import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -43,15 +42,8 @@ public class SearchRobot implements SpringLongPollingBot, MultiThreadUpdateConsu
     public void consume(Update update) {
         BotApiMethod<?> message = null;
         try {
-
-            if (this.properties.isLogs()) {
-                log.info("消息：{}", JSONUtil.toJsonStr(update));
-            }
             message = AbstractHandler.doExecute(update, this.properties.isLogs());
             if (Objects.nonNull(message)) {
-                if (this.properties.isLogs()) {
-                    log.info("回复：{}", JSONUtil.toJsonStr(message));
-                }
                 this.telegramClient.execute(message);
             }
         } catch (TelegramApiException e) {

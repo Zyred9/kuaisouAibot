@@ -1,9 +1,12 @@
 package com.search.robots.database.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.search.robots.beans.view.AsyncBean;
+import com.search.robots.beans.view.vo.AdvShow;
 import com.search.robots.beans.view.vo.adv.AdvUserAudit;
 import com.search.robots.database.entity.AdvUser;
 import com.search.robots.database.entity.Config;
@@ -12,6 +15,7 @@ import com.search.robots.database.enums.adv.AdvTypeEnum;
 import com.search.robots.database.mapper.AdvUserMapper;
 import com.search.robots.database.service.AdvUserService;
 import com.search.robots.database.service.ConfigService;
+import com.search.robots.handlers.AsyncTaskHandler;
 import com.search.robots.handlers.EmptyHandler;
 import com.search.robots.helper.Assert;
 import com.search.robots.helper.KeyboardHelper;
@@ -19,12 +23,12 @@ import com.search.robots.helper.RedisHelper;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -135,18 +139,30 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
     public String buildCurrent(String keyword) {
         String key = AdvUser.KEYWORD_ADV_USER + keyword;
         Set<String> ids = RedisHelper.sMembers(key);
+
+        List<AdvUser> advUsers;
+
         if (CollUtil.isEmpty(ids)) {
-            return null;
-        }
-        Set<Long> longIds = ids.stream().map(Long::parseLong)
-                .collect(Collectors.toSet());
-        List<AdvUser> advUsers = this.baseMapper.selectList(
+            advUsers = this.baseMapper.selectList(
                 Wrappers.<AdvUser>lambdaQuery()
-                        .in(AdvUser::getId, longIds)
+                        .eq(AdvUser::getAdvType, AdvTypeEnum.BUY_TOP_LINK)
                         .eq(AdvUser::getAdvStatus, AdvStatus.PROMOTION_ING)
-                        .orderByAsc(AdvUser::getRanking)
-                        .last(" limit 7")
-        );
+                        .last(" order by rand() limit 2")
+            );
+            Set<Long> longIds = advUsers.stream().map(AdvUser::getId).collect(Collectors.toSet());
+            AsyncTaskHandler.async(AsyncBean.relatedIncr(longIds));
+        } else {
+            Set<Long>  longIds = ids.stream().map(Long::parseLong).collect(Collectors.toSet());
+            advUsers = this.baseMapper.selectList(
+                    Wrappers.<AdvUser>lambdaQuery()
+                            .in(AdvUser::getId, longIds)
+                            .eq(AdvUser::getAdvType, AdvTypeEnum.BUY_KEYWORD_RANK)
+                            .eq(AdvUser::getAdvStatus, AdvStatus.PROMOTION_ING)
+                            .orderByAsc(AdvUser::getRanking)
+                            .last(" limit 7")
+            );
+            AsyncTaskHandler.async(AsyncBean.directIncr(longIds));
+        }
         if (CollUtil.isEmpty(advUsers)) {
             return null;
         }
@@ -162,5 +178,68 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
                     .append("\n");
         }
         return sb.toString();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void incr(Set<Long> directIds, boolean direct) {
+        if (CollUtil.isEmpty(directIds)) {
+            return;
+        }
+
+        String today = LocalDate.now().toString();
+
+        List<AdvUser> advUsers = this.listByIds(directIds);
+        List<AdvUser> updates = new ArrayList<>(advUsers.size());
+        for (AdvUser advUser : advUsers) {
+            AdvUser update = new AdvUser();
+            update.setId(advUser.getId());
+
+            // 每天统计展示
+            List<AdvShow> advShows = advUser.getAdvShow();
+            if (CollUtil.isNotEmpty(advShows)) {
+                AdvShow advShow = advShows.stream()
+                        .filter(a -> StrUtil.equals(a.getDate(), today))
+                        .findFirst().orElse(null);
+                if (Objects.nonNull(advShow)) {
+                    if (direct) {
+                        advShow.setDirectShow(advShow.getDirectShow() + 1);
+                    } else {
+                        advShow.setRelatedShow(advShow.getRelatedShow() + 1);
+                    }
+                } else {
+                    advShows.add(AdvShow.buildDefault(direct));
+                }
+
+                // 保证只有7天的数据
+                advShows = AdvShow.filterLastSevenDays(advShows);
+            } else {
+                advShows = new ArrayList<>();
+                advShows.add(AdvShow.buildDefault(direct));
+            }
+            update.setAdvShow(advShows);
+
+            // 总展示次数
+            update.setShowCount(advUser.getShowCount() + 1);
+
+            // 状态判断(顶部链接、按钮链接)
+            if (Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_TOP_LINK)
+                    || Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_BOTTOM_BUTTON)) {
+                if (advUser.getShowCount() >= advUser.getExpirationCount()) {
+                    update.setAdvStatus(AdvStatus.THE_END);
+                }
+            }
+            // 关键词排行
+            else if (Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_KEYWORD_RANK)) {
+                // 比较两个时间
+                boolean after = advUser.getExpirationTime().isAfter(LocalDateTime.now());
+                if (after) {
+                    update.setAdvStatus(AdvStatus.THE_END);
+                }
+            }
+
+            updates.add(update);
+        }
+        this.updateBatchById(updates);
     }
 }

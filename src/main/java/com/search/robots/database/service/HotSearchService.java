@@ -19,4 +19,6 @@ public interface HotSearchService extends IService<HotSearch> {
     void search(String keyword);
 
     List<HotSearch> keywords (SearchPeriodEnum hit);
+
+    String hottest();
 }

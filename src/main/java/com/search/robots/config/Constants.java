@@ -20,6 +20,8 @@ public interface Constants {
 
     String START_AD_CENTER = "https://t.me/{}?start=ad_null";
 
+    String BOT_START_URL = "https://t.me/{}?start=";
+
     String START_MESSAGE_TEXT = """
             🔍我是个资源搜索引擎，向我发送关键词，帮你找到有趣的群组、频道、视频、音乐、电影、新闻。[简体中文包](https://t.me/setlanguage/zh-hans-beta)
             

@@ -55,4 +55,8 @@ public class BotProperties {
     public String groupStart() {
         return StrUtil.format(Constants.START_GROUP_URL, this.botUsername);
     }
+
+    public String botStart () {
+        return StrUtil.format(Constants.BOT_START_URL, this.botUsername);
+    }
 }
