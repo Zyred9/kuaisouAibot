@@ -39,6 +39,13 @@ public enum AdvTypeEnum {
         if (StrUtil.equals(data, "keyword_page")) {
             return BUY_KEYWORD_PAGE_RANK;
         }
+        if (StrUtil.equals(data, "top_link")) {
+            return BUY_TOP_LINK;
+        }
+        if (StrUtil.equals(data, "bottom_button")) {
+            return BUY_BOTTOM_BUTTON;
+        }
+
         return null;
     }
 
@@ -48,6 +55,13 @@ public enum AdvTypeEnum {
         }
         if (Objects.equals(BUY_KEYWORD_PAGE_RANK, of)) {
             return "keyword_page";
+        }
+
+        if (Objects.equals(BUY_TOP_LINK, of)) {
+            return "top_link";
+        }
+        if (Objects.equals(BUY_BOTTOM_BUTTON, of)) {
+            return "bottom_button";
         }
         return null;
     }

@@ -2,6 +2,7 @@ package com.search.robots.beans.view.vo;
 
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
  */
 @Setter
 @Getter
+@NoArgsConstructor
 @Accessors(chain = true)
 public class AdvButton {
 
@@ -23,6 +25,12 @@ public class AdvButton {
     /** 次数 **/
     private BigDecimal amount;
     /** 展示次数 **/
-    private BigDecimal showNumber;
+    private Long showNumber;
+
+
+    public AdvButton(BigDecimal amount, Long showNumber) {
+        this.amount = amount;
+        this.showNumber = showNumber;
+    }
 
 }

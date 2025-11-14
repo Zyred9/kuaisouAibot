@@ -151,7 +151,7 @@ public class AdvUser {
                 .setCreatedAt(now);
     }
 
-    public static AdvUser buildAdvUserDefault (User user, AdvButton advButton, AdvTypeEnum advType) {
+    public static AdvUser buildAdvUserDefault (User user, AdvButton advButton, AdvTypeEnum advType, AdvPositionEnum rank) {
         LocalDateTime now = LocalDateTime.now();
         return new AdvUser()
                 .setUserId(user.getUserId())
@@ -159,7 +159,7 @@ public class AdvUser {
                 .setPriceId(null)
                 .setKeyword("")
                 .setAdvType(advType)
-                .setAdvPosition(null)
+                .setAdvPosition(rank)
                 .setRanking(0)
                 .setSource("direct")
                 .setPriceMonth(advButton.getAmount())
@@ -167,7 +167,7 @@ public class AdvUser {
                 .setAdvStatus(AdvStatus.UN_START)
                 .setEffectiveTime(now)
                 .setExpirationTime(null)
-                .setExpirationCount(advButton.getShowNumber().longValue())
+                .setExpirationCount(advButton.getShowNumber())
                 .setAdvSource(AdvSource.BUY)
                 .setAdvContent("")
                 .setAdvUrl("")
@@ -193,6 +193,27 @@ public class AdvUser {
                 StrHelper.specialResult(this.getAdvStatus().getDesc()),
                 TimeHelper.format(this.getEffectiveTime()),
                 TimeHelper.format(this.getExpirationTime()),
+                StrHelper.specialResult(this.getAdvSource().getDesc()),
+                StrHelper.specialResult(this.getAdvContent()),
+                StrHelper.specialResult(this.getAdvUrl()),
+                this.updateContentText(),
+                StrHelper.specialLong(this.getShowCount()),
+                showDetailText
+        );
+    }
+
+    public String buildTopButtonPaymentText () {
+        String renewText = buildRenewRecordsText(this);
+        String showDetailText = buildShowDetailText(this);
+        return StrUtil.format(Constants.TOP_BUTTON_PAYMENT_TEXT,
+                StrHelper.specialLong(this.getId()),
+                StrHelper.specialResult(this.getAdvType().getDesc()),
+                StrHelper.specialLong(this.getExpirationCount()),
+                DecimalHelper.decimalParse(this.getPriceMonth()),
+                renewText,
+                StrHelper.specialResult(this.getAdvStatus().getDesc()),
+                TimeHelper.format(this.getEffectiveTime()),
+                StrHelper.specialLong(this.getExpirationCount()),
                 StrHelper.specialResult(this.getAdvSource().getDesc()),
                 StrHelper.specialResult(this.getAdvContent()),
                 StrHelper.specialResult(this.getAdvUrl()),

@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.search.robots.beans.cache.CommonCache;
 import com.search.robots.beans.view.DialogueCtx;
+import com.search.robots.beans.view.vo.AdvButton;
 import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
 import com.search.robots.database.entity.*;
@@ -15,6 +16,7 @@ import com.search.robots.database.enums.Included.IncludedNewUserEnum;
 import com.search.robots.database.enums.Included.IncludedSearchPriorityEnum;
 import com.search.robots.database.enums.Included.IncludedSearchTypeEnum;
 import com.search.robots.database.enums.SearchPeriodEnum;
+import com.search.robots.database.enums.adv.AdvPositionEnum;
 import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.enums.adv.AdvTypeEnum;
 import com.search.robots.database.service.*;
@@ -22,6 +24,7 @@ import com.search.robots.helper.*;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -293,19 +296,24 @@ public class PrivateCallbackHandler extends AbstractHandler {
         if (StrUtil.equals(command.get(1), "do_payment_button")) {
             String prev = command.get(2);
             BillTypeEnum bt = BillTypeEnum.ofData(prev);
+            AdvTypeEnum advTypeEnum = AdvTypeEnum.ofData(prev);
+            AdvPositionEnum rank = AdvPositionEnum.RANK_1;
 
             List<String> priceList = StrUtil.split(command.get(3), "_");
-            int showCount = Integer.parseInt(priceList.get(0));
-            int price = Integer.parseInt(priceList.get(1));
+            long showCount = Long.parseLong(priceList.get(0));
+            java.math.BigDecimal need = new java.math.BigDecimal(priceList.get(1));
 
             User user = this.userService.user(callbackQuery.getFrom());
-            java.math.BigDecimal need = new java.math.BigDecimal(price);
+
+            AdvButton button = new AdvButton(need, showCount);
+            AdvUser advUser = AdvUser.buildAdvUserDefault(user, button, advTypeEnum, rank);
+            this.advUserService.save(advUser);
 
             if (this.processorUserRealBalance(message, user, need, bt)) {
                 return null;
             }
-            InlineKeyboardMarkup markup = KeyboardHelper.buildAdvertisingKeyboard();
-            return editMarkdown(message, config.getAdvertisingMarkdown(), markup);
+            InlineKeyboardMarkup markup = KeyboardHelper.buildPymentKeywordKeyboard(advUser.getId(), prev, null);
+            return editMarkdown(message, advUser.buildTopButtonPaymentText(), markup);
         }
 
         // 关键词购买支付
@@ -316,7 +324,10 @@ public class PrivateCallbackHandler extends AbstractHandler {
             User user = this.userService.user(callbackQuery.getFrom());
 
             AdvPrice price = this.advPriceService.getById(priceId);
-            this.processorUserRealBalance(message, user, price.getMonthlyPrice(), bt);
+            boolean b = this.processorUserRealBalance(message, user, price.getMonthlyPrice(), bt);
+            if (b) {
+                return null;
+            }
 
             AdvLibrary library = this.advLibraryService.getById(price.getLibraryId());
             price.setIsSold(Boolean.TRUE);
@@ -622,7 +633,15 @@ public class PrivateCallbackHandler extends AbstractHandler {
             InlineKeyboardMarkup markup = KeyboardHelper.buildPymentKeywordKeyboard(
                     advUser.getId(), command.get(2), advUser.getLibraryId()
             );
-            return editMarkdownV2(message, advUser.buildAdvUserPaymentText(), markup);
+
+            String text;
+            if (Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_KEYWORD_RANK)) {
+                text = advUser.buildAdvUserPaymentText();
+            } else {
+                text = advUser.buildTopButtonPaymentText();
+            }
+
+            return editMarkdownV2(message, text, markup);
         }
         return null;
     }

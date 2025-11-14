@@ -169,7 +169,7 @@ public class Config {
                     if (Objects.nonNull(ints)) {
                         AdvButton button = new AdvButton();
                         button.setAmount(BigDecimal.valueOf(ints[0]));
-                        button.setShowNumber(BigDecimal.valueOf(ints[1]));
+                        button.setShowNumber((long) ints[1]);
                         button.setName(buttonTransfer.getText());
 
                         buttons.add(button);

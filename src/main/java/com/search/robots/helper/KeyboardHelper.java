@@ -145,13 +145,18 @@ public class KeyboardHelper {
     }
 
     public static InlineKeyboardMarkup buildPymentKeywordKeyboard (Long userAdvId, String prev, Long libraryId) {
-        return InlineKeyboardMarkup.builder().keyboard(List.of(
-                row(buttonText("\uD83D\uDD04优先续订", "three#my_adv#priority_renewal#" + userAdvId)),
-                row(buttonText("\uD83D\uDFE2开始推广", "three#my_adv#start_promotion#" + userAdvId)),
-                row(buttonText("✏️修改广告标题", "three#my_adv#edit_title#" + prev + "#" + userAdvId), buttonText("✏️修改广告链接", "three#my_adv#edit_link#" + prev + "#" + userAdvId)),
-                row(buttonText("⬅️返回关键词列表", "one#query_keyword#" + prev + "#" + libraryId)),
-                row(buttonText("⬅️返回我的广告", "two#self_adv#0#0#1"))
-        )).build();
+        List<InlineKeyboardRow> rows = new ArrayList<>(6);
+        rows.add(row(buttonText("\uD83D\uDD04优先续订", "three#my_adv#priority_renewal#" + userAdvId)));
+        rows.add(row(buttonText("\uD83D\uDFE2开始推广", "three#my_adv#start_promotion#" + userAdvId)));
+        rows.add(row(
+                buttonText("✏️修改广告标题", "three#my_adv#edit_title#" + prev + "#" + userAdvId),
+                buttonText("✏️修改广告链接", "three#my_adv#edit_link#" + prev + "#" + userAdvId)
+        ));
+        if (Objects.nonNull(libraryId)) {
+            rows.add(row(buttonText("⬅️返回关键词列表", "one#query_keyword#" + prev + "#" + libraryId)));
+        }
+        rows.add(row(buttonText("⬅️返回我的广告", "two#self_adv#0#0#1")));
+        return InlineKeyboardMarkup.builder().keyboard(rows).build();
     }
 
 
