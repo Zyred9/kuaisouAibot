@@ -82,8 +82,17 @@ public class PrivateCallbackHandler extends AbstractHandler {
             log.info("[回调] {}", text);
         }
 
+        Integer messageDate = message.getDate();
+        long currentTimestamp = System.currentTimeMillis() / 1000;
+        long messageAge = currentTimestamp - messageDate;
+        if (messageAge > 600) {
+            return answerAlert(callbackQuery, "⚠️消息已过期，请重新发送关键词");
+        }
+
+
+        // 查询
         if (StrUtil.equals(command.get(0), "search")) {
-            return this.searchHandler.processorCallbackSearch(callbackQuery, message, command);
+            return this.searchHandler.processorCallbackSearch(message, command);
         }
 
         // 第一层
@@ -99,7 +108,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
             return this.processorLevelThree(callbackQuery, message, command);
         }
         if (StrUtil.equals(command.get(0), "four")) {
-            return this.processorLevelFour(callbackQuery, message, command);
+            return this.processorLevelFour(message, command);
         }
 
         // five
@@ -186,7 +195,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
         return null;
     }
 
-    private BotApiMethod<?> processorLevelFour(CallbackQuery callbackQuery, Message message, List<String> command) {
+    private BotApiMethod<?> processorLevelFour(Message message, List<String> command) {
         // ads_toggle 拉新广告
         if (StrUtil.equals(command.get(1), "new_user")) {
             int newUserCode = Integer.parseInt(command.get(2));
@@ -312,7 +321,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
                 return null;
             }
             InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
-            return editMarkdown(message, advUser.getAdvText(), markup);
+            return editMarkdownV2(message, advUser.getAdvText(), markup);
         }
 
         // 关键词购买支付
@@ -589,25 +598,17 @@ public class PrivateCallbackHandler extends AbstractHandler {
         }
         // 我的广告
         if (StrUtil.equals(command.get(1), "self_adv")) {
-            Config config = this.configService.queryConfig();
-            String format = StrUtil.format(Constants.SELF_ADV_TEXT,
-                    0, 0, 0,
-                    0, 0, 0,
-                    0, 0, 0,
-                    0, 0, 0,
-                    0, 0, 0,
-                    config.getTutorialUrl(), config.getCommunityName()
-            );
+            String statisticsText = this.advUserService.advStatistics(callbackQuery.getFrom().getId());
             String position = StrHelper.collGet(command, 2, "0");
             String status = StrHelper.collGet(command, 3, "0");
             int current = StrHelper.collGet(command, 4, 1);
 
             AdvTypeEnum advType = AdvTypeEnum.of(position);
-            AdvStatus advStatus = AdvStatus.of(position);
+            AdvStatus advStatus = AdvStatus.of(status);
 
             Page<AdvUser> userPage = this.advUserService.selfPage(current, callbackQuery.getFrom().getId(), advType, advStatus);
             InlineKeyboardMarkup markup = KeyboardHelper.buildSelfAdvKeyboard(position, status, userPage);
-            return editMarkdown(message, format, markup);
+            return editMarkdown(message, statisticsText, markup);
         }
         // 专页购买
         if (StrUtil.equals(command.get(1), "special_page")) {

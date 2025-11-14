@@ -89,10 +89,6 @@ public class SearchServiceImpl implements SearchService {
         List<SearchBean> content = searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
                 .collect(Collectors.toList());
-
-        // 热搜词收录
-        AsyncTaskHandler.async(AsyncBean.kw(text));
-
         // 返回分页结果
         return new PageImpl<>(content, pageRequest, searchHits.getTotalHits());
     }

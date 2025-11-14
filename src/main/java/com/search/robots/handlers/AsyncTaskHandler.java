@@ -58,7 +58,6 @@ public class AsyncTaskHandler extends Thread {
                     this.advUserService.incr(bean.getDirectIds(), true);
                     continue;
                 }
-
                 // 记录直接搜索展现次数
                 if (CollUtil.isNotEmpty(bean.getRelatedIds())) {
                     this.advUserService.incr(bean.getRelatedIds(), false);

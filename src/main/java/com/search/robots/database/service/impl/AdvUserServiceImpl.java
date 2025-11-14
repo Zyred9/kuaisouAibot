@@ -7,7 +7,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.search.robots.beans.view.AsyncBean;
 import com.search.robots.beans.view.vo.AdvShow;
+import com.search.robots.beans.view.vo.adv.AdvStatistics;
 import com.search.robots.beans.view.vo.adv.AdvUserAudit;
+import com.search.robots.config.Constants;
 import com.search.robots.database.entity.AdvUser;
 import com.search.robots.database.entity.Config;
 import com.search.robots.database.enums.adv.AdvStatus;
@@ -26,10 +28,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -141,24 +145,9 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
         String key = AdvUser.KEYWORD_ADV_USER + keyword;
         Set<String> ids = RedisHelper.sMembers(key);
 
-        List<AdvUser> advUsers;
-        if (CollUtil.isEmpty(ids)) {
-            advUsers = this.randTopAdv();
-        } else {
-            Set<Long>  longIds = ids.stream().map(Long::parseLong).collect(Collectors.toSet());
-            advUsers = this.baseMapper.selectList(
-                    Wrappers.<AdvUser>lambdaQuery()
-                            .in(AdvUser::getId, longIds)
-                            .eq(AdvUser::getAdvType, AdvTypeEnum.BUY_KEYWORD_RANK)
-                            .eq(AdvUser::getAdvStatus, AdvStatus.PROMOTION_ING)
-                            .orderByAsc(AdvUser::getRanking)
-                            .last(" limit 7")
-            );
-            AsyncTaskHandler.async(AsyncBean.directIncr(longIds));
-        }
-        if (CollUtil.isEmpty(advUsers)) {
-            advUsers = this.randTopAdv();
-        }
+        List<AdvUser> advUsers = CollUtil.isEmpty(ids)
+                ? this.topLinkRandAdvList()
+                : this.keywordAdvList(ids);
         if (CollUtil.isEmpty(advUsers)) {
             return null;
         }
@@ -244,16 +233,114 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
         this.updateBatchById(updates);
     }
 
+    @Override
+    public AdvUser buttonAdv() {
+        AdvUser adv = this.baseMapper.selectOne(
+                Wrappers.<AdvUser>lambdaQuery()
+                        .eq(AdvUser::getAdvType, AdvTypeEnum.BUY_BOTTOM_BUTTON)
+                        .eq(AdvUser::getAdvStatus, AdvStatus.PROMOTION_ING)
+                        .last(" order by rand() limit 1")
+        );
+        if (Objects.nonNull(adv)) {
+            AsyncTaskHandler.async(AsyncBean.directIncr(Set.of(adv.getId())));
+            return adv;
+        }
+        return null;
+    }
 
-    public List<AdvUser> randTopAdv () {
+    @Override
+    public String advStatistics(Long userId) {
+        List<AdvStatistics> advStatistics = this.selectAdvStatistics(userId);
+        Map<AdvTypeEnum, AdvStatistics> map = advStatistics.stream()
+                .collect(Collectors.toMap(AdvStatistics::getAdvType, Function.identity()));
+
+        AdvStatistics keywordAdv = map.get(AdvTypeEnum.BUY_KEYWORD_RANK);
+        AdvStatistics keywordPageAdv = map.get(AdvTypeEnum.BUY_KEYWORD_PAGE_RANK);
+        AdvStatistics brandPage = map.get(AdvTypeEnum.BUY_BRAND_PAGE_RANK);
+        AdvStatistics topLinkAdv = map.get(AdvTypeEnum.BUY_TOP_LINK);
+        AdvStatistics bottomButtonAdv = map.get(AdvTypeEnum.BUY_BOTTOM_BUTTON);
+
+        Config config = this.configService.queryConfig();
+        return StrUtil.format(Constants.SELF_ADV_TEXT,
+                keywordAdv.getTotal(), keywordAdv.getDoing(), keywordAdv.getStop(),
+                keywordPageAdv.getTotal(), keywordPageAdv.getDoing(), keywordPageAdv.getStop(),
+                brandPage.getTotal(), brandPage.getDoing(), brandPage.getStop(),
+                topLinkAdv.getTotal(), topLinkAdv.getDoing(), topLinkAdv.getStop(),
+                bottomButtonAdv.getTotal(), bottomButtonAdv.getDoing(), bottomButtonAdv.getStop(),
+                config.getTutorialUrl(), config.getCommunityName()
+        );
+    }
+
+    private List<AdvStatistics> selectAdvStatistics(Long userId) {
+        List<AdvUser> advUsers = this.baseMapper.selectList(
+                Wrappers.<AdvUser>lambdaQuery()
+                        .select(AdvUser::getAdvType, AdvUser::getAdvStatus)
+                        .eq(AdvUser::getUserId, userId)
+        );
+        if (CollUtil.isEmpty(advUsers)) {
+            return AdvStatistics.buildDefault();
+        }
+
+        Map<AdvTypeEnum, List<AdvUser>> map = advUsers.stream()
+                .collect(Collectors.groupingBy(AdvUser::getAdvType));
+
+        for (AdvTypeEnum value : AdvTypeEnum.values()) {
+            if (!map.containsKey(value)) {
+                map.put(value, Collections.emptyList());
+            }
+        }
+
+        List<AdvStatistics> advStatistics = new ArrayList<>(5);
+        Set<Map.Entry<AdvTypeEnum, List<AdvUser>>> entries = map.entrySet();
+        for (Map.Entry<AdvTypeEnum, List<AdvUser>> entry : entries) {
+            List<AdvUser> advUserList = entry.getValue();
+            AdvStatistics statistics = new AdvStatistics();
+            statistics.setAdvType(entry.getKey());
+            statistics.setTotal(advUserList.size());
+            long doing = advUserList.stream()
+                    .filter(a -> Objects.equals(a.getAdvStatus(), AdvStatus.PROMOTION_ING))
+                    .count();
+            long end = advUserList.stream()
+                    .filter(a -> Objects.equals(a.getAdvStatus(), AdvStatus.THE_END))
+                    .count();
+            statistics.setDoing((int)doing);
+            statistics.setStop((int)end);
+
+            advStatistics.add(statistics);
+        }
+        return advStatistics;
+    }
+
+
+    public List<AdvUser> topLinkRandAdvList() {
         List<AdvUser> advUsers = this.baseMapper.selectList(
                 Wrappers.<AdvUser>lambdaQuery()
                         .eq(AdvUser::getAdvType, AdvTypeEnum.BUY_TOP_LINK)
                         .eq(AdvUser::getAdvStatus, AdvStatus.PROMOTION_ING)
                         .last(" order by rand() limit 2")
         );
-        Set<Long> longIds = advUsers.stream().map(AdvUser::getId).collect(Collectors.toSet());
-        AsyncTaskHandler.async(AsyncBean.relatedIncr(longIds));
+        if (CollUtil.isNotEmpty(advUsers)) {
+            Set<Long> longIds = advUsers.stream().map(AdvUser::getId).collect(Collectors.toSet());
+            AsyncTaskHandler.async(AsyncBean.relatedIncr(longIds));
+        }
+        return advUsers;
+    }
+
+    public List<AdvUser> keywordAdvList(Set<String> ids) {
+        Set<Long> longIds = ids.stream().map(Long::parseLong).collect(Collectors.toSet());
+        List<AdvUser> advUsers = this.baseMapper.selectList(
+                Wrappers.<AdvUser>lambdaQuery()
+                        .in(AdvUser::getId, longIds)
+                        .eq(AdvUser::getAdvType, AdvTypeEnum.BUY_KEYWORD_RANK)
+                        .eq(AdvUser::getAdvStatus, AdvStatus.PROMOTION_ING)
+                        .orderByAsc(AdvUser::getRanking)
+                        .last(" limit 7")
+        );
+        if (CollUtil.isNotEmpty(advUsers)) {
+            AsyncTaskHandler.async(AsyncBean.directIncr(longIds));
+        } else {
+            advUsers = this.topLinkRandAdvList();
+        }
         return advUsers;
     }
 }

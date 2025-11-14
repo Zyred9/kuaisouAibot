@@ -51,7 +51,7 @@ public abstract class AbstractHandler {
             if (handler.support(update)) {
                 BotApiMethod<?> result = handler.execute(update);
                 if (Objects.nonNull(result) && logs) {
-                    log.info("处理器：{}，\n处理消息内容：{}\n响应结果：{}",
+                    log.info("处理器：{}，\n处理消息内容：{}\n响应结果：{} \n\n",
                             handler.getClass().getSimpleName(),
                             JSONUtil.toJsonStr(update),
                             JSONUtil.toJsonStr(result)

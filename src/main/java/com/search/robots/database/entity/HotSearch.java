@@ -29,7 +29,6 @@ public class HotSearch {
     private LocalDate searchDay;
     private LocalDateTime createTime;
 
-
     public static HotSearch buildSearch (String keyword) {
         return new HotSearch()
                 .setKeyword(keyword)

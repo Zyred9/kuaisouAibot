@@ -102,7 +102,6 @@ public class HotSearchServiceImpl extends ServiceImpl<HotSearchMapper, HotSearch
 
     @Override
     public String hottest() {
-
         String currentHotSearch = RedisHelper.get(HotSearch.HOT_SEARCH_KEY);
         if (StrUtil.isNotBlank(currentHotSearch)) {
             return currentHotSearch;
@@ -125,8 +124,7 @@ public class HotSearchServiceImpl extends ServiceImpl<HotSearchMapper, HotSearch
                     .append(start).append("query_").append(encode).append(")");
         }
         currentHotSearch = sb.toString();
-
-        RedisHelper.setEx(HotSearch.HOT_SEARCH_KEY, currentHotSearch, 1, TimeUnit.HOURS);
+        RedisHelper.setEx(HotSearch.HOT_SEARCH_KEY, currentHotSearch, 10, TimeUnit.MINUTES);
         return currentHotSearch;
     }
 }

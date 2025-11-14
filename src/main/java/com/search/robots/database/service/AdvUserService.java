@@ -48,4 +48,8 @@ public interface AdvUserService extends IService<AdvUser> {
      * @param direct        是否直接展示
      */
     void incr(Set<Long> userAdvIds, boolean direct);
+
+    AdvUser buttonAdv();
+
+    String advStatistics(Long userId);
 }

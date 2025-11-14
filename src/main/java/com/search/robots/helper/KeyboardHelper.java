@@ -48,9 +48,8 @@ public class KeyboardHelper {
      * @param beans         查询结果
      * @return              按钮
      */
-    public static InlineKeyboardMarkup buildSearchResultKeyboard(String hitType, int current, Boolean filter, SortEnum sort,
-                                                                 String bot, org.springframework.data.domain.Page<SearchBean> beans,
-                                                                 String keyword) {
+    public static InlineKeyboardMarkup buildSearchResultKeyboard(String hitType, int current, Boolean filter, SortEnum sort, String bot,
+                                                                 org.springframework.data.domain.Page<SearchBean> beans, String keyword, AdvUser adv) {
         List<InlineKeyboardRow> rows = new ArrayList<>(2);
 
         // 第一排
@@ -95,6 +94,10 @@ public class KeyboardHelper {
             optionRow.add(buttonText("➡️下一页", StrHelper.buildName("search", hitType, (current + 1), filter, sort.getCode(), keyword)));
         }
         rows.add(optionRow);
+
+        if (Objects.nonNull(adv)) {
+            rows.add(row(buttonUrl(adv.getAdvContent(), adv.getAdvUrl())));
+        }
         return InlineKeyboardMarkup.builder().keyboard(rows).build();
     }
 

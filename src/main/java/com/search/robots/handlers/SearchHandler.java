@@ -2,8 +2,10 @@ package com.search.robots.handlers;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.search.robots.beans.view.AsyncBean;
 import com.search.robots.beans.view.vo.search.SearchBean;
 import com.search.robots.config.BotProperties;
+import com.search.robots.database.entity.AdvUser;
 import com.search.robots.database.enums.content.SortEnum;
 import com.search.robots.database.enums.content.SourceTypeEnum;
 import com.search.robots.database.service.AdvUserService;
@@ -74,21 +76,11 @@ public class SearchHandler extends AbstractHandler {
     /**
      * 键盘点击回调
      *
-     * @param callbackQuery     回调
      * @param message           消息
      * @param command           命令列表
      * @return                  编辑结果
      */
-    public BotApiMethod<?> processorCallbackSearch(CallbackQuery callbackQuery,
-                                                   Message message, List<String> command) {
-
-        Integer messageDate = message.getDate();
-        long currentTimestamp = System.currentTimeMillis() / 1000;
-        long messageAge = currentTimestamp - messageDate;
-        if (messageAge > 600) {
-            return answerAlert(callbackQuery, "⚠️消息已过期，请重新发送关键词");
-        }
-
+    public BotApiMethod<?> processorCallbackSearch(Message message, List<String> command) {
         SourceTypeEnum sourceType = SourceTypeEnum.fromCode(command.get(1));
         int current = Integer.parseInt(command.get(2));
         Boolean filter = Boolean.valueOf(command.get(3));
@@ -104,11 +96,14 @@ public class SearchHandler extends AbstractHandler {
                                      int current, SortEnum sort, Boolean filter, boolean send) {
 
         StringBuilder sb = new StringBuilder();
+
+        // 头部的广告或者关键词
         String advText = this.advUserService.buildCurrent(message.getText());
         if (StrUtil.isNotEmpty(advText)) {
             sb.append(advText).append("\n");
         }
 
+        // 数据的查询
         Page<SearchBean> search = this.searchService.search(keyword, sourceType, current, sort);
         if (!search.isEmpty()) {
             search.forEach(a -> sb.append(a.buildLineText()));
@@ -116,12 +111,15 @@ public class SearchHandler extends AbstractHandler {
             if (StrUtil.isNotBlank(hottest)) {
                 sb.append(hottest);
             }
+            AsyncTaskHandler.async(AsyncBean.kw(keyword));
         } else {
             sb.append("关键词暂未收录\n");
         }
 
+        // 底部按钮的处理
+        AdvUser buttonAdv = this.advUserService.buttonAdv();
         InlineKeyboardMarkup markup = KeyboardHelper.buildSearchResultKeyboard(
-                hitType, current, filter, sort, this.properties.getBotUsername(), search, keyword
+                hitType, current, filter, sort, this.properties.getBotUsername(), search, keyword, buttonAdv
         );
 
         return send ? markdownV2(message, sb.toString(), markup) : editMarkdownV2(message, sb.toString(), markup);
