@@ -1,0 +1,16 @@
+package com.search.robots.database.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.search.robots.database.entity.Address;
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * TRC20地址 Mapper
+ * 
+ * @author zyred
+ * @since 2025/01/17
+ */
+@Mapper
+public interface AddressMapper extends BaseMapper<Address> {
+
+}

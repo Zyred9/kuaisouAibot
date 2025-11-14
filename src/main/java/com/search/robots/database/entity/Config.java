@@ -92,10 +92,10 @@ public class Config {
     private String keywordRankText;
 
     // 充值配置
-    /** 充值地址：用户进行USDT等充值时跳转的网页地址或目标地址，支持http/https或协议规定的地址格式。 **/
-    private String rechargeAddress;
-    /** 充值二维码图片ID：用于展示充值收款二维码的Telegram图片file_id。若为空则不展示图片，仅发送文本。 **/
-    private String rechargeQrImageId;
+//    /** 充值地址：用户进行USDT等充值时跳转的网页地址或目标地址，支持http/https或协议规定的地址格式。 **/
+//    private String rechargeAddress;
+//    /** 充值二维码图片ID：用于展示充值收款二维码的Telegram图片file_id。若为空则不展示图片，仅发送文本。 **/
+//    private String rechargeQrImageId;
     /** 充值提示文本：点击充值按钮后展示的Markdown文案，支持包含充值说明、到账时间、注意事项等。 **/
     private String rechargeTipMarkdown;
 

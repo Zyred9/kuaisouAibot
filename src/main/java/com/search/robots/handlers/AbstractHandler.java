@@ -19,6 +19,7 @@ import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -213,6 +214,16 @@ public abstract class AbstractHandler {
                 .chatId(message.getChatId())
                 .photo(new InputFile(fileId))
                 .parseMode(parseModel)
+                .replyMarkup(markup)
+                .caption(caption)
+                .build();
+    }
+
+    protected SendPhoto photoMarkdown(Message message, File file, String caption, InlineKeyboardMarkup markup) {
+        return SendPhoto.builder()
+                .chatId(message.getChatId())
+                .photo(new InputFile(file))
+                .parseMode(ParseMode.MARKDOWN)
                 .replyMarkup(markup)
                 .caption(caption)
                 .build();

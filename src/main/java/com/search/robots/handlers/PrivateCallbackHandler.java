@@ -22,16 +22,19 @@ import com.search.robots.database.enums.adv.AdvTypeEnum;
 import com.search.robots.database.service.*;
 import com.search.robots.helper.*;
 import com.search.robots.sender.AsyncSender;
+import com.search.robots.sender.SyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
+import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -58,6 +61,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
     private final AdvPriceService advPriceService;
     private final IncludedService includedService;
     private final HotSearchService hotSearchService;
+    private final AddressService addressService;
     private final AdvLibraryService advLibraryService;
     private final ExhibitionService exhibitionService;
     private final PrivateChatHandler privateChatHandler;
@@ -585,15 +589,30 @@ public class PrivateCallbackHandler extends AbstractHandler {
         if (StrUtil.equals(command.get(1), "adv_recharge")) {
             // 1) 获取配置，并进行空值与异常保护
             Config config = this.configService.queryConfig();
+            Address address = this.addressService.getByUserId(callbackQuery.getFrom().getId());
 
-            String rechargeQrImageId = config.getRechargeQrImageId();
-            if (StrUtil.isBlank(rechargeQrImageId)) {
-                return null;
-            }
             String tipMarkdown = config.getRechargeTipMarkdown();
-
             InlineKeyboardMarkup backKb = KeyboardHelper.buildSingleBackKeyboard("one#self_adv_center_new");
-            AsyncSender.async(photoMarkdown(message, rechargeQrImageId, tipMarkdown, backKb));
+
+            if (StrUtil.isBlank(address.getQrImageId())) {
+                File file = QRCodeGenerator.buildQrCode(
+                        address.getAddress(),
+                        callbackQuery.getFrom().getId(),
+                        this.properties.getQrCodePath()
+                );
+                Message send = SyncSender.send(photoMarkdown(message, file, tipMarkdown, backKb));
+                PhotoSize photoSize = send.getPhoto().stream().
+                        max(Comparator.comparingInt(PhotoSize::getFileSize)).orElse(null);
+
+                if (Objects.nonNull(photoSize)) {
+                    address.setQrImageId(photoSize.getFileId());
+                    this.addressService.updateById(address);
+                }
+            } else {
+                AsyncSender.async(
+                        photoMarkdown(message, address.getQrImageId(), tipMarkdown, backKb)
+                );
+            }
             return null;
         }
         // 我的广告

@@ -32,6 +32,8 @@ public class BotProperties {
     private Long backgroundGroupId;
     private Map<String, String> tokens;
 
+    private String qrCodePath;
+
 
     public String getToken () {
         return this.tokens.get(Constants.TOKEN_KEY);

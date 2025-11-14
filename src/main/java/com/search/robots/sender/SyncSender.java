@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.methods.groupadministration.RestrictCh
 import org.telegram.telegrambots.meta.api.methods.groupadministration.SetChatAdministratorCustomTitle;
 import org.telegram.telegrambots.meta.api.methods.groupadministration.SetChatTitle;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
@@ -31,6 +32,11 @@ public class SyncSender {
 
     @SneakyThrows
     public static Message send (SendMessage msg) {
+        return SyncSender.telegramClient.execute(msg);
+    }
+
+    @SneakyThrows
+    public static Message send (SendPhoto msg) {
         return SyncSender.telegramClient.execute(msg);
     }
 
