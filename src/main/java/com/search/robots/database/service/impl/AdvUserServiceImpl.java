@@ -20,6 +20,7 @@ import com.search.robots.handlers.EmptyHandler;
 import com.search.robots.helper.Assert;
 import com.search.robots.helper.KeyboardHelper;
 import com.search.robots.helper.RedisHelper;
+import com.search.robots.helper.StrHelper;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -141,16 +142,8 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
         Set<String> ids = RedisHelper.sMembers(key);
 
         List<AdvUser> advUsers;
-
         if (CollUtil.isEmpty(ids)) {
-            advUsers = this.baseMapper.selectList(
-                Wrappers.<AdvUser>lambdaQuery()
-                        .eq(AdvUser::getAdvType, AdvTypeEnum.BUY_TOP_LINK)
-                        .eq(AdvUser::getAdvStatus, AdvStatus.PROMOTION_ING)
-                        .last(" order by rand() limit 2")
-            );
-            Set<Long> longIds = advUsers.stream().map(AdvUser::getId).collect(Collectors.toSet());
-            AsyncTaskHandler.async(AsyncBean.relatedIncr(longIds));
+            advUsers = this.randTopAdv();
         } else {
             Set<Long>  longIds = ids.stream().map(Long::parseLong).collect(Collectors.toSet());
             advUsers = this.baseMapper.selectList(
@@ -164,16 +157,25 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
             AsyncTaskHandler.async(AsyncBean.directIncr(longIds));
         }
         if (CollUtil.isEmpty(advUsers)) {
+            advUsers = this.randTopAdv();
+        }
+        if (CollUtil.isEmpty(advUsers)) {
             return null;
         }
 
         StringBuilder sb = new StringBuilder();
         for (AdvUser advUser : advUsers) {
-            sb.append(advUser.getAdvPosition().getIcon())
-                    .append("[")
-                    .append(advUser.getAdvContent())
+            if (Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_TOP_LINK)
+                    || Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_BOTTOM_BUTTON)) {
+                sb.append("\\[广告\\] ");
+            }
+            if (Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_KEYWORD_RANK)) {
+                sb.append(advUser.getAdvPosition().getIcon());
+            }
+            sb.append("[")
+                    .append(StrHelper.specialResult(advUser.getAdvContentText()))
                     .append("](")
-                    .append(advUser.getAdvUrl())
+                    .append(advUser.getAdvUrlText())
                     .append(")")
                     .append("\n");
         }
@@ -232,14 +234,26 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
             // 关键词排行
             else if (Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_KEYWORD_RANK)) {
                 // 比较两个时间
-                boolean after = advUser.getExpirationTime().isAfter(LocalDateTime.now());
+                boolean after = LocalDateTime.now().isAfter(advUser.getExpirationTime());
                 if (after) {
                     update.setAdvStatus(AdvStatus.THE_END);
                 }
             }
-
             updates.add(update);
         }
         this.updateBatchById(updates);
+    }
+
+
+    public List<AdvUser> randTopAdv () {
+        List<AdvUser> advUsers = this.baseMapper.selectList(
+                Wrappers.<AdvUser>lambdaQuery()
+                        .eq(AdvUser::getAdvType, AdvTypeEnum.BUY_TOP_LINK)
+                        .eq(AdvUser::getAdvStatus, AdvStatus.PROMOTION_ING)
+                        .last(" order by rand() limit 2")
+        );
+        Set<Long> longIds = advUsers.stream().map(AdvUser::getId).collect(Collectors.toSet());
+        AsyncTaskHandler.async(AsyncBean.relatedIncr(longIds));
+        return advUsers;
     }
 }

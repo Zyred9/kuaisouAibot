@@ -16,6 +16,7 @@ import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.service.*;
 import com.search.robots.helper.DecimalHelper;
 import com.search.robots.helper.KeyboardHelper;
+import com.search.robots.helper.StrHelper;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +86,16 @@ public class PrivateChatHandler extends AbstractHandler{
                 List<HotSearch> keywords = this.hotSearchService.keywords(hit);
                 InlineKeyboardMarkup markup = KeyboardHelper.buildHotSearchKeyboard(keywords, hit);
                 return markdownReply(message, "近期热门搜索排行榜", markup);
+            }
+            if (StrUtil.startWith(commands.get(1), "query_")) {
+                String encode = StrUtil.removeAll(commands.get(1), "query_");
+                String decode = StrHelper.decode(encode);
+                return this.searchHandler.processorStartSearch(message, decode);
+            }
+            if (StrUtil.equals(commands.get(1), "ad_null")) {
+                Config config = this.configService.queryConfig();
+                InlineKeyboardMarkup markup = KeyboardHelper.buildAdvertisingKeyboard();
+                return markdown(message, config.getAdvertisingMarkdown(), markup);
             }
             this.processorStartWith(message, commands);
         }
@@ -231,11 +242,8 @@ public class PrivateChatHandler extends AbstractHandler{
                 }
                 advUser.setAdvStatus(AdvStatus.UNDER_APPROVAL);
                 this.advUserService.updateById(advUser);
-                String advUserPaymentText = advUser.buildAdvUserPaymentText();
-                InlineKeyboardMarkup markup = KeyboardHelper
-                        .buildPymentKeywordKeyboard(advUser.getId(),
-                                dialogueCtx.getMark(), advUser.getLibraryId());
-                result = markdownV2(message, advUserPaymentText, markup);
+                InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
+                result = markdownV2(message, advUser.getAdvText(), markup);
             }
 
             CommonCache.removeDialogue(message.getFrom().getId());

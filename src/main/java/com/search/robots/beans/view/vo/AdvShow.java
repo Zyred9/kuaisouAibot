@@ -1,6 +1,7 @@
 package com.search.robots.beans.view.vo;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -44,6 +45,7 @@ public class AdvShow {
     private Long uniqueUser;
     
     /** 总展现次数(计算字段) **/
+    @JsonIgnore
     public Long getTotalShow() {
         return (directShow == null ? 0L : directShow) + (relatedShow == null ? 0L : relatedShow);
     }
@@ -55,7 +57,9 @@ public class AdvShow {
                 .setUniqueUser(0L);
         if (direct) {
             advShow.setDirectShow(1L);
+            advShow.setRelatedShow(0L);
         } else {
+            advShow.setDirectShow(0L);
             advShow.setRelatedShow(1L);
         }
         return advShow;

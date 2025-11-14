@@ -113,11 +113,11 @@ public class AdvUser {
     private LocalDateTime createdAt;
 
 
-    public String getAdvContent() {
+    public String getAdvContentText() {
         return StrUtil.isBlank(this.advContent) ? "未配置❌" : this.advContent;
     }
 
-    public String getAdvUrl() {
+    public String getAdvUrlText() {
         return StrUtil.isBlank(this.advUrl) ? "未配置❌" : this.advUrl;
     }
 
@@ -179,8 +179,16 @@ public class AdvUser {
                 .setCreatedAt(now);
     }
 
+    public String getAdvText () {
+        if (Objects.equals(this.getAdvType(), AdvTypeEnum.BUY_TOP_LINK)
+                || Objects.equals(this.getAdvType(), AdvTypeEnum.BUY_BOTTOM_BUTTON)) {
+            return buildTopButtonPaymentText();
+        }
+        return buildAdvUserPaymentText();
+    }
 
-    public String buildAdvUserPaymentText() {
+
+    private String buildAdvUserPaymentText() {
         String renewText = buildRenewRecordsText(this);
         String showDetailText = buildShowDetailText(this);
         return StrUtil.format(Constants.KEYWORD_PAYMENT_TEXT,
@@ -194,15 +202,15 @@ public class AdvUser {
                 TimeHelper.format(this.getEffectiveTime()),
                 TimeHelper.format(this.getExpirationTime()),
                 StrHelper.specialResult(this.getAdvSource().getDesc()),
-                StrHelper.specialResult(this.getAdvContent()),
-                StrHelper.specialResult(this.getAdvUrl()),
+                StrHelper.specialResult(this.getAdvContentText()),
+                StrHelper.specialResult(this.getAdvUrlText()),
                 this.updateContentText(),
                 StrHelper.specialLong(this.getShowCount()),
                 showDetailText
         );
     }
 
-    public String buildTopButtonPaymentText () {
+    private String buildTopButtonPaymentText () {
         String renewText = buildRenewRecordsText(this);
         String showDetailText = buildShowDetailText(this);
         return StrUtil.format(Constants.TOP_BUTTON_PAYMENT_TEXT,
@@ -215,8 +223,8 @@ public class AdvUser {
                 TimeHelper.format(this.getEffectiveTime()),
                 StrHelper.specialLong(this.getExpirationCount()),
                 StrHelper.specialResult(this.getAdvSource().getDesc()),
-                StrHelper.specialResult(this.getAdvContent()),
-                StrHelper.specialResult(this.getAdvUrl()),
+                StrHelper.specialResult(this.getAdvContentText()),
+                StrHelper.specialResult(this.getAdvUrlText()),
                 this.updateContentText(),
                 StrHelper.specialLong(this.getShowCount()),
                 showDetailText
@@ -276,7 +284,7 @@ public class AdvUser {
         String title = equals ? "✅广告审批通过" : "❌广告审拒绝";
         return StrUtil.format(Constants.ADV_USER_AUDIT_SUCCESS_TEXT,
                 this.userId, this.username, this.id,
-                this.getAdvContent(), this.getAdvUrl(),
+                this.getAdvContentText(), this.getAdvUrlText(),
                 this.getTempContent(), this.getTempUrl(),
                 title, customUsername
         );

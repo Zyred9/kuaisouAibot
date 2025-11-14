@@ -55,8 +55,19 @@ public class SearchHandler extends AbstractHandler {
      * @return              结果
      */
     public BotApiMethod<?> processorDefaultSearch(Message message) {
-        return this.doSearch(message, "", message.getText(),
-                null, 0, SortEnum.EMPTY, Boolean.FALSE);
+        return this.doSearch(message, "", message.getText(), null,
+                0, SortEnum.EMPTY, Boolean.FALSE, true);
+    }
+
+    /**
+     * start 链接
+     *
+     * @param message   消息体
+     * @return          新消息
+     */
+    public BotApiMethod<?> processorStartSearch(Message message, String decode) {
+        return this.doSearch(message, "", decode, null,
+                0, SortEnum.EMPTY, Boolean.FALSE, true);
     }
 
 
@@ -84,18 +95,18 @@ public class SearchHandler extends AbstractHandler {
         SortEnum sort = SortEnum.of(command.get(4));
         String keyword = command.get(5);
 
-        return this.doSearch(message, command.get(1), keyword, sourceType, current, sort, filter);
+        return this.doSearch(message, command.get(1), keyword, sourceType, current, sort, filter, false);
     }
 
 
 
-    private EditMessageText doSearch(Message message, String hitType, String keyword,
-                                     SourceTypeEnum sourceType, int current, SortEnum sort, Boolean filter) {
+    private BotApiMethod<?> doSearch(Message message, String hitType, String keyword, SourceTypeEnum sourceType,
+                                     int current, SortEnum sort, Boolean filter, boolean send) {
 
         StringBuilder sb = new StringBuilder();
         String advText = this.advUserService.buildCurrent(message.getText());
         if (StrUtil.isNotEmpty(advText)) {
-            sb.append(advText).append("~\n");
+            sb.append(advText).append("\n");
         }
 
         Page<SearchBean> search = this.searchService.search(keyword, sourceType, current, sort);
@@ -112,7 +123,8 @@ public class SearchHandler extends AbstractHandler {
         InlineKeyboardMarkup markup = KeyboardHelper.buildSearchResultKeyboard(
                 hitType, current, filter, sort, this.properties.getBotUsername(), search, keyword
         );
-        return editMarkdownV2(message, sb.toString(), markup);
+
+        return send ? markdownV2(message, sb.toString(), markup) : editMarkdownV2(message, sb.toString(), markup);
     }
 
 

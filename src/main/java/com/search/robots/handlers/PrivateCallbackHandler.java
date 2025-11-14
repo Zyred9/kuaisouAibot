@@ -24,7 +24,6 @@ import com.search.robots.helper.*;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
@@ -312,8 +311,8 @@ public class PrivateCallbackHandler extends AbstractHandler {
             if (this.processorUserRealBalance(message, user, need, bt)) {
                 return null;
             }
-            InlineKeyboardMarkup markup = KeyboardHelper.buildPymentKeywordKeyboard(advUser.getId(), prev, null);
-            return editMarkdown(message, advUser.buildTopButtonPaymentText(), markup);
+            InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
+            return editMarkdown(message, advUser.getAdvText(), markup);
         }
 
         // 关键词购买支付
@@ -336,9 +335,8 @@ public class PrivateCallbackHandler extends AbstractHandler {
             AdvUser advUser = AdvUser.buildKeywordAdvUserDefault(user, library, price);
             this.advUserService.save(advUser);
 
-            String advUserPaymentText = advUser.buildAdvUserPaymentText();
-            InlineKeyboardMarkup markup = KeyboardHelper.buildPymentKeywordKeyboard(advUser.getUserId(), prev, library.getId());
-            return editMarkdownV2(message, advUserPaymentText, markup);
+            InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
+            return editMarkdownV2(message, advUser.getAdvText(), markup);
         }
 
         // 我的广告
@@ -392,7 +390,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
 
                 this.advUserService.updateById(advUser);
                 InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
-                return editMarkdownV2(message, advUser.buildAdvUserPaymentText(), markup);
+                return editMarkdownV2(message, advUser.getAdvText(), markup);
             }
         }
 
@@ -437,20 +435,16 @@ public class PrivateCallbackHandler extends AbstractHandler {
                 return answerAlert(callbackQuery, "未找到该广告购买记录!");
             }
             
-            String resultText = advUser.buildAdvUserPaymentText();
-
             InlineKeyboardMarkup markup;
             if (Objects.equals(callbackQuery.getFrom().getId(), advUser.getUserId())
                     && !Objects.equals(advUser.getAdvStatus(), AdvStatus.THE_END)) {
-                markup = KeyboardHelper.buildPymentKeywordKeyboard(
-                        advUser.getId(), command.get(2), advUser.getLibraryId()
-                );
+                markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
             } else {
                 markup = KeyboardHelper
                         .buildKeywordSoldKeyboard(command.get(2), advUser.getLibraryId());
             }
 
-            return editMarkdownV2(message, resultText, markup);
+            return editMarkdownV2(message, advUser.getAdvText(), markup);
         }
         
         // 处理购买按钮点击
@@ -629,19 +623,8 @@ public class PrivateCallbackHandler extends AbstractHandler {
             if (Objects.isNull(advUser)) {
                 return answerAlert(callbackQuery, "未找到该广告购买记录!");
             }
-
-            InlineKeyboardMarkup markup = KeyboardHelper.buildPymentKeywordKeyboard(
-                    advUser.getId(), command.get(2), advUser.getLibraryId()
-            );
-
-            String text;
-            if (Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_KEYWORD_RANK)) {
-                text = advUser.buildAdvUserPaymentText();
-            } else {
-                text = advUser.buildTopButtonPaymentText();
-            }
-
-            return editMarkdownV2(message, text, markup);
+            InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
+            return editMarkdownV2(message, advUser.getAdvText(), markup);
         }
         return null;
     }

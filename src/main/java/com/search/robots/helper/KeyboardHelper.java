@@ -71,9 +71,9 @@ public class KeyboardHelper {
         InlineKeyboardRow viewsRow = new InlineKeyboardRow();
         if (CollUtil.contains(SourceTypeEnum.views(), hitType)) {
             for (SortEnum value : SortEnum.keyboards()) {
-                String name = value.getIcon();
+                String name = value.getIcon() + value.getDesc();
                 if (Objects.equals(sort, value)) {
-                    name = SortEnum.EMPTY.getIcon();
+                    name = SortEnum.EMPTY.getIcon() + value.getDesc();
                 }
                 viewsRow.add(
                         buttonText(name, StrHelper.buildName("search", hitType,
@@ -85,7 +85,7 @@ public class KeyboardHelper {
 
         InlineKeyboardRow optionRow = new InlineKeyboardRow();
         // 购买广告
-        optionRow.add(buttonUrl("购买广告", StrUtil.format(Constants.START_AD_CENTER, bot)));
+        optionRow.add(buttonUrl("\uD83D\uDECD购买广告", StrUtil.format(Constants.START_AD_CENTER, bot)));
         optionRow.add(buttonText("\uD83D\uDD1E过滤", StrHelper.buildName("search", hitType, current, !filter, sort.getCode(), keyword)));
 
         if (beans.hasPrevious()) {
@@ -144,20 +144,20 @@ public class KeyboardHelper {
         return InlineKeyboardMarkup.builder().keyboard(rows).build();
     }
 
-    public static InlineKeyboardMarkup buildPymentKeywordKeyboard (Long userAdvId, String prev, Long libraryId) {
-        List<InlineKeyboardRow> rows = new ArrayList<>(6);
-        rows.add(row(buttonText("\uD83D\uDD04优先续订", "three#my_adv#priority_renewal#" + userAdvId)));
-        rows.add(row(buttonText("\uD83D\uDFE2开始推广", "three#my_adv#start_promotion#" + userAdvId)));
-        rows.add(row(
-                buttonText("✏️修改广告标题", "three#my_adv#edit_title#" + prev + "#" + userAdvId),
-                buttonText("✏️修改广告链接", "three#my_adv#edit_link#" + prev + "#" + userAdvId)
-        ));
-        if (Objects.nonNull(libraryId)) {
-            rows.add(row(buttonText("⬅️返回关键词列表", "one#query_keyword#" + prev + "#" + libraryId)));
-        }
-        rows.add(row(buttonText("⬅️返回我的广告", "two#self_adv#0#0#1")));
-        return InlineKeyboardMarkup.builder().keyboard(rows).build();
-    }
+//    public static InlineKeyboardMarkup buildPymentKeywordKeyboard (AdvUser advUser, String prev) {
+//        List<InlineKeyboardRow> rows = new ArrayList<>(6);
+//        rows.add(row(buttonText("\uD83D\uDD04优先续订", "three#my_adv#priority_renewal#" + advUser.getId())));
+//        rows.add(row(buttonText("\uD83D\uDFE2开始推广", "three#my_adv#start_promotion#" + advUser.getId())));
+//        rows.add(row(
+//                buttonText("✏️修改广告标题", "three#my_adv#edit_title#" + prev + "#" + advUser.getId()),
+//                buttonText("✏️修改广告链接", "three#my_adv#edit_link#" + prev + "#" + advUser.getId())
+//        ));
+//        if (Objects.nonNull(advUser.getLibraryId())) {
+//            rows.add(row(buttonText("⬅️返回关键词列表", "one#query_keyword#" + prev + "#" + advUser.getLibraryId())));
+//        }
+//        rows.add(row(buttonText("⬅️返回我的广告", "two#self_adv#0#0#1")));
+//        return InlineKeyboardMarkup.builder().keyboard(rows).build();
+//    }
 
 
     public static InlineKeyboardMarkup buildAdvUserDetailKeyboard (AdvUser advUser) {
@@ -166,14 +166,18 @@ public class KeyboardHelper {
                 "\uD83D\uDFE0暂停推广" : "\uD83D\uDFE2开始推广";
         InlineKeyboardButton button = buttonText(name, "three#my_adv#start_promotion#" + advUser.getId());
 
-        return InlineKeyboardMarkup.builder().keyboard(List.of(
-                row(buttonText("\uD83D\uDD04优先续订", "three#my_adv#priority_renewal#" + advUser.getId())),
-                row(button),
-                row(buttonText("✏️修改广告标题", "three#my_adv#edit_title#" + prev + "#" + advUser.getId()),
-                        buttonText("✏️修改广告链接", "three#my_adv#edit_link#" + prev + "#" + advUser.getId())),
-                row(buttonText("⬅️返回关键词列表", "one#query_keyword#" + prev + "#" + advUser.getLibraryId())),
-                row(buttonText("⬅️返回我的广告", "two#self_adv#0#0#1"))
-        )).build();
+        List<InlineKeyboardRow> rows = new ArrayList<>(6);
+        rows.add(row(buttonText("\uD83D\uDD04优先续订", "three#my_adv#priority_renewal#" + advUser.getId())));
+        rows.add(row(button));
+        rows.add(row(
+                buttonText("✏️修改广告标题", "three#my_adv#edit_title#" + prev + "#" + advUser.getId()),
+                buttonText("✏️修改广告链接", "three#my_adv#edit_link#" + prev + "#" + advUser.getId()))
+        );
+        if (Objects.nonNull(advUser.getLibraryId())) {
+            rows.add(row(buttonText("⬅️返回关键词列表", "one#query_keyword#" + prev + "#" + advUser.getLibraryId())));
+        }
+        rows.add(row(buttonText("⬅️返回我的广告", "two#self_adv#0#0#1")));
+        return InlineKeyboardMarkup.builder().keyboard(rows).build();
     }
 
 
