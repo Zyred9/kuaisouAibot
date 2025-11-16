@@ -67,9 +67,9 @@ public class SearchHandler extends AbstractHandler {
      * @param message   消息体
      * @return          新消息
      */
-    public BotApiMethod<?> processorStartSearch(Message message, String decode) {
+    public BotApiMethod<?> processorStartSearch(Message message, String decode, boolean send) {
         return this.doSearch(message, "", decode, null,
-                0, SortEnum.EMPTY, Boolean.FALSE, true);
+                0, SortEnum.EMPTY, Boolean.FALSE, send);
     }
 
 
@@ -103,6 +103,7 @@ public class SearchHandler extends AbstractHandler {
             sb.append(advText).append("\n");
         }
 
+        boolean hasButton = false;
         // 数据的查询
         Page<SearchBean> search = this.searchService.search(keyword, sourceType, current, sort);
         if (!search.isEmpty()) {
@@ -112,6 +113,7 @@ public class SearchHandler extends AbstractHandler {
                 sb.append(hottest);
             }
             AsyncTaskHandler.async(AsyncBean.kw(keyword));
+            hasButton = true;
         } else {
             sb.append("关键词暂未收录\n");
         }
@@ -119,7 +121,7 @@ public class SearchHandler extends AbstractHandler {
         // 底部按钮的处理
         AdvUser buttonAdv = this.advUserService.buttonAdv();
         InlineKeyboardMarkup markup = KeyboardHelper.buildSearchResultKeyboard(
-                hitType, current, filter, sort, this.properties.getBotUsername(), search, keyword, buttonAdv
+                hitType, current, filter, sort, this.properties.getBotUsername(), search, keyword, buttonAdv, hasButton
         );
 
         return send ? markdownV2(message, sb.toString(), markup) : editMarkdownV2(message, sb.toString(), markup);

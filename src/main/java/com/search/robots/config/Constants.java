@@ -22,6 +22,10 @@ public interface Constants {
 
     String BOT_START_URL = "https://t.me/{}?start=";
 
+    String TRANSFER_QUERY = """
+            https://apilist.tronscanapi.com/api/filter/trc20/transfers?sort=-timestamp&count=true&limit=20&start=0&filterTokenValue=0&relatedAddress={}&start_timestamp={}
+            """;
+
     String START_MESSAGE_TEXT = """
             🔍我是个资源搜索引擎，向我发送关键词，帮你找到有趣的群组、频道、视频、音乐、电影、新闻。[简体中文包](https://t.me/setlanguage/zh-hans-beta)
             
@@ -235,15 +239,15 @@ public interface Constants {
 
     // 充值后发送给用户的
     String RECHARGE_USER_MESSAGE_TEXT = """
-            🆔：7653000728
-            昵称：DevelopBotAny668
-            当前余额：11.0150$
+            🆔：`{}`
+            昵称：`{}`
+            当前余额：`{}$`
             
             ==金额动账通知==
-            交易号: 20251102143902
-            申请时间：11-02 14:39
-            类型：充值
-            金额：11.0000$
+            交易号: `{}`
+            申请时间：`{}`
+            类型：`{}`
+            金额：`{}$`
             """;
 
     String NEXT_DETAIL_TEXT = """

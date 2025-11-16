@@ -7,6 +7,7 @@ bots:
     proxy-port: 7890
     proxy-type: socks
     background-group-id: -1002756411889
+    notify-chat-id: -1002756411889
     tokens:
       BOT_TOKEN: 8091103662:AAGhAp6lUMG2IK5VROdS9Uu9fMalLSAE91w
     qr-code-path: D:\open_workspace\kuaisouAibot\

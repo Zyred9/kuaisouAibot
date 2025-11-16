@@ -2,15 +2,14 @@ package com.search.robots.database.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.search.robots.beans.view.AsyncBean;
 import com.search.robots.beans.view.vo.search.SearchBean;
 import com.search.robots.database.enums.content.SortEnum;
 import com.search.robots.database.enums.content.SourceTypeEnum;
 import com.search.robots.database.service.SearchService;
-import com.search.robots.handlers.AsyncTaskHandler;
 import lombok.RequiredArgsConstructor;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -76,18 +75,33 @@ public class SearchServiceImpl implements SearchService {
 
         PageRequest pageRequest = PageRequest.of(current, PAGE_SIZE, orders);
 
+        // 配置高亮
+        HighlightBuilder highlightBuilder = new HighlightBuilder()
+                .field("sourceName")
+                .preTags("*")
+                .postTags("*");
+
         // 构建查询对象
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
                 .withQuery(boolQuery)
                 .withPageable(pageRequest)
+                .withHighlightBuilder(highlightBuilder)
                 .build();
 
         // 执行查询
         SearchHits<SearchBean> searchHits = elasticsearchTemplate.search(searchQuery, SearchBean.class);
         
-        // 提取结果列表
+        // 提取结果列表并处理高亮
         List<SearchBean> content = searchHits.getSearchHits().stream()
-                .map(SearchHit::getContent)
+                .map(hit -> {
+                    SearchBean bean = hit.getContent();
+                    // 获取高亮字段
+                    List<String> highlights = hit.getHighlightField("sourceName");
+                    if (Objects.nonNull(highlights) && !highlights.isEmpty()) {
+                        bean.setSourceName(highlights.get(0));
+                    }
+                    return bean;
+                })
                 .collect(Collectors.toList());
         // 返回分页结果
         return new PageImpl<>(content, pageRequest, searchHits.getTotalHits());

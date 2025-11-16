@@ -133,4 +133,7 @@ public class TimeHelper {
         }
     }
 
+    public static String build() {
+        return TimeHelper.format(LocalDateTime.now(), "yyyyMMddHHmmddSSS");
+    }
 }

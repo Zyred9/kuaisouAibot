@@ -33,6 +33,7 @@ public class BotProperties {
     private Map<String, String> tokens;
 
     private String qrCodePath;
+    private String notifyChatId;
 
 
     public String getToken () {

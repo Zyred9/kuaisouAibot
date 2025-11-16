@@ -5,7 +5,9 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.search.robots.beans.cache.CommonCache;
+import com.search.robots.beans.caffeine.CountdownCaffeine;
 import com.search.robots.beans.view.DialogueCtx;
+import com.search.robots.beans.view.caffeine.Task;
 import com.search.robots.beans.view.vo.AdvButton;
 import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
@@ -58,10 +60,11 @@ public class PrivateCallbackHandler extends AbstractHandler {
     private final SearchHandler searchHandler;
     private final ConfigService configService;
     private final AdvUserService advUserService;
+    private final AddressService addressService;
     private final AdvPriceService advPriceService;
     private final IncludedService includedService;
+    private final RechargeService rechargeService;
     private final HotSearchService hotSearchService;
-    private final AddressService addressService;
     private final AdvLibraryService advLibraryService;
     private final ExhibitionService exhibitionService;
     private final PrivateChatHandler privateChatHandler;
@@ -422,7 +425,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
         user.setBalance(balance.subtract(need));
         this.userService.updateById(user);
 
-        Bill bill = Bill.buildAdvPaymentBill(user, need, bt);
+        Bill bill = Bill.buildAdvPaymentBill(user, balance, need, bt);
         this.billService.save(bill);
         return false;
     }
@@ -587,14 +590,13 @@ public class PrivateCallbackHandler extends AbstractHandler {
         }
         // 充值
         if (StrUtil.equals(command.get(1), "adv_recharge")) {
-            // 1) 获取配置，并进行空值与异常保护
             Config config = this.configService.queryConfig();
-            Address address = this.addressService.getByUserId(callbackQuery.getFrom().getId());
+            Address address = this.addressService.selectEmptyAddress(callbackQuery.getFrom().getId());
 
             String tipMarkdown = config.getRechargeTipMarkdown();
             InlineKeyboardMarkup backKb = KeyboardHelper.buildSingleBackKeyboard("one#self_adv_center_new");
 
-            if (StrUtil.isBlank(address.getQrImageId())) {
+            if (StrUtil.isBlank(address.getImageId())) {
                 File file = QRCodeGenerator.buildQrCode(
                         address.getAddress(),
                         callbackQuery.getFrom().getId(),
@@ -605,14 +607,16 @@ public class PrivateCallbackHandler extends AbstractHandler {
                         max(Comparator.comparingInt(PhotoSize::getFileSize)).orElse(null);
 
                 if (Objects.nonNull(photoSize)) {
-                    address.setQrImageId(photoSize.getFileId());
+                    address.setImageId(photoSize.getFileId());
                     this.addressService.updateById(address);
                 }
             } else {
                 AsyncSender.async(
-                        photoMarkdown(message, address.getQrImageId(), tipMarkdown, backKb)
+                        photoMarkdown(message, address.getImageId(), tipMarkdown, backKb)
                 );
             }
+
+            CountdownCaffeine.set(Task.buildRecharge(address.getAddress()));
             return null;
         }
         // 我的广告
@@ -788,6 +792,12 @@ public class PrivateCallbackHandler extends AbstractHandler {
             long libraryId = Long.parseLong(command.get(3));
             AdvLibrary library = this.advLibraryService.getByIdWithPrices(libraryId);
             return this.privateChatHandler.processorQueryKeyword(message, library, command.get(2));
+        }
+
+        // 搜索词点击
+        if (StrUtil.equals(command.get(1), "keyword")) {
+            String decodeKeyword = StrHelper.decode(command.get(2));
+            return this.searchHandler.processorStartSearch(message, decodeKeyword, false);
         }
         return null;
     }

@@ -4,9 +4,11 @@ bots:
     logs: false
     enable-proxy: false
     background-group-id: 123456789001
+    notify-chat-id:
     tokens:
       BOT_TOKEN: 7625159298:AAFGjgPTBlPtc2TaNfFo7Ph2FAZgVjK9Rno
     qr-code-path: /usr/local/qr_code/
+
 # -------------------部署需要修改---------------------
 
 mybatis-plus:

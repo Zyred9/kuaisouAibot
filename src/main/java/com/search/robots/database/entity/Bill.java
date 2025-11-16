@@ -39,6 +39,8 @@ public class Bill {
     private String billNo;
     /** 账单类型 **/
     private BillTypeEnum type;
+    /** 变动前金额 **/
+    private BigDecimal beforeAmount;
     /** 金额 **/
     private BigDecimal amount;
     /** 描述 **/
@@ -49,18 +51,18 @@ public class Bill {
     /**
      * 构建广告扣费账单记录（如顶部链接/底部按钮购买等）
      */
-    public static Bill buildAdvPaymentBill(User user, BigDecimal need, BillTypeEnum type) {
-        LocalDateTime now = LocalDateTime.now();
-        String billNo = String.valueOf(TimeHelper.getTimestamp(now));
+    public static Bill buildAdvPaymentBill(User user, BigDecimal before,
+                                           BigDecimal need, BillTypeEnum type) {
         return new Bill()
                 .setUserId(user.getUserId())
                 .setUsername(user.getUsername())
                 .setNickname(user.getNickname())
-                .setBillNo(billNo)
+                .setBillNo(TimeHelper.build())
                 .setType(type)
                 .setDescription("")
+                .setBeforeAmount(before)
                 .setAmount(need.negate())
-                .setCreateTime(now);
+                .setCreateTime(LocalDateTime.now());
     }
 
     public static String buildBillText (List<Bill> bills) {
@@ -75,12 +77,16 @@ public class Bill {
         return sb.toString();
     }
 
+    public static void buildRecharge(User user, BigDecimal amount) {
+
+    }
+
     // 20251102010226|奖励|0.015|审批通过✅
     public String buildTextLine() {
         return StrUtil.format(Constants.SELF_BILL_LINE_TEXT,
-                this.billNo, this.type.getDesc(),
-                DecimalHelper.standardSymbol(this.amount),
-                StrHelper.specialResult(this.description)
+                this.billNo, this.type.getMessage(),
+                DecimalHelper.decimalParse(this.amount),
+                StrHelper.specialResult("审批通过✅")
         );
     }
 }

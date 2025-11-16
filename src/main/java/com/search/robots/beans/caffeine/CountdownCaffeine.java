@@ -1,9 +1,11 @@
 package com.search.robots.beans.caffeine;
 
+import cn.hutool.core.lang.UUID;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
 import com.github.benmanes.caffeine.cache.Scheduler;
+import com.search.robots.beans.view.caffeine.Task;
 import lombok.SneakyThrows;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.springframework.stereotype.Component;
@@ -21,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class CountdownCaffeine extends Thread {
 
-    private static Cache<String, Integer> DESTORY_CACHE;
+    private static Cache<String, Task> DESTORY_CACHE;
 
     public CountdownCaffeine(ExpireListener listener) {
         DESTORY_CACHE = Caffeine.newBuilder()
@@ -34,9 +36,9 @@ public class CountdownCaffeine extends Thread {
         super.start();
     }
 
-    public static void set (Long chatId, Integer messageId, int duration) {
-        String key = chatId + "_" + messageId;
-        DESTORY_CACHE.put(key, duration);
+    public static void set (Task task) {
+        String key = UUID.fastUUID().toString(true);
+        DESTORY_CACHE.put(key, task);
     }
 
     @Override
@@ -48,20 +50,20 @@ public class CountdownCaffeine extends Thread {
         }
     }
 
-    private static class DynamicExpire implements Expiry<String, Integer> {
+    private static class DynamicExpire implements Expiry<String, Task> {
 
         @Override
-        public long expireAfterCreate(String messageId, Integer expire, long currentTime) {
-            return TimeUnit.SECONDS.toNanos(expire);
+        public long expireAfterCreate(String messageId, Task expire, long currentTime) {
+            return expire.getNode().getTimeUnit().toNanos(expire.getNode().getLoop());
         }
 
         @Override
-        public long expireAfterUpdate(String messageId, Integer expire, long currentTime, @NonNegative long currentDuration) {
+        public long expireAfterUpdate(String messageId, Task expire, long currentTime, @NonNegative long currentDuration) {
             return currentDuration;
         }
 
         @Override
-        public long expireAfterRead(String messageId, Integer expire, long currentTime, @NonNegative long currentDuration) {
+        public long expireAfterRead(String messageId, Task expire, long currentTime, @NonNegative long currentDuration) {
             return currentDuration;
         }
     }

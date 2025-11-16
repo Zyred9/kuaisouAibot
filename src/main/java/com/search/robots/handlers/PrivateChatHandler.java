@@ -90,7 +90,7 @@ public class PrivateChatHandler extends AbstractHandler{
             if (StrUtil.startWith(commands.get(1), "query_")) {
                 String encode = StrUtil.removeAll(commands.get(1), "query_");
                 String decode = StrHelper.decode(encode);
-                return this.searchHandler.processorStartSearch(message, decode);
+                return this.searchHandler.processorStartSearch(message, decode, true);
             }
             if (StrUtil.equals(commands.get(1), "ad_null")) {
                 Config config = this.configService.queryConfig();

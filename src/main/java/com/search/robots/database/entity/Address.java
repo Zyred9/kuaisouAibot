@@ -21,25 +21,15 @@ import java.time.LocalDateTime;
 @TableName("t_address")
 public class Address {
 
-    /** 主键ID **/
-    @TableId(type = IdType.AUTO)
-    private Long id;
-
-    /** TRC20地址 **/
+    /** TRC20 地址 **/
+    @TableId(type = IdType.INPUT)
     private String address;
-
-    /** 绑定的用户ID **/
+    /** 分配的用户ID **/
     private Long userId;
-
-    /** 二维码图片ID(可空) **/
-    private String qrImageId;
-
-    /** 创建时间 **/
-    private LocalDateTime createTime;
-
-    /** 分配时间 **/
-    private LocalDateTime assignTime;
-
-    /** 更新时间 **/
-    private LocalDateTime updateTime;
+    /** 图片地址 **/
+    private String imageId;
+    /** 监听次数 **/
+    private Integer listenCount;
+    /** 上一次查询时间 **/
+    private Long prevTimestamp;
 }
