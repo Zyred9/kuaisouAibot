@@ -19,4 +19,11 @@ public interface AdvLibraryService extends IService<AdvLibrary> {
     AdvLibrary getByKeywordWithPrices(String keyword, String data);
     AdvLibrary getByIdWithPrices(Long libraryId);
 
+
+    /**
+     * 处理客户端搜索对关键词的 7 天搜索记录处理
+     *
+     * @param keyword 关键词
+     */
+    void search(String keyword);
 }

@@ -108,9 +108,13 @@ public class SearchHandler extends AbstractHandler {
         Page<SearchBean> search = this.searchService.search(keyword, sourceType, current, sort);
         if (!search.isEmpty()) {
             search.forEach(a -> sb.append(a.buildLineText()));
-            String hottest = this.hotSearchService.hottest();
-            if (StrUtil.isNotBlank(hottest)) {
-                sb.append(hottest);
+            if (current != 0) {
+                sb.append("\uD83D\uDC47点击筛选类型，当前【第").append(current + 1).append("页】");
+            } else {
+                String hottest = this.hotSearchService.hottest();
+                if (StrUtil.isNotBlank(hottest)) {
+                    sb.append(hottest);
+                }
             }
             AsyncTaskHandler.async(AsyncBean.kw(keyword));
             hasButton = true;

@@ -9,7 +9,6 @@ import com.search.robots.database.service.SearchService;
 import lombok.RequiredArgsConstructor;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -21,9 +20,9 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Elasticsearch 搜索服务实现类
@@ -76,34 +75,38 @@ public class SearchServiceImpl implements SearchService {
         PageRequest pageRequest = PageRequest.of(current, PAGE_SIZE, orders);
 
         // 配置高亮
-        HighlightBuilder highlightBuilder = new HighlightBuilder()
-                .field("sourceName")
-                .preTags("*")
-                .postTags("*");
+//        HighlightBuilder highlightBuilder = new HighlightBuilder()
+//                .field("sourceName")
+//                .preTags("*")
+//                .postTags("*");
 
         // 构建查询对象
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
                 .withQuery(boolQuery)
                 .withPageable(pageRequest)
-                .withHighlightBuilder(highlightBuilder)
+//                .withHighlightBuilder(highlightBuilder)
                 .build();
 
         // 执行查询
         SearchHits<SearchBean> searchHits = elasticsearchTemplate.search(searchQuery, SearchBean.class);
         
-        // 提取结果列表并处理高亮
-        List<SearchBean> content = searchHits.getSearchHits().stream()
-                .map(hit -> {
-                    SearchBean bean = hit.getContent();
-                    // 获取高亮字段
-                    List<String> highlights = hit.getHighlightField("sourceName");
-                    if (Objects.nonNull(highlights) && !highlights.isEmpty()) {
-                        bean.setSourceName(highlights.get(0));
-                    }
-                    return bean;
-                })
-                .collect(Collectors.toList());
-        // 返回分页结果
+//        // 提取结果列表并处理高亮
+//        List<SearchBean> content = searchHits.getSearchHits().stream()
+//                .map(hit -> {
+//                    SearchBean bean = hit.getContent();
+//                    // 获取高亮字段
+//                    List<String> highlights = hit.getHighlightField("sourceName");
+//                    if (!highlights.isEmpty()) {
+//                        bean.setSourceName(highlights.get(0));
+//                    }
+//                    return bean;
+//                })
+//                .collect(Collectors.toList());
+        List<SearchHit<SearchBean>> searchList = searchHits.getSearchHits();
+        List<SearchBean> content = new ArrayList<>(searchList.size());
+        for (SearchHit<SearchBean> hit : searchList) {
+            content.add(hit.getContent());
+        }
         return new PageImpl<>(content, pageRequest, searchHits.getTotalHits());
     }
 }

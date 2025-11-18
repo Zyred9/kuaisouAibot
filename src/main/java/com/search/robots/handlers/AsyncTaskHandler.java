@@ -4,6 +4,7 @@ package com.search.robots.handlers;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.search.robots.beans.view.AsyncBean;
+import com.search.robots.database.service.AdvLibraryService;
 import com.search.robots.database.service.AdvUserService;
 import com.search.robots.database.service.HotSearchService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ public class AsyncTaskHandler extends Thread {
 
     @Resource private AdvUserService advUserService;
     @Resource private HotSearchService hotSearchService;
+    @Resource private AdvLibraryService advLibraryService;
 
     public static void async(AsyncBean ab) {
         if (Objects.isNull(ab)) {
@@ -47,9 +49,10 @@ public class AsyncTaskHandler extends Thread {
             try {
                 AsyncBean bean = ASYNC_QUEUE.take();
 
-                // 热搜词统计
-                if (StrUtil.isNotBlank(bean.getSearchKeyword())){
+                // 热搜词统计 关键词搜索统计
+                if (StrUtil.isNotBlank(bean.getSearchKeyword())) {
                     this.hotSearchService.search(bean.getSearchKeyword());
+                    this.advLibraryService.search(bean.getSearchKeyword());
                     continue;
                 }
 

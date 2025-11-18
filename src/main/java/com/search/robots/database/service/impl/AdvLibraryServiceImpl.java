@@ -1,8 +1,10 @@
 package com.search.robots.database.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.search.robots.beans.view.vo.AdvShow;
 import com.search.robots.database.entity.AdvLibrary;
 import com.search.robots.database.entity.AdvPrice;
 import com.search.robots.database.enums.adv.AdvTypeEnum;
@@ -14,8 +16,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 广告库ServiceImpl
@@ -93,6 +100,36 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
         }
         
         return library;
+    }
+
+    @Override
+    public void search(String keyword) {
+        AdvLibrary library = this.baseMapper.selectOne(
+                Wrappers.<AdvLibrary>lambdaQuery()
+                        .eq(AdvLibrary::getKeyword, keyword)
+                        .orderByDesc(AdvLibrary::getId)
+                        .last("limit 1")
+        );
+        if (Objects.isNull(library)) {
+            return;
+        }
+
+        String now = LocalDate.now().toString();
+        List<AdvShow> advShows = library.getShow7d();
+        if (CollUtil.isEmpty(advShows)) {
+            advShows = new ArrayList<>();
+        }
+        Map<String, AdvShow> map = advShows.stream().collect(Collectors
+                .toMap(AdvShow::getDate, Function.identity()));
+        if (!map.containsKey(now)) {
+            advShows.add(AdvShow.buildDefault(true));
+            library.setShow7d(advShows);
+        } else {
+            AdvShow advShow = map.get(now);
+            advShow.setUniqueUser(advShow.getUniqueUser() + 1);
+            advShow.setDirectShow(advShow.getDirectShow() + 1);
+        }
+        this.baseMapper.updateById(library);
     }
 
 
