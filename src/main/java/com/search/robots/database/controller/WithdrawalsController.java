@@ -2,8 +2,8 @@ package com.search.robots.database.controller;
 
 
 import com.search.robots.beans.view.base.Result;
-import com.search.robots.beans.web.adv.AdvUserAudit;
-import com.search.robots.database.service.AdvUserService;
+import com.search.robots.beans.web.withdrawals.WithdrawalsAudit;
+import com.search.robots.database.service.WithdrawalsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,22 +20,22 @@ import javax.validation.Valid;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/adv_user")
-public class AdvUserController {
+@RequestMapping("/withdrawals")
+public class WithdrawalsController {
 
-    private final AdvUserService advUserService;
+    private final WithdrawalsService withdrawalsService;
 
 
     /**
-     * 后台审批用户的广告
+     * 后台审批用户的提现
      *
-     * @param audit 广告审批的内容
+     * @param audit 提现审批的内容
      * @return      结果
      */
     @PostMapping("/audit")
-    public Result<Void> auditAdvUser(@Valid @RequestBody AdvUserAudit audit) {
-        this.advUserService.auditAdvUser(audit);
-        return Result.success();
+    public Result<Boolean> auditWithdrawals(@Valid @RequestBody WithdrawalsAudit audit) {
+        boolean audited = this.withdrawalsService.audit(audit);
+        return Result.success(audited);
     }
 
 

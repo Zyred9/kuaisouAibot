@@ -24,6 +24,7 @@ import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  *
@@ -56,9 +57,20 @@ public class SearchHandler extends AbstractHandler {
      * @param message       消息体
      * @return              结果
      */
+    public BotApiMethod<?> processorChatSearch(Message message, Boolean filter, List<Long> chatIds) {
+        return this.doSearch(message, "", message.getText(), null,
+                0, SortEnum.EMPTY, filter, true, chatIds);
+    }
+
+    /**
+     * 输入的搜索
+     *
+     * @param message       消息体
+     * @return              结果
+     */
     public BotApiMethod<?> processorDefaultSearch(Message message) {
         return this.doSearch(message, "", message.getText(), null,
-                0, SortEnum.EMPTY, Boolean.FALSE, true);
+                0, SortEnum.EMPTY, Boolean.FALSE, true, null);
     }
 
     /**
@@ -69,7 +81,7 @@ public class SearchHandler extends AbstractHandler {
      */
     public BotApiMethod<?> processorStartSearch(Message message, String decode, boolean send) {
         return this.doSearch(message, "", decode, null,
-                0, SortEnum.EMPTY, Boolean.FALSE, send);
+                0, SortEnum.EMPTY, Boolean.FALSE, send, null);
     }
 
 
@@ -86,16 +98,25 @@ public class SearchHandler extends AbstractHandler {
         Boolean filter = Boolean.valueOf(command.get(3));
         SortEnum sort = SortEnum.of(command.get(4));
         String keyword = command.get(5);
-
-        return this.doSearch(message, command.get(1), keyword, sourceType, current, sort, filter, false);
+        return this.doSearch(message, command.get(1), keyword, sourceType,
+                current, sort, filter, false, null);
     }
 
 
 
     private BotApiMethod<?> doSearch(Message message, String hitType, String keyword, SourceTypeEnum sourceType,
-                                     int current, SortEnum sort, Boolean filter, boolean send) {
+                                     int current, SortEnum sort, Boolean filter, boolean send, List<Long> chatIds) {
 
         StringBuilder sb = new StringBuilder();
+
+        // 定向搜索
+        if (chatIds != null) {
+            sb.append("\uD83D\uDD14 关键词：").append(keyword).append("\n");
+            if (!chatIds.isEmpty()) {
+                long count = this.searchService.countSource(chatIds);
+                sb.append("\uD83D\uDD14 当前为定向搜索：结果来自").append(chatIds.size()).append("个频道/群组，共").append(count).append("个资源。").append("\n");
+            }
+        }
 
         // 头部的广告或者关键词
         String advText = this.advUserService.buildCurrent(message.getText());
@@ -105,15 +126,19 @@ public class SearchHandler extends AbstractHandler {
 
         boolean hasButton = false;
         // 数据的查询
-        Page<SearchBean> search = this.searchService.search(keyword, sourceType, current, sort);
+        Page<SearchBean> search = this.searchService.search(keyword, sourceType, current, sort, chatIds, filter);
         if (!search.isEmpty()) {
             search.forEach(a -> sb.append(a.buildLineText()));
             if (current != 0) {
                 sb.append("\uD83D\uDC47点击筛选类型，当前【第").append(current + 1).append("页】");
             } else {
-                String hottest = this.hotSearchService.hottest();
-                if (StrUtil.isNotBlank(hottest)) {
-                    sb.append(hottest);
+                if (Boolean.TRUE.equals(filter)) {
+                    sb.append("*已过滤因色情被系统限制访问的链接*");
+                } else {
+                    String hottest = this.hotSearchService.hottest();
+                    if (StrUtil.isNotBlank(hottest)) {
+                        sb.append(hottest);
+                    }
                 }
             }
             AsyncTaskHandler.async(AsyncBean.kw(keyword));
@@ -121,6 +146,7 @@ public class SearchHandler extends AbstractHandler {
         } else {
             sb.append("关键词暂未收录\n");
         }
+
 
         // 底部按钮的处理
         AdvUser buttonAdv = this.advUserService.buttonAdv();

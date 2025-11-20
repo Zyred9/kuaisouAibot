@@ -120,4 +120,5 @@ public class ChatQueryHandler {
     public Integer getChatMemberCount(Long chatId) {
         return this.telegramClient.execute(GetChatMemberCount.builder().chatId(chatId).build());
     }
+
 }

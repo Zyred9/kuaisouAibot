@@ -77,9 +77,6 @@ public class Bill {
         return sb.toString();
     }
 
-    public static void buildRecharge(User user, BigDecimal amount) {
-
-    }
 
     // 20251102010226|奖励|0.015|审批通过✅
     public String buildTextLine() {

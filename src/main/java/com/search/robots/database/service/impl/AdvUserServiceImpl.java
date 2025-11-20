@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.search.robots.beans.view.AsyncBean;
 import com.search.robots.beans.view.vo.AdvShow;
 import com.search.robots.beans.view.vo.adv.AdvStatistics;
-import com.search.robots.beans.view.vo.adv.AdvUserAudit;
+import com.search.robots.beans.web.adv.AdvUserAudit;
 import com.search.robots.config.Constants;
 import com.search.robots.database.entity.AdvUser;
 import com.search.robots.database.entity.Config;
@@ -28,7 +28,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

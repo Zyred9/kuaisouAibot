@@ -2,7 +2,7 @@ package com.search.robots.database.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.search.robots.beans.view.vo.adv.AdvUserAudit;
+import com.search.robots.beans.web.adv.AdvUserAudit;
 import com.search.robots.database.entity.AdvUser;
 import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.enums.adv.AdvTypeEnum;

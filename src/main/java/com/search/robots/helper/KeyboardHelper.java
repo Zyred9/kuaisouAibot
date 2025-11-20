@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.search.robots.beans.view.ButtonTransfer;
 import com.search.robots.beans.view.KeyboardTransfer;
 import com.search.robots.beans.view.vo.search.SearchBean;
+import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
 import com.search.robots.database.entity.*;
 import com.search.robots.database.enums.Included.IncludedNewUserEnum;
@@ -37,6 +38,26 @@ import java.util.*;
  */
 public class KeyboardHelper {
 
+    public static InlineKeyboardMarkup buildEmptyIncludeKeyboard (String groupStart) {
+        List<InlineKeyboardRow> rows = new ArrayList<>(1);
+        rows.add(row(buttonUrl("➕ 将机器人设为管理员", groupStart)));
+        return InlineKeyboardMarkup.builder().keyboard(rows).build();
+    }
+
+
+    public static InlineKeyboardMarkup buildPrivacyLinkKeyboard (String groupStart, String botName, Long includeId, String channelUrl, String community) {
+        List<InlineKeyboardRow> rows = new ArrayList<>(6);
+        rows.add(row(buttonUrl("➕ 将机器人设为管理员", groupStart)));
+        rows.add(row(buttonText("\uD83D\uDCCA查看曝光数据", "three#details_setting#exposure_data#" + includeId)));
+        rows.add(row(buttonUrl("\uD83D\uDECD购买广告", StrUtil.format(Constants.START_AD_CENTER, botName))));
+
+        rows.add(row(
+                buttonUrl("\uD83D\uDCE2 官方频道", channelUrl),
+                buttonUrl("\uD83D\uDC65 交流群", community)
+        ));
+        return InlineKeyboardMarkup.builder().keyboard(rows).build();
+    }
+
 
     /**
      * @param hitType   资源类型
@@ -45,7 +66,7 @@ public class KeyboardHelper {
      * @param sort      排序
      * @param bot       机器人名字
      * @param beans     查询结果
-     * @param hasButton
+     * @param hasButton 是否展示按钮
      * @return 按钮
      */
     public static InlineKeyboardMarkup buildSearchResultKeyboard(String hitType, int current, Boolean filter, SortEnum sort, String bot,
@@ -86,7 +107,7 @@ public class KeyboardHelper {
             InlineKeyboardRow optionRow = new InlineKeyboardRow();
             // 购买广告
             optionRow.add(buttonUrl("\uD83D\uDECD购买广告", StrUtil.format(Constants.START_AD_CENTER, bot)));
-            optionRow.add(buttonText("\uD83D\uDD1E过滤", StrHelper.buildName("search", hitType, current, !filter, sort.getCode(), keyword)));
+            optionRow.add(buttonText(filter ? "🔄过滤" : "\uD83D\uDD1E过滤", StrHelper.buildName("search", hitType, current, !filter, sort.getCode(), keyword)));
 
             if (beans.hasPrevious()) {
                 optionRow.add(buttonText("⬅️上一页", StrHelper.buildName("search", hitType, (current - 1), filter, sort.getCode(), keyword)));

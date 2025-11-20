@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Objects;
+
 /**
  *  收录审批状态
  *
@@ -23,4 +25,8 @@ public enum IncludedStatusEnum {
     @EnumValue
     private final int code;
     private final String desc;
+
+    public static IncludedStatusEnum of(Integer auditCode) {
+        return Objects.equals(auditCode, PASS.code) ? PASS : REJECT;
+    }
 }

@@ -1,4 +1,4 @@
-package com.search.robots.beans.view.vo.adv;
+package com.search.robots.beans.web.adv;
 
 
 import lombok.Getter;

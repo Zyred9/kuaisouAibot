@@ -18,7 +18,7 @@ import java.util.List;
  * @author admin
  * @since v 0.0.1
  */
-@Component
+//@Component
 public class BackgroundHandler extends AbstractHandler {
 
     @Resource private BotProperties properties;

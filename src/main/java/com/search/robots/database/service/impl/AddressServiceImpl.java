@@ -44,7 +44,7 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address> impl
                         .isNull(Address::getUserId)
         );
 
-        if (remain <= 10 && StrUtil.isBlank(this.properties.getNotifyChatId())) {
+        if (remain <= 10 && Objects.isNull(this.properties.getNotifyChatId())) {
             AsyncSender.async(
                     SendMessage.builder()
                             .chatId(this.properties.getBackgroundGroupId())

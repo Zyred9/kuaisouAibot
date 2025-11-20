@@ -38,6 +38,8 @@ import java.util.Objects;
 @TableName(value = "t_included", autoResultMap = true)
 public class Included {
 
+    public static final String INCLUDED_PREFIX_KEY = "data:included:";
+
     /** 频道id/群组id **/
     @TableId(type = IdType.INPUT)
     private Long id;
@@ -99,6 +101,7 @@ public class Included {
     private List<Long> targetedSearchIndexIds;
     /** 子群是否启用定向搜索 **/
     private Boolean childTargetedSearch = true;
+    private String auditReason;
 
     public static Included buildBean(ChatFullInfo info, User from, boolean parent, Integer count) {
 
@@ -137,6 +140,7 @@ public class Included {
                 .setPriorities(IncludedSearchPriorityEnum.vals())
                 .setOpenGlobalSearch(true)
                 .setTargetedSearchIndexIds(Collections.emptyList())
+                .setAuditReason("")
                 .setChildTargetedSearch(false);
     }
 
@@ -168,7 +172,7 @@ public class Included {
                     DecimalHelper.decimalParse(this.exposureWeighting),
                     this.sourceCount,
                     this.globalSearchCount,
-                    this.includedStatus.getDesc(),
+                    this.includedStatus.getDesc(), this.auditReason,
 
                     groupStart,
                     config.getTutorialUrl(),
@@ -186,7 +190,7 @@ public class Included {
                 DecimalHelper.decimalParse(this.exposureWeighting),
                 this.sourceCount,
                 this.globalSearchCount,
-                this.includedStatus.getDesc(),
+                this.includedStatus.getDesc(), this.auditReason,
 
                 groupStart,
                 config.getTutorialUrl(),

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.search.robots.beans.cache.CommonCache;
 import com.search.robots.beans.chat.ChatQueryHandler;
 import com.search.robots.beans.view.DialogueCtx;
@@ -58,6 +59,7 @@ public class PrivateChatHandler extends AbstractHandler{
     private final HotSearchService hotSearchService;
     private final ChatQueryHandler chatQueryHandler;
     private final AdvLibraryService advLibraryService;
+    private final WithdrawalsService withdrawalsService;
 
     @Override
     public boolean support(Update update) {
@@ -131,128 +133,169 @@ public class PrivateChatHandler extends AbstractHandler{
         }
 
         if (CommonCache.hasDialogue(message.getFrom().getId())) {
-
-            BotApiMethod<?> result = null;
-            DialogueCtx dialogueCtx = CommonCache.getDialogue(message.getFrom().getId());
-            User user = this.userService.user(message.getFrom());
-
-            // 输入了地址
-            if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADDRESS)) {
-
-                user.setTrAddr(message.getText());
-                this.userService.updateById(user);
-
-                InlineKeyboardMarkup markup = KeyboardHelper.buildBindingTrcAddrSuccessKeyboard();
-                String format = StrUtil.format(Constants.UPDATE_ADDR_TEXT, message.getText());
-                result = markdownV2(message, format, markup);
-            }
-            // 输入了提现金额
-            if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_WITHDRAWAL_AMOUNT)) {
-                BigDecimal balance = user.getBalance();
-                BigDecimal amount = new BigDecimal(message.getText());
-                Config config = this.configService.queryConfig();
-
-                // 金额小于最低
-                if (DecimalHelper.compare(amount, config.getWithdrawalThreshold())) {
-                    String msg = "发生错误，提现金额需大于`{}$`";
-                    String format = StrUtil.format(msg, DecimalHelper.decimalParse(config.getWithdrawalThreshold()));
-                    InlineKeyboardMarkup markup = KeyboardHelper.buildSelfKeyboard();
-                    result = markdownReply(message, format, markup);
-                }
-                // 金额
-                else if (DecimalHelper.compare(balance, amount)) {
-                    InlineKeyboardMarkup markup = KeyboardHelper.buildSelfKeyboard();
-                    result = markdownReply(message, "发生错误，余额不足", markup);
-                }
-                // TODO 金额正常的情况
-            }
-
-            // 输出了定向查询频道/群组
-            if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_TARGETED_SEARCH)) {
-                String chatString = message.getText();
-                String[] chatInfos = chatString.split("[,，]");
-
-                List<ChatFullInfo> results = new ArrayList<>();
-                for (String chatInfo : chatInfos) {
-                    try {
-                        ChatFullInfo info = this.chatQueryHandler.findGroupByIdOrUsername(chatInfo);
-                        if (Objects.nonNull(info)) {
-                            results.add(info);
-                        }
-                    } catch (Exception ex) {
-                        log.info("[机器人无法找到群组/频道] {}, 错误信息：{}", chatInfo, ex.getMessage());
-                    }
-                }
-
-                Long includedId = dialogueCtx.getBusinessId();
-                Included included = this.includedService.getById(includedId);
-
-                List<Included> children = new ArrayList<>();
-                for (ChatFullInfo info : results) {
-                    Integer count = this.chatQueryHandler.getChatMemberCount(info.getId());
-                    children.add(Included.buildBean(info, message.getFrom(), false, count));
-                }
-
-                if (CollUtil.isNotEmpty(children)) {
-                    this.includedService.saveBatch(children);
-                }
-
-                if (CollUtil.isNotEmpty(results)) {
-                    List<Long> ids = results.stream().map(ChatFullInfo::getId).toList();
-                    included.getTargetedSearchIndexIds().addAll(ids);
-                    Included updateEntity = new Included()
-                            .setId(dialogueCtx.getBusinessId())
-                            .setTargetedSearchIndexIds(included.getTargetedSearchIndexIds());
-                    this.includedService.updateById(updateEntity);
-                }
-
-                List<Included> includeList = Collections.emptyList();
-                if (CollUtil.isNotEmpty(included.getTargetedSearchIndexIds())) {
-                    includeList = this.includedService
-                            .listByIds(included.getTargetedSearchIndexIds());
-                }
-
-                Config config = this.configService.queryConfig();
-
-                InlineKeyboardMarkup markup = KeyboardHelper.buildTargetedSearchKeyboard(included, includeList);
-                result = markdown(message, included.buildDetailIncludedText(this.properties.groupStart(), config), markup);
-            }
-
-            // 输入广告标题和链接
-            if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_TITLE)
-                    || Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_LINK)) {
-                int length = message.getText().length();
-
-                if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_TITLE)) {
-                    if (length < 2 || length > 25) {
-                        return ok(message, "广告文本长度限制2-25字，请再次发送：");
-                    }
-                }
-
-                Long businessId = dialogueCtx.getBusinessId();
-                AdvUser advUser = this.advUserService.getById(businessId);
-                if (Objects.isNull(advUser)) {
-                    return null;
-                }
-
-                if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_TITLE)) {
-                    advUser.setTempContent(message.getText());
-                } else {
-                    advUser.setTempUrl(message.getText());
-                }
-                advUser.setAdvStatus(AdvStatus.UNDER_APPROVAL);
-                this.advUserService.updateById(advUser);
-                InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
-                result = markdownV2(message, advUser.getAdvText(), markup);
-            }
-
-            CommonCache.removeDialogue(message.getFrom().getId());
-            return result;
+            return this.processorDialogue(message);
         }
 
+        if (StrUtil.startWith(message.getText(), "https://t.me")) {
+            String username = StrUtil.removeAll(message.getText(), "https://t.me/");
+            if (StrUtil.isEmpty(username)) {
+                return null;
+            }
+            Included included = this.includedService.getOne(
+                    Wrappers.<Included>lambdaQuery()
+                            .eq(Included::getIndexUsername, username)
+                            .last("limit 1")
+            );
+            Config config = this.configService.queryConfig();
+            if (Objects.nonNull(included)) {
+
+                String built = included.buildDetailIncludedText(this.properties.groupStart(), config);
+                InlineKeyboardMarkup markup = KeyboardHelper.buildPrivacyLinkKeyboard(
+                        this.properties.groupStart(),
+                        this.properties.getBotUsername(),
+                        included.getId(), config.getTutorialUrl(),
+                        ("https://t.me/" + config.getCommunityName())
+                );
+                return markdownV2(message, built, markup);
+            } else {
+                String format = StrUtil.format(Constants.EMPTY_INCLUDE_TEXT, config.getTutorialUrl(),
+                        ("https://t.me/" + config.getCommunityName()));
+                InlineKeyboardMarkup markup = KeyboardHelper.buildEmptyIncludeKeyboard(this.properties.groupStart());
+                return markdownV2(message, format, markup);
+            }
+
+        }
 
         // -------------------- 处理搜索 --------------------//
         return this.searchHandler.processorDefaultSearch(message);
+    }
+
+    private BotApiMethod<?> processorDialogue(Message message) {
+        BotApiMethod<?> result = null;
+        DialogueCtx dialogueCtx = CommonCache.getDialogue(message.getFrom().getId());
+        User user = this.userService.user(message.getFrom());
+
+        // 输入了地址
+        if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADDRESS)) {
+
+            user.setTrAddr(message.getText());
+            this.userService.updateById(user);
+
+            InlineKeyboardMarkup markup = KeyboardHelper.buildBindingTrcAddrSuccessKeyboard();
+            String format = StrUtil.format(Constants.UPDATE_ADDR_TEXT, message.getText());
+            result = markdownV2(message, format, markup);
+        }
+        // 输入了提现金额
+        if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_WITHDRAWAL_AMOUNT)) {
+            BigDecimal balance = user.getBalance();
+            BigDecimal amount = new BigDecimal(message.getText());
+            Config config = this.configService.queryConfig();
+
+            // 金额小于最低
+            if (DecimalHelper.compare(amount, config.getWithdrawalThreshold())) {
+                String msg = "发生错误，提现金额需大于`{}$`";
+                String format = StrUtil.format(msg, DecimalHelper.decimalParse(config.getWithdrawalThreshold()));
+                InlineKeyboardMarkup markup = KeyboardHelper.buildSelfKeyboard();
+                result = markdownReply(message, format, markup);
+            }
+            // 金额
+            else if (DecimalHelper.compare(balance, amount)) {
+                InlineKeyboardMarkup markup = KeyboardHelper.buildSelfKeyboard();
+                result = markdownReply(message, "发生错误，余额不足", markup);
+            } else {
+                this.withdrawalsService.create(user, amount);
+                if (Objects.nonNull(this.properties.getNotifyChatId())) {
+                    AsyncSender.async(ok(this.properties.getNotifyChatId(), "有人提交提现申请，请前往后台处理！"));
+                }
+                result = markdownV2(message, StrUtil.format(Constants.WITHDRAWAL_ADDR_TEXT, user.getTrAddr()));
+            }
+            return result;
+        }
+
+        // 输出了定向查询频道/群组
+        if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_TARGETED_SEARCH)) {
+            String chatString = message.getText();
+            String[] chatInfos = chatString.split("[,，]");
+
+            List<ChatFullInfo> results = new ArrayList<>();
+            for (String chatInfo : chatInfos) {
+                try {
+                    ChatFullInfo info = this.chatQueryHandler.findGroupByIdOrUsername(chatInfo);
+                    if (Objects.nonNull(info)) {
+                        results.add(info);
+                    }
+                } catch (Exception ex) {
+                    log.info("[机器人无法找到群组/频道] {}, 错误信息：{}", chatInfo, ex.getMessage());
+                }
+            }
+
+            Long includedId = dialogueCtx.getBusinessId();
+            Included included = this.includedService.get(includedId);
+
+            List<Included> children = new ArrayList<>();
+            for (ChatFullInfo info : results) {
+                Integer count = this.chatQueryHandler.getChatMemberCount(info.getId());
+                boolean newSource = Objects.isNull(this.includedService.get(info.getId()));
+                if (newSource) {
+                    children.add(Included.buildBean(info, message.getFrom(), false, count));
+                }
+            }
+
+            if (CollUtil.isNotEmpty(children)) {
+                this.includedService.saveBatch(children);
+            }
+
+            if (CollUtil.isNotEmpty(results)) {
+                List<Long> ids = results.stream().map(ChatFullInfo::getId).toList();
+                included.getTargetedSearchIndexIds().addAll(ids);
+                Included updateEntity = new Included()
+                        .setId(dialogueCtx.getBusinessId())
+                        .setTargetedSearchIndexIds(included.getTargetedSearchIndexIds());
+                this.includedService.updateSelf(updateEntity);
+            }
+
+            List<Included> includeList = Collections.emptyList();
+            if (CollUtil.isNotEmpty(included.getTargetedSearchIndexIds())) {
+                includeList = this.includedService
+                        .listByIds(included.getTargetedSearchIndexIds());
+            }
+
+            Config config = this.configService.queryConfig();
+
+            InlineKeyboardMarkup markup = KeyboardHelper.buildTargetedSearchKeyboard(included, includeList);
+            result = markdownV2(message, included.buildDetailIncludedText(this.properties.groupStart(), config), markup);
+        }
+
+        // 输入广告标题和链接
+        if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_TITLE)
+                || Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_LINK)) {
+            int length = message.getText().length();
+
+            if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_TITLE)) {
+                if (length < 2 || length > 25) {
+                    return ok(message, "广告文本长度限制2-25字，请再次发送：");
+                }
+            }
+
+            Long businessId = dialogueCtx.getBusinessId();
+            AdvUser advUser = this.advUserService.getById(businessId);
+            if (Objects.isNull(advUser)) {
+                return null;
+            }
+
+            if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_TITLE)) {
+                advUser.setTempContent(message.getText());
+            } else {
+                advUser.setTempUrl(message.getText());
+            }
+            advUser.setAdvStatus(AdvStatus.UNDER_APPROVAL);
+            this.advUserService.updateById(advUser);
+            InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
+            result = markdownV2(message, advUser.getAdvText(), markup);
+        }
+
+        CommonCache.removeDialogue(message.getFrom().getId());
+        return result;
     }
 
     private BotApiMethod<?> processorKeyword(Message message) {

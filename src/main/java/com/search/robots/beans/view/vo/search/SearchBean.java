@@ -60,6 +60,7 @@ public class SearchBean {
     @Field(type = FieldType.Keyword)
     private String subscribers;
 
+    @Field(type = FieldType.Keyword)
     private Long chatId;
 
     private Long messageId;

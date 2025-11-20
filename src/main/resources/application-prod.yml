@@ -8,7 +8,7 @@ bots:
     tokens:
       BOT_TOKEN: 7625159298:AAFGjgPTBlPtc2TaNfFo7Ph2FAZgVjK9Rno
     qr-code-path: /usr/local/qr_code/
-
+    history-url: http://localhost:8813/collect/td/history
 # -------------------部署需要修改---------------------
 
 mybatis-plus:
@@ -29,7 +29,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: Qj683k2^11299%nkjb
-    url: jdbc:mysql://127.0.0.1:3306/kuaisou_ai_bot?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Shanghai&useSSL=false&nullCatalogMeansCurrent=true
+    url: jdbc:mysql://127.0.0.1:3306/kuaisou_ai_bot?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Shanghai&useSSL=false&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true
   elasticsearch:
     uris:
       - http://149.28.214.142:9200
@@ -41,6 +41,10 @@ spring:
     elasticsearch:
       repositories:
         enabled: true
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
 logging:
   level:
     com.db.bots: ERROR

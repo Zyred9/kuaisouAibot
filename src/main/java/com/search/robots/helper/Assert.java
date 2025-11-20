@@ -37,7 +37,7 @@ public class Assert {
      * @throws SelfException 对象为null时抛出
      */
     public static void notNull(Object obj, String message) {
-        if (Objects.isNull(obj)) {
+        if (Objects.nonNull(obj)) {
             throw new SelfException(message);
         }
     }
@@ -51,7 +51,7 @@ public class Assert {
      * @throws SelfException 对象为null时抛出
      */
     public static void notNull(Object obj, int code, String message) {
-        if (Objects.isNull(obj)) {
+        if (Objects.nonNull(obj)) {
             throw new SelfException(code, message);
         }
     }
@@ -79,7 +79,7 @@ public class Assert {
      * @throws SelfException 表达式为false时抛出
      */
     public static void isTrue(boolean expression, String message) {
-        if (!expression) {
+        if (expression) {
             throw new SelfException(message);
         }
     }
@@ -93,7 +93,7 @@ public class Assert {
      * @throws SelfException 表达式为false时抛出
      */
     public static void isTrue(boolean expression, int code, String message) {
-        if (!expression) {
+        if (expression) {
             throw new SelfException(code, message);
         }
     }
@@ -106,7 +106,7 @@ public class Assert {
      * @throws SelfException 表达式为true时抛出
      */
     public static void isFalse(boolean expression, String message) {
-        if (expression) {
+        if (!expression) {
             throw new SelfException(message);
         }
     }
@@ -121,7 +121,7 @@ public class Assert {
      * @throws SelfException 字符串为空时抛出
      */
     public static void notEmpty(String str, String message) {
-        if (StrUtil.isEmpty(str)) {
+        if (StrUtil.isNotEmpty(str)) {
             throw new SelfException(message);
         }
     }
@@ -134,7 +134,7 @@ public class Assert {
      * @throws SelfException 字符串为空白时抛出
      */
     public static void notBlank(String str, String message) {
-        if (StrUtil.isBlank(str)) {
+        if (StrUtil.isNotBlank(str)) {
             throw new SelfException(message);
         }
     }
@@ -148,7 +148,7 @@ public class Assert {
      * @throws SelfException 字符串为空白时抛出
      */
     public static void notBlank(String str, int code, String message) {
-        if (StrUtil.isBlank(str)) {
+        if (StrUtil.isNotBlank(str)) {
             throw new SelfException(code, message);
         }
     }

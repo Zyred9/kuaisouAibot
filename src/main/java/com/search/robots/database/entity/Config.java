@@ -40,6 +40,8 @@ public class Config {
     private String startMessage;
     /** 最低提现金额 **/
     private BigDecimal withdrawalThreshold;
+    /** 提现服务费用 **/
+    private BigDecimal withdrawalServiceFee = BigDecimal.ONE;
     /** 邀请的活动描述 **/
     private String inviteActivityText;
     /** 推广的图片文件id **/

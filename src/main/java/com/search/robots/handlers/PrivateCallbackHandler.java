@@ -89,16 +89,14 @@ public class PrivateCallbackHandler extends AbstractHandler {
             log.info("[回调] {}", text);
         }
 
-        Integer messageDate = message.getDate();
-        long currentTimestamp = System.currentTimeMillis() / 1000;
-        long messageAge = currentTimestamp - messageDate;
-        if (messageAge > 600) {
-            return answerAlert(callbackQuery, "⚠️消息已过期，请重新发送关键词");
-        }
-
-
         // 查询
         if (StrUtil.equals(command.get(0), "search")) {
+            Integer messageDate = message.getDate();
+            long currentTimestamp = System.currentTimeMillis() / 1000;
+            long messageAge = currentTimestamp - messageDate;
+            if (messageAge > 600) {
+                return answerAlert(callbackQuery, "⚠️消息已过期，请重新发送关键词");
+            }
             return this.searchHandler.processorCallbackSearch(message, command);
         }
 
@@ -125,7 +123,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
                 int hit = Integer.parseInt(command.get(2));
                 Long chatId = Long.parseLong(command.get(3));
                 IncludedSearchPriorityEnum priorityEnum = IncludedSearchPriorityEnum.of(hit);
-                Included included = this.includedService.getById(chatId);
+                Included included = this.includedService.get(chatId);
 
                 List<IncludedSearchPriorityEnum> chooses = included.getPriorities();
                 if (CollUtil.isEmpty(included.getPriorities())) {
@@ -134,7 +132,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
 
                 chooses.add(priorityEnum);
                 included.setPriorities(chooses);
-                this.includedService.updateById(included);
+                this.includedService.updateSelf(included);
                 InlineKeyboardMarkup markup = KeyboardHelper.buildSearchPriorityCustomizeKeyboard(included);
                 return editKeyboard(message, markup);
             }
@@ -144,7 +142,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
         if (StrUtil.equals(command.get(0), "six")) {
             if (StrUtil.equals(command.get(1), "search_result_customize")) {
                 long chatId = Long.parseLong(command.get(3));
-                Included included = this.includedService.getById(chatId);
+                Included included = this.includedService.get(chatId);
                 // 全局搜索
                 InlineKeyboardMarkup markup = null;
                 if (StrUtil.equals(command.get(2), "global_search")) {
@@ -163,7 +161,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
                     markup = KeyboardHelper.buildTargetedSearchKeyboard(included, includeList);
                 }
 
-                this.includedService.updateById(included);
+                this.includedService.updateSelf(included);
                 return editKeyboard(message, markup);
             }
         }
@@ -174,11 +172,11 @@ public class PrivateCallbackHandler extends AbstractHandler {
                 if (StrUtil.equals(command.get(2), "enable")) {
                     long parentId = Long.parseLong(command.get(3));
                     long childId = Long.parseLong(command.get(4));
-                    Included parent = this.includedService.getById(parentId);
-                    Included child = this.includedService.getById(childId);
+                    Included parent = this.includedService.get(parentId);
+                    Included child = this.includedService.get(childId);
 
                     child.setChildTargetedSearch(!child.getChildTargetedSearch());
-                    this.includedService.updateById(child);
+                    this.includedService.updateSelf(child);
 
                     List<Included> includeList = Collections.emptyList();
                     List<Long> ids = parent.getTargetedSearchIndexIds();
@@ -209,9 +207,9 @@ public class PrivateCallbackHandler extends AbstractHandler {
             IncludedNewUserEnum newUserEnum = IncludedNewUserEnum.of(newUserCode);
 
             long chatId = Long.parseLong(command.get(3));
-            Included included = this.includedService.getById(chatId);
+            Included included = this.includedService.get(chatId);
             included.setNewUsers(newUserEnum);
-            this.includedService.updateById(included);
+            this.includedService.updateSelf(included);
 
             InlineKeyboardMarkup markup = KeyboardHelper.buildNewUserKeyboard(included);
             return editKeyboard(message, markup);
@@ -219,11 +217,11 @@ public class PrivateCallbackHandler extends AbstractHandler {
         // 隐私设置privacy_setting#search_result_customize
         if (StrUtil.equals(command.get(1), "privacy_setting")) {
             long chatId = Long.parseLong(command.get(3));
-            Included included = this.includedService.getById(chatId);
+            Included included = this.includedService.get(chatId);
             // 隐私设置
             if (StrUtil.equals(command.get(2), "open_privacy_search")) {
                 included.setOpenPrivacySearch(!included.getOpenPrivacySearch());
-                this.includedService.updateById(included);
+                this.includedService.updateSelf(included);
 
                 InlineKeyboardMarkup markup = KeyboardHelper.buildSearchCustomizeKeyboard(included);
                 return editKeyboard(message, markup);
@@ -231,7 +229,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
             // 未成年设置
             if (StrUtil.equals(command.get(2), "open_filter_minors")) {
                 included.setOpenFilterMinors(!included.getOpenFilterMinors());
-                this.includedService.updateById(included);
+                this.includedService.updateSelf(included);
                 InlineKeyboardMarkup markup = KeyboardHelper.buildSearchCustomizeKeyboard(included);
                 return editKeyboard(message, markup);
             }
@@ -255,7 +253,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
         // 群组详情设置
         if (StrUtil.equals(command.get(1), "details_setting")) {
             long chatId = Long.parseLong(command.get(3));
-            Included included = this.includedService.getById(chatId);
+            Included included = this.includedService.get(chatId);
             if (Objects.isNull(included)) {
                 return null;
             }
@@ -267,7 +265,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
                 ThreadHelper.execute(() -> {
                     ThreadHelper.sleep(2);
                     InlineKeyboardMarkup markup = KeyboardHelper.buildIncludedDetailKeyboard(included);
-                    AsyncSender.async(editMarkdown(message, included.buildDetailIncludedText(this.properties.groupStart(), config), markup));
+                    AsyncSender.async(editMarkdownV2(message, included.buildDetailIncludedText(this.properties.groupStart(), config), markup));
                 });
                 return null;
             }
@@ -301,10 +299,10 @@ public class PrivateCallbackHandler extends AbstractHandler {
                 return editKeyboard(message, markup);
             }
 
-            this.includedService.updateById(included);
+            this.includedService.updateSelf(included);
             String detailIncludedText = included.buildDetailIncludedText(this.properties.groupStart(), config);
             InlineKeyboardMarkup markup = KeyboardHelper.buildIncludedDetailKeyboard(included);
-            return editMarkdown(message, detailIncludedText, markup);
+            return editMarkdownV2(message, detailIncludedText, markup);
         }
 
         // 顶部链接和底部按钮展示次数购买
@@ -512,14 +510,14 @@ public class PrivateCallbackHandler extends AbstractHandler {
             IncludedSearchTypeEnum searchType = IncludedSearchTypeEnum.of(hit);
             Page<Included> includedPage = this.includedService.selectPage(current,
                     callbackQuery.getFrom().getId(), searchType);
-            String selfIndexText = this.includedService.buildSelfIndexText();
+            String selfIndexText = this.includedService.buildSelfIndexText(callbackQuery.getFrom().getId());
             InlineKeyboardMarkup markup = KeyboardHelper.buildGroupChannelKeyboard(searchType, includedPage);
             return editMarkdown(message, selfIndexText, markup);
         }
         // 群组详情
         if (StrUtil.equals(command.get(1), "included_detail")) {
             Long includedId = Long.parseLong(command.get(2));
-            Included included = this.includedService.getById(includedId);
+            Included included = this.includedService.get(includedId);
             if (Objects.isNull(included)) {
                 return null;
             }
@@ -527,7 +525,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
 
             String detailIncludedText = included.buildDetailIncludedText(this.properties.groupStart(), config);
             InlineKeyboardMarkup markup = KeyboardHelper.buildIncludedDetailKeyboard(included);
-            return editMarkdown(message, detailIncludedText, markup);
+            return editMarkdownV2(message, detailIncludedText, markup);
         }
         // 推广报表
         if (StrUtil.equals(command.get(1), "get_spread_statement")) {
@@ -692,7 +690,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
         if (StrUtil.equals(command.get(1), "group_channel")) {
             Page<Included> includedPage = this.includedService.selectPage(1,
                     callbackQuery.getFrom().getId(), IncludedSearchTypeEnum.ALL);
-            String selfIndexText = this.includedService.buildSelfIndexText();
+            String selfIndexText = this.includedService.buildSelfIndexText(callbackQuery.getFrom().getId());
             InlineKeyboardMarkup markup = KeyboardHelper.buildGroupChannelKeyboard(IncludedSearchTypeEnum.ALL, includedPage);
             return editMarkdown(message, selfIndexText, markup);
         }

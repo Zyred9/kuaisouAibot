@@ -11,6 +11,10 @@ import com.search.robots.helper.KeyboardHelper;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.Call;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -20,6 +24,7 @@ import org.telegram.telegrambots.meta.api.objects.chat.ChatFullInfo;
 import org.telegram.telegrambots.meta.api.objects.chatmember.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
+import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -37,6 +42,7 @@ public class BotJoinChatHandler extends AbstractHandler {
 
 
     private final BotProperties properties;
+    private final OkHttpClient okHttpClient;
     private final ConfigService configService;
     private final IncludedService includedService;
     private final ChatQueryHandler chatQueryHandler;
@@ -84,25 +90,53 @@ public class BotJoinChatHandler extends AbstractHandler {
             Config config = this.configService.queryConfig();
 
             // 查询该群组是否已经存在，或者是别人的附属群组
-            String text;
-            Included included = this.includedService.getById(chat.getId());
+            Included included = this.includedService.get(chat.getId());
+            ChatFullInfo chatInfo = this.chatQueryHandler.getChat(chat.getId());
+            Integer count = this.chatQueryHandler.getChatMemberCount(chat.getId());
+
+            Included parentIncluded = Included.buildBean(chatInfo, from, true, count);
             if (Objects.isNull(included)) {
-                ChatFullInfo chatInfo = this.chatQueryHandler.getChat(chat.getId());
-                Integer count = this.chatQueryHandler.getChatMemberCount(chat.getId());
-
-                Included parentIncluded = Included.buildBean(chatInfo, from, true, count);
                 this.includedService.save(parentIncluded);
-
-                text = parentIncluded.buildDetailIncludedText(this.properties.groupStart(), config);
-                included = parentIncluded;
             } else {
-                text = included.buildDetailIncludedText(this.properties.groupStart(), config);
+                this.includedService.updateSelf(parentIncluded);
             }
-            InlineKeyboardMarkup markup = KeyboardHelper.buildIncludedDetailKeyboard(included);
-            AsyncSender.async(markdown(chat.getId(), text, markup));
-        }
+            included = parentIncluded;
 
+            String text = included.buildDetailIncludedText(this.properties.groupStart(), config);
+            InlineKeyboardMarkup markup = KeyboardHelper.buildIncludedDetailKeyboard(included);
+            AsyncSender.async(markdownV2(chat.getId(), text, markup));
+
+            String url = null;
+            if (StrUtil.isNotEmpty(chatInfo.getUserName())) {
+                url = "https://t.me/" + chatInfo.getUserName();
+            }
+            this.history(url, chatInfo.getId());
+        }
         return null;
     }
 
+
+    private void history (String url, Long chatId) {
+        log.info("[获取历史聊天记录] 开始 {}， {}", url, chatId);
+        String fullUrl = this.properties.getHistoryUrl()
+                + "?link=" + url
+                + "&chatId=" + chatId
+                + "&count=10000";
+
+        Call call = this.okHttpClient.newCall(
+                new Request.Builder()
+                        .get()
+                        .url(fullUrl)
+                        .build()
+        );
+        try (Response execute = call.execute()) {
+            if (execute.isSuccessful()) {
+                log.info("[获取历史聊天记录] 结束 {}， {}", url, chatId);
+            } else {
+                log.info("[获取历史聊天记录] 失败 {}， {}，错误码：{}", url, chatId, execute.code());
+            }
+        } catch (IOException e) {
+            log.error("[获取历史聊天记录] 异常 {}， {}", url, chatId, e);
+        }
+    }
 }
