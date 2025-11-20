@@ -111,10 +111,11 @@ public class SearchHandler extends AbstractHandler {
 
         // 定向搜索
         if (chatIds != null) {
-            sb.append("\uD83D\uDD14 关键词：").append(keyword).append("\n");
+            sb.append("\uD83D\uDD14 关键词：`").append(keyword).append("`\n");
             if (!chatIds.isEmpty()) {
                 long count = this.searchService.countSource(chatIds);
-                sb.append("\uD83D\uDD14 当前为定向搜索：结果来自").append(chatIds.size()).append("个频道/群组，共").append(count).append("个资源。").append("\n");
+                sb.append("\uD83D\uDD14 当前为定向搜索：结果来自").append(chatIds.size())
+                        .append("个频道/群组，共").append(count).append("个资源。").append("\n");
             }
         }
 
@@ -146,14 +147,11 @@ public class SearchHandler extends AbstractHandler {
         } else {
             sb.append("关键词暂未收录\n");
         }
-
-
         // 底部按钮的处理
         AdvUser buttonAdv = this.advUserService.buttonAdv();
         InlineKeyboardMarkup markup = KeyboardHelper.buildSearchResultKeyboard(
                 hitType, current, filter, sort, this.properties.getBotUsername(), search, keyword, buttonAdv, hasButton
         );
-
         return send ? markdownV2(message, sb.toString(), markup) : editMarkdownV2(message, sb.toString(), markup);
     }
 

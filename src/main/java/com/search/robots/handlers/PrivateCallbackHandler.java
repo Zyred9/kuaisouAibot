@@ -210,6 +210,8 @@ public class PrivateCallbackHandler extends AbstractHandler {
             Included included = this.includedService.get(chatId);
             included.setNewUsers(newUserEnum);
             this.includedService.updateSelf(included);
+            // 重新设置每日广告
+            included.updateEveryAdv();
 
             InlineKeyboardMarkup markup = KeyboardHelper.buildNewUserKeyboard(included);
             return editKeyboard(message, markup);

@@ -107,21 +107,21 @@ public class BotJoinChatHandler extends AbstractHandler {
             InlineKeyboardMarkup markup = KeyboardHelper.buildIncludedDetailKeyboard(included);
             AsyncSender.async(markdownV2(chat.getId(), text, markup));
 
-            String url = null;
+            String url = "";
             if (StrUtil.isNotEmpty(chatInfo.getUserName())) {
                 url = "https://t.me/" + chatInfo.getUserName();
             }
-            this.history(url, chatInfo.getId());
+            this.history(url, chatInfo.getInviteLink());
         }
         return null;
     }
 
 
-    private void history (String url, Long chatId) {
-        log.info("[获取历史聊天记录] 开始 {}， {}", url, chatId);
+    private void history (String url, String inviteLink) {
+        log.info("[获取历史聊天记录] 开始 {}， {}", url, inviteLink);
         String fullUrl = this.properties.getHistoryUrl()
                 + "?link=" + url
-                + "&chatId=" + chatId
+                + "&inviteLink=" + inviteLink
                 + "&count=10000";
 
         Call call = this.okHttpClient.newCall(
@@ -132,13 +132,13 @@ public class BotJoinChatHandler extends AbstractHandler {
         );
         try (Response execute = call.execute()) {
             if (execute.isSuccessful() && Objects.nonNull(execute.body())) {
-                String body = execute.body().toString();
-                log.info("[获取历史聊天记录] 结果 {}， {}, 结果：{}", url, chatId, JSONUtil.toJsonStr(body));
+                String body = execute.body().string();
+                log.info("[获取历史聊天记录] 结果 {}， {}, 结果：{}", url, inviteLink, body);
             } else {
-                log.info("[获取历史聊天记录] 失败 {}， {}，错误码：{}", url, chatId, execute.code());
+                log.info("[获取历史聊天记录] 失败 {}， {}，错误码：{}", url, inviteLink, execute.code());
             }
         } catch (IOException e) {
-            log.error("[获取历史聊天记录] 异常 {}， {}", url, chatId, e);
+            log.error("[获取历史聊天记录] 异常 {}， {}", url, inviteLink, e);
         }
     }
 }

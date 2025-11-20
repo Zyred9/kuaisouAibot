@@ -6,10 +6,12 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.Expiry;
 import com.github.benmanes.caffeine.cache.Scheduler;
 import com.search.robots.beans.view.caffeine.Task;
+import com.search.robots.database.enums.caffeine.TaskNode;
 import lombok.SneakyThrows;
 import org.checkerframework.checker.index.qual.NonNegative;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -54,7 +56,14 @@ public class CountdownCaffeine extends Thread {
 
         @Override
         public long expireAfterCreate(String messageId, Task expire, long currentTime) {
-            return expire.getNode().getTimeUnit().toNanos(expire.getNode().getLoop());
+            if (Objects.equals(expire.getNode(), TaskNode.RECHARGE)) {
+                return expire.getNode().getTimeUnit().toNanos(expire.getNode().getLoop());
+            }
+            if (Objects.isNull(expire.getUnit())) {
+                return expire.getNode().getTimeUnit().toNanos(expire.getDays().getCode());
+            } else {
+                return expire.getUnit().toNanos(expire.getMinutes());
+            }
         }
 
         @Override

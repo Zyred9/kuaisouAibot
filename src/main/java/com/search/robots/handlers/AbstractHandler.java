@@ -209,6 +209,20 @@ public abstract class AbstractHandler {
         return photoMarkdown(message, fileId, caption, markup, ParseMode.MARKDOWNV2);
     }
 
+    protected SendPhoto photoMarkdownV2(Long chatId, String fileId, String caption, InlineKeyboardMarkup markup) {
+        return photoMarkdown(chatId, fileId, caption, markup, ParseMode.MARKDOWNV2);
+    }
+
+    protected SendPhoto photoMarkdown(Long chatId, String fileId, String caption, InlineKeyboardMarkup markup, String parseModel) {
+        return SendPhoto.builder()
+                .chatId(chatId)
+                .photo(new InputFile(fileId))
+                .parseMode(parseModel)
+                .replyMarkup(markup)
+                .caption(caption)
+                .build();
+    }
+
     protected SendPhoto photoMarkdown(Message message, String fileId, String caption, InlineKeyboardMarkup markup, String parseModel) {
         return SendPhoto.builder()
                 .chatId(message.getChatId())

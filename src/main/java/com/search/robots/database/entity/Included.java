@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.search.robots.beans.caffeine.CountdownCaffeine;
+import com.search.robots.beans.view.caffeine.Task;
 import com.search.robots.config.Constants;
 import com.search.robots.database.enums.Included.*;
 import com.search.robots.helper.DecimalHelper;
@@ -25,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -103,6 +106,9 @@ public class Included {
     private Boolean childTargetedSearch = true;
     private String auditReason;
 
+    /** 发送拉新时间 **/
+    private LocalDateTime sendNewTime;
+
     public static Included buildBean(ChatFullInfo info, User from, boolean parent, Integer count) {
 
         PrivacyTypeEnum pt;
@@ -111,8 +117,7 @@ public class Included {
         } else {
             pt = Objects.isNull(info.getUserName()) ? PrivacyTypeEnum.PRIVATE : PrivacyTypeEnum.PUBLIC;
         }
-
-        return new Included()
+        Included included = new Included()
                 .setId(info.getId())
                 .setParent(parent)
                 .setIndexTitle(info.getTitle())
@@ -141,7 +146,11 @@ public class Included {
                 .setOpenGlobalSearch(true)
                 .setTargetedSearchIndexIds(Collections.emptyList())
                 .setAuditReason("")
-                .setChildTargetedSearch(false);
+                .setChildTargetedSearch(false)
+                .setSendNewTime(LocalDateTime.now());
+        // 构建每天的广告
+        included.buildEveryAdv();
+        return included;
     }
 
     public List<Long> getTargetedSearchIndexIds() {
@@ -198,4 +207,24 @@ public class Included {
         );
     }
 
+    public void buildEveryAdv() {
+        CountdownCaffeine.set(Task.buildEveryAdv(
+                this.getId(), this.getNewUsers()
+        ));
+    }
+
+    public void updateEveryAdv() {
+        LocalDateTime prevSendTime = this.getSendNewTime();
+        LocalDateTime nextSendTime = prevSendTime.plusDays(this.newUsers.getCode());
+
+        // 计算下一次和当前时间剩余得秒数
+        LocalDateTime now = LocalDateTime.now();
+        long remainingSeconds = java.time.Duration.between(now, nextSendTime).getSeconds();
+        int seconds = (int) Math.max(0, remainingSeconds);
+
+        seconds = Math.max(seconds, 0);
+        CountdownCaffeine.set(Task.buildEveryAdv(
+                this.getId(), this.getNewUsers(), seconds
+        ));
+    }
 }

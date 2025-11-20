@@ -1,18 +1,27 @@
 package com.search.robots.beans.caffeine;
 
+import cn.hutool.core.util.StrUtil;
 import com.github.benmanes.caffeine.cache.RemovalCause;
 import com.github.benmanes.caffeine.cache.RemovalListener;
 import com.search.robots.beans.view.caffeine.Task;
+import com.search.robots.database.entity.Config;
+import com.search.robots.database.entity.Included;
 import com.search.robots.database.enums.caffeine.TaskNode;
+import com.search.robots.database.service.ConfigService;
+import com.search.robots.database.service.IncludedService;
 import com.search.robots.handlers.AbstractHandler;
 import com.search.robots.handlers.Trc20Handler;
+import com.search.robots.helper.KeyboardHelper;
+import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
@@ -29,6 +38,8 @@ import java.util.Objects;
 public class ExpireListener extends AbstractHandler implements RemovalListener<String, Task> {
 
     private final Trc20Handler trc20Handler;
+    private final ConfigService configService;
+    private final IncludedService includedService;
 
     @Override
     public boolean support(Update update) {return false;}
@@ -47,6 +58,10 @@ public class ExpireListener extends AbstractHandler implements RemovalListener<S
             if (Objects.equals(TaskNode.RECHARGE, node)) {
                 reset = this.trc20Handler.processorListenAddress(expire);
             }
+
+            if (Objects.equals(TaskNode.EVERY_ADV, node)) {
+                reset = this.processorEveryAdv(expire);
+            }
         } catch (Exception ex) {
             log.error("[caffeine监听] 错误原因：{}", ex.getMessage(), ex);
         } finally {
@@ -54,5 +69,39 @@ public class ExpireListener extends AbstractHandler implements RemovalListener<S
                 CountdownCaffeine.set(expire);
             }
         }
+    }
+
+    /**
+     * 处理每天的广告
+     *
+     * @param expire    过期得对象
+     * @return          结果
+     */
+    private boolean processorEveryAdv(Task expire) {
+        Config config = this.configService.queryConfig();
+        InlineKeyboardMarkup keyboard = KeyboardHelper.keyboard(config.getHelpfulPopularizeKeyboard());
+
+        if (StrUtil.isAllNotBlank(config.getHelpfulPopularizeMarkdown(),
+                config.getHelpfulPopularizeFileId())) {
+            AsyncSender.async(
+                    photoMarkdownV2(expire.getChatId(), config.getHelpfulPopularizeFileId(),
+                            config.getHelpfulPopularizeMarkdown(), keyboard)
+            );
+        }
+
+        if (StrUtil.isEmpty(config.getHelpfulPopularizeFileId())
+                && StrUtil.isNotEmpty(config.getHelpfulPopularizeMarkdown())) {
+            AsyncSender.async(
+                    markdownV2(expire.getChatId(), config.getHelpfulPopularizeMarkdown(), keyboard)
+            );
+        }
+
+        Included included = this.includedService.get(expire.getChatId());
+        if (Objects.nonNull(included)) {
+            included.buildEveryAdv();
+        }
+        included.setSendNewTime(LocalDateTime.now());
+        this.includedService.updateSelf(included);
+        return false;
     }
 }
