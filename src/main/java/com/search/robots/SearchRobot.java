@@ -71,7 +71,6 @@ public class SearchRobot implements SpringLongPollingBot, MultiThreadUpdateConsu
         try {
             User user = this.telegramClient.execute(GetMe.builder().build());
             this.initializerHandler.init(user);
-            this.properties.setBotUsername(user.getUserName());
             log.info("[机器人状态] {}", botSession.isRunning());
         } catch (Exception ex) {
             log.error("初始化异常", ex);

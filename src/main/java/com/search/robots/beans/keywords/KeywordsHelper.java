@@ -3,7 +3,6 @@ package com.search.robots.beans.keywords;
 import cn.hutool.core.util.StrUtil;
 import toolgood.words.StringSearch;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +17,7 @@ import java.util.Map;
  */
 public class KeywordsHelper {
 
-    private static final Map<Long, Map<String, String>> MAP_SEARCH = new HashMap<>(128);
+    private static final Map<String, Long> MAP_SEARCH = new HashMap<>(128);
     private static final StringSearch SEARCH = new StringSearch();
 
 
@@ -32,27 +31,20 @@ public class KeywordsHelper {
         return null;
     }
 
-    public static void addKeywords (Long chatId, String key, String content) {
-        if (MAP_SEARCH.containsKey(chatId)) {
-            Map<String, String> keywords = MAP_SEARCH.get(chatId);
-            List<String> keys = new ArrayList<>(keywords.keySet());
-            keys.add(key);
-            KeywordsHelper.add(keys);
-            keywords.put(key, content);
-        } else {
-            Map<String, String> map = new HashMap<>(128);
-            map.put(key, content);
-            MAP_SEARCH.put(chatId, map);
-            KeywordsHelper.add(List.of(key));
-        }
+    public static void addKeywords (String key, Long keywordId) {
+        MAP_SEARCH.put(key, keywordId);
     }
 
-    public static String getContent (Long chatId, String key) {
+    public static Long getKeywordId(String key) {
         String illegal = KeywordsHelper.illegal(key);
         if (StrUtil.isNotBlank(illegal)) {
-            return MAP_SEARCH.get(chatId).get(key);
+            return MAP_SEARCH.get(key);
         }
         return null;
+    }
+
+    public static void remove (String key) {
+        MAP_SEARCH.remove(key);
     }
 
 }

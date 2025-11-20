@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.search.robots.beans.cache.CommonCache;
 import com.search.robots.beans.chat.ChatQueryHandler;
+import com.search.robots.beans.keywords.KeywordsHelper;
 import com.search.robots.beans.view.DialogueCtx;
 import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
@@ -24,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.chat.ChatFullInfo;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
@@ -51,9 +54,9 @@ public class PrivateChatHandler extends AbstractHandler{
 
     private final UserService userService;
     private final BotProperties properties;
-    private final SearchService searchService;
     private final SearchHandler searchHandler;
     private final ConfigService configService;
+    private final KeywordService keywordService;
     private final AdvUserService advUserService;
     private final IncludedService includedService;
     private final HotSearchService hotSearchService;
@@ -79,6 +82,29 @@ public class PrivateChatHandler extends AbstractHandler{
 
         if (StrUtil.equals(text, "/start")) {
             return this.processorStart(message);
+        }
+
+        // 关键词专页
+        Long keywordId = KeywordsHelper.getKeywordId(message.getText());
+        if (Objects.nonNull(keywordId)) {
+            Keyword kw = this.keywordService.getById(keywordId);
+            if (Objects.nonNull(kw)) {
+                if (Boolean.TRUE.equals(kw.getStatus())) {
+                    if (StrUtil.isAllNotBlank(kw.getContentText(), kw.getImageId())) {
+                        AsyncSender.async(photoMarkdownV2(message, kw.getImageId(), kw.getContentText()));
+                    }
+                    else if (StrUtil.isNotBlank(kw.getContentText())) {
+                        AsyncSender.async(markdownV2(message, kw.getContentText()));
+                    }
+                    else if (StrUtil.isNotBlank(kw.getImageId())){
+                        AsyncSender.async(SendPhoto.builder()
+                                .chatId(message.getChatId())
+                                .photo(new InputFile(kw.getImageId()))
+                                .build());
+                    }
+                    return null;
+                }
+            }
         }
 
         if (StrUtil.startWith(text, "/start")) {
