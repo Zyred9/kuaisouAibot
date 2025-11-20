@@ -1,6 +1,7 @@
 package com.search.robots.handlers;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.search.robots.beans.chat.ChatQueryHandler;
 import com.search.robots.config.BotProperties;
 import com.search.robots.database.entity.Config;
@@ -130,8 +131,9 @@ public class BotJoinChatHandler extends AbstractHandler {
                         .build()
         );
         try (Response execute = call.execute()) {
-            if (execute.isSuccessful()) {
-                log.info("[获取历史聊天记录] 结束 {}， {}", url, chatId);
+            if (execute.isSuccessful() && Objects.nonNull(execute.body())) {
+                String body = execute.body().toString();
+                log.info("[获取历史聊天记录] 结果 {}， {}, 结果：{}", url, chatId, JSONUtil.toJsonStr(body));
             } else {
                 log.info("[获取历史聊天记录] 失败 {}， {}，错误码：{}", url, chatId, execute.code());
             }
