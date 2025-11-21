@@ -2,7 +2,10 @@ package com.search.robots.database.controller;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.search.robots.beans.view.base.Result;
+import com.search.robots.database.entity.Address;
 import com.search.robots.database.service.AddressService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +31,28 @@ import java.util.Set;
 public class AddressController {
 
     private final AddressService addressService;
+
+    /**
+     * 分页查询地址
+     * 支持address精准搜索
+     * 
+     * @param current 当前页码
+     * @param size 每页条数
+     * @param address 地址(可选，精准搜索)
+     * @return 分页结果
+     */
+    @GetMapping("/page")
+    public Result<Page<Address>> page(@RequestParam(defaultValue = "1") Integer current,
+                                      @RequestParam(defaultValue = "10") Integer size,
+                                      @RequestParam(required = false) String address) {
+        Page<Address> page = addressService.page(
+                Page.of(current, size),
+                Wrappers.<Address>lambdaQuery()
+                        .eq(StrUtil.isNotBlank(address), Address::getAddress, address)
+                        .orderByDesc(Address::getAddress)
+        );
+        return Result.success(page);
+    }
 
     /**
      * Excel批量导入地址

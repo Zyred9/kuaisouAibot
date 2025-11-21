@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.search.robots.beans.view.vo.search.SearchBean;
 import com.search.robots.database.enums.content.SortEnum;
 import com.search.robots.database.enums.content.SourceTypeEnum;
+import com.search.robots.database.mapper.SearchRepository;
 import com.search.robots.database.service.SearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,7 @@ public class SearchServiceImpl implements SearchService {
     private static final int PAGE_SIZE = 12;
 
     private final ElasticsearchRestTemplate elasticsearchTemplate;
+    private final SearchRepository searchRepository;
 
     @Override
     public Page<SearchBean> search(String text, SourceTypeEnum type, int current, SortEnum sort, List<Long> chatIds, Boolean filter) {
@@ -103,5 +105,17 @@ public class SearchServiceImpl implements SearchService {
                 .build();
         SearchHits<SearchBean> searchHits = elasticsearchTemplate.search(searchQuery, SearchBean.class);
         return searchHits.getTotalHits();
+    }
+
+    @Override
+    public void save(SearchBean bean) {
+        if (Objects.isNull(bean) || Objects.isNull(bean.getType()) || StrUtil.isBlank(bean.getSourceName())) {
+            return;
+        }
+        try {
+            this.searchRepository.save(bean);
+        } catch (Exception ex) {
+            log.error("[ES保存搜索资源失败] bean: {}, 错误信息: {}", bean, ex.getMessage(), ex);
+        }
     }
 }

@@ -9,9 +9,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.search.bots</groupId>
-    <artifactId>kuaisouAibot</artifactId>
+    <artifactId>search_bot</artifactId>
     <version>0.0.1-release</version>
-    <name>kuaisouAibot</name>
+    <name>search_bot</name>
     <description>telegram bot</description>
     <url/>
     <licenses>

@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.Objects;
 
 @Slf4j
@@ -34,14 +35,14 @@ public class KeywordController {
     }
 
     @PostMapping("/add")
-    public Result<Void> add(@RequestBody Keyword keyword) {
-        if (StrUtil.isBlank(keyword.getKeyword())) {
-            return Result.error("关键词不能为空");
-        }
+    public Result<Void> add(@Valid @RequestBody Keyword keyword) {
         if (Objects.isNull(keyword.getStatus())) {
-            keyword.setStatus(true);
+            keyword.setStatus(false);
         }
         keywordService.save(keyword);
+        if (Boolean.TRUE.equals(keyword.getStatus())) {
+            this.keywordService.updateStatus(keyword.getId(), keyword.getStatus());
+        }
         return Result.success();
     }
 

@@ -1,8 +1,11 @@
 package com.search.robots.database.entity;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -30,6 +33,7 @@ public class Keyword {
     private Long id;
 
     /** 关键词 **/
+    @NotBlank(message = "关键词不能为空")
     private String keyword;
 
     /** 图片id **/
@@ -40,4 +44,9 @@ public class Keyword {
 
     /** 启用状态：0.禁用 1.启用 **/
     private Boolean status;
+
+    @AssertTrue(message = "imageId和contentText不能同时为空")
+    public boolean isImageOrContentValid() {
+        return StrUtil.isNotBlank(this.imageId) || StrUtil.isNotBlank(this.contentText);
+    }
 }

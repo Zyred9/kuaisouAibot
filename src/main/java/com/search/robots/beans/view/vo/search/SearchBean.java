@@ -42,7 +42,7 @@ public class SearchBean {
     @Field(type = FieldType.Keyword)
     private SourceTypeEnum type;
 
-    @Field(type = FieldType.Text, analyzer = "ik_smart")
+    @Field(type = FieldType.Text, analyzer = "ik_max_word")
     private String sourceName;
 
     @Field(type = FieldType.Keyword)

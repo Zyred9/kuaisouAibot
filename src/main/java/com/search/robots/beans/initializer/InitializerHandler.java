@@ -44,7 +44,7 @@ public class InitializerHandler {
             included.updateEveryAdv();
         }
 
-        List<Keyword> ks = this.keywordService.list();
+        List<Keyword> ks = this.keywordService.listEnabled();
         List<String> keys = ks.stream().map(Keyword::getKeyword).toList();
         KeywordsHelper.add(keys);
 

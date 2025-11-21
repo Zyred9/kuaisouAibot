@@ -2,6 +2,7 @@ package com.search.robots.database.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.search.robots.beans.web.withdrawals.WithdrawalsAudit;
 import com.search.robots.config.Constants;
@@ -124,5 +125,14 @@ public class WithdrawalsServiceImpl extends ServiceImpl<WithdrawalsMapper, Withd
             return true;
         }
         return false;
+    }
+
+    @Override
+    public Page<Withdrawals> withdrawalsPage(int current, int size, String username) {
+        return this.baseMapper.selectPage(
+                Page.of(current, size),
+                Wrappers.<Withdrawals>lambdaQuery()
+                        .like(StrUtil.isNotBlank(username), Withdrawals::getUsername, username)
+        );
     }
 }

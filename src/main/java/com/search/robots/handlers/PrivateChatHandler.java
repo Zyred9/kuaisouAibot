@@ -459,8 +459,6 @@ public class PrivateChatHandler extends AbstractHandler{
         if (isChild) {
             AsyncSender.async(this.processorStart(message));
         }
-        // todo 发送携带按钮的搜索
-
     }
 
     private BotApiMethod<?> processorStart(Message message) {

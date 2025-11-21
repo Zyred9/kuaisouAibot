@@ -1,5 +1,6 @@
 package com.search.robots.database.service;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.search.robots.beans.web.withdrawals.WithdrawalsAudit;
 import com.search.robots.database.entity.User;
@@ -21,4 +22,6 @@ public interface WithdrawalsService extends IService<Withdrawals> {
     void create (User user, BigDecimal amount);
 
     boolean audit(@Valid WithdrawalsAudit audit);
+
+    Page<Withdrawals> withdrawalsPage(int current, int size, String username);
 }

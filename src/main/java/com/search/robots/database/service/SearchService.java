@@ -28,5 +28,12 @@ public interface SearchService {
      */
     Page<SearchBean> search(String text, SourceTypeEnum type, int current, SortEnum sort, List<Long> chatIds, Boolean filter);
 
+    /**
+     * 保存搜索资源文档
+     *
+     * @param bean 搜索文档
+     */
+    void save(SearchBean bean);
+
     long countSource(List<Long> chatIds);
 }
