@@ -4,9 +4,7 @@ package com.search.robots.handlers;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.search.robots.beans.view.AsyncBean;
-import com.search.robots.database.service.AdvLibraryService;
-import com.search.robots.database.service.AdvUserService;
-import com.search.robots.database.service.HotSearchService;
+import com.search.robots.database.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +26,7 @@ public class AsyncTaskHandler extends Thread {
 
     @Resource private AdvUserService advUserService;
     @Resource private HotSearchService hotSearchService;
+    @Resource private ExhibitionService exhibitionService;
     @Resource private AdvLibraryService advLibraryService;
 
     public static void async(AsyncBean ab) {
@@ -64,6 +63,13 @@ public class AsyncTaskHandler extends Thread {
                 // 记录直接搜索展现次数
                 if (CollUtil.isNotEmpty(bean.getRelatedIds())) {
                     this.advUserService.incr(bean.getRelatedIds(), false);
+                    continue;
+                }
+                // 曝光
+                if (CollUtil.isNotEmpty(bean.getExposureChatIds())) {
+                    this.exhibitionService.processorExposureChats(
+                            bean.getExposureChatIds()
+                    );
                     continue;
                 }
 

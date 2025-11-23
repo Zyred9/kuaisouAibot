@@ -143,6 +143,7 @@ public class SearchHandler extends AbstractHandler {
                 }
             }
             AsyncTaskHandler.async(AsyncBean.kw(keyword));
+            AsyncTaskHandler.async(AsyncBean.exposure(search));
             hasButton = true;
         } else {
             sb.append("关键词暂未收录\n");
@@ -152,6 +153,7 @@ public class SearchHandler extends AbstractHandler {
         InlineKeyboardMarkup markup = KeyboardHelper.buildSearchResultKeyboard(
                 hitType, current, filter, sort, this.properties.getBotUsername(), search, keyword, buttonAdv, hasButton
         );
+
         return send ? markdownV2(message, sb.toString(), markup) : editMarkdownV2(message, sb.toString(), markup);
     }
 

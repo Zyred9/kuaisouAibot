@@ -8,11 +8,10 @@ import com.search.robots.database.mapper.ExhibitionMapper;
 import com.search.robots.database.service.ExhibitionService;
 import com.search.robots.helper.StrHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -27,24 +26,6 @@ import java.util.stream.Collectors;
 @Service
 public class ExhibitionServiceImpl extends ServiceImpl<ExhibitionMapper, Exhibition> implements ExhibitionService {
 
-    @Override
-    public void exhibition(Long chatId, boolean isContent) {
-        Exhibition exhibition = this.baseMapper.selectOne(
-                Wrappers.<Exhibition>lambdaQuery()
-                        .eq(Exhibition::getChatId, chatId)
-                        .eq(Exhibition::getShowDay, LocalDate.now())
-        );
-        if (Objects.isNull(exhibition)) {
-            this.baseMapper.insert(Exhibition.buildDefault(chatId, isContent));
-        } else {
-            if (isContent) {
-                exhibition.setContentCount(exhibition.getContentCount() + 1);
-            } else {
-                exhibition.setLinkCount(exhibition.getLinkCount() + 1);
-            }
-            this.baseMapper.updateById(exhibition);
-        }
-    }
 
     @Override
     public void customExhibition(Exhibition exhibition) {
@@ -101,5 +82,40 @@ public class ExhibitionServiceImpl extends ServiceImpl<ExhibitionMapper, Exhibit
             }
         }
         return sb.toString();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void processorExposureChats(Set<Long> exposureChatIds) {
+        if (CollUtil.isEmpty(exposureChatIds)) {
+            return;
+        }
+        List<Exhibition> exhibitions = this.baseMapper.selectList(
+                Wrappers.<Exhibition>lambdaQuery()
+                        .in(Exhibition::getChatId, exposureChatIds)
+                        .eq(Exhibition::getShowDay, LocalDate.now())
+        );
+        Map<Long, Exhibition> map = exhibitions.stream()
+                .collect(Collectors.toMap(Exhibition::getChatId, Function.identity()));
+
+        List<Exhibition> inserts = new ArrayList<>();
+        List<Exhibition> updates = new ArrayList<>();
+        for (Long chatId : exposureChatIds) {
+            if (map.containsKey(chatId)) {
+                Exhibition exhibition = map.get(chatId);
+                exhibition.setLinkCount(Objects.isNull(exhibition.getLinkCount()) ? 0 : exhibition.getLinkCount() + 1);
+                exhibition.setContentCount(Objects.isNull(exhibition.getContentCount()) ? 0 : exhibition.getContentCount() + 1);
+                updates.add(exhibition);
+            } else {
+                inserts.add(Exhibition.buildDefault(chatId));
+            }
+        }
+
+        if (CollUtil.isNotEmpty(inserts)) {
+            this.saveBatch(inserts);
+        }
+        if (CollUtil.isNotEmpty(updates)) {
+            this.updateBatchById(inserts);
+        }
     }
 }

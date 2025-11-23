@@ -35,15 +35,11 @@ public class Exhibition {
     private Integer contentCount;
 
 
-    public static Exhibition buildDefault (Long chatId, boolean isContent) {
-        Exhibition exhibition = new Exhibition()
+    public static Exhibition buildDefault (Long chatId) {
+        return new Exhibition()
                 .setChatId(chatId)
-                .setShowDay(LocalDate.now());
-        if (isContent) {
-            exhibition.setContentCount(1);
-        } else {
-            exhibition.setLinkCount(1);
-        }
-        return exhibition;
+                .setShowDay(LocalDate.now())
+                .setContentCount(1)
+                .setLinkCount(1);
     }
 }

@@ -5,6 +5,7 @@ import com.search.robots.database.entity.Exhibition;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>
@@ -16,8 +17,6 @@ import java.util.List;
  */
 public interface ExhibitionService extends IService<Exhibition> {
 
-    void exhibition(Long chatId, boolean isContent);
-
     /**
      * 自定义展示次数，一般是给后台使用的
      *
@@ -26,4 +25,7 @@ public interface ExhibitionService extends IService<Exhibition> {
     void customExhibition(Exhibition exhibition);
 
     String querySevenExhibition(List<LocalDate> localDates, long chatId);
+
+    void processorExposureChats(Set<Long> exposureChatIds);
+
 }
