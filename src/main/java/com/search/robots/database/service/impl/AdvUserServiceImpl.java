@@ -10,6 +10,7 @@ import com.search.robots.beans.view.vo.AdvShow;
 import com.search.robots.beans.view.vo.adv.AdvStatistics;
 import com.search.robots.beans.web.adv.AdvUserAudit;
 import com.search.robots.config.Constants;
+import com.search.robots.config.SelfException;
 import com.search.robots.database.entity.AdvUser;
 import com.search.robots.database.entity.Config;
 import com.search.robots.database.enums.adv.AdvStatus;
@@ -91,12 +92,17 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
 
     @Override
     public void auditAdvUser(AdvUserAudit audit) {
-        AdvUser advUser = this.baseMapper.selectById(audit.getAdvUserId());
+        AdvUser advUser = this.baseMapper.selectById(audit.getId());
         Assert.isNull(advUser, "用户广告不存在");
+
+        if (StrUtil.isAllBlank(advUser.getTempContent(), advUser.getTempUrl())) {
+            throw new SelfException("用户未提交新广告内容！");
+        }
+
 
         Config config = this.configService.queryConfig();
         advUser.setAdvStatus(
-                Objects.equals(audit.getAdvStatus(), 1)
+                Objects.equals(audit.getAdvStatus(), AdvStatus.APPROVAL_PASS.getCode())
                         ? AdvStatus.APPROVAL_PASS : AdvStatus.UN_START
         );
         advUser.setAdvContent(advUser.getTempContent());

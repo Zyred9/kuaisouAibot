@@ -76,6 +76,8 @@ public class Config {
     // 广告文案配置
     /** 广告文案文本(支持Markdown) **/
     private String advertisingMarkdown;
+    /** 广告文案图片file_id **/
+    private String advertisingFileId;
     /** 广告文案按钮JSON **/
     private String advertisingKeyboard;
 

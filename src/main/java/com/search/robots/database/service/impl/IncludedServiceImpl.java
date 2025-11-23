@@ -124,7 +124,8 @@ public class IncludedServiceImpl extends ServiceImpl<IncludedMapper, Included> i
         return this.baseMapper.selectPage(
                 Page.of(current, size),
                 Wrappers.<Included>lambdaQuery()
-                        .eq(Included::getIndexUsername, indexUsername)
+                        .eq(StrUtil.isNotBlank(indexUsername),
+                                Included::getIndexUsername, indexUsername)
         );
     }
 

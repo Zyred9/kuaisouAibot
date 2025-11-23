@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.search.robots.beans.view.vo.AdvButton;
 import com.search.robots.beans.view.vo.AdvShow;
 import com.search.robots.beans.view.vo.AdvUserRenew;
@@ -179,6 +180,7 @@ public class AdvUser {
                 .setCreatedAt(now);
     }
 
+    @JsonIgnore
     public String getAdvText () {
         if (Objects.equals(this.getAdvType(), AdvTypeEnum.BUY_TOP_LINK)
                 || Objects.equals(this.getAdvType(), AdvTypeEnum.BUY_BOTTOM_BUTTON)) {
@@ -188,6 +190,7 @@ public class AdvUser {
     }
 
 
+    @JsonIgnore
     private String buildAdvUserPaymentText() {
         String renewText = buildRenewRecordsText(this);
         String showDetailText = buildShowDetailText(this);
@@ -210,6 +213,7 @@ public class AdvUser {
         );
     }
 
+    @JsonIgnore
     private String buildTopButtonPaymentText () {
         String renewText = buildRenewRecordsText(this);
         String showDetailText = buildShowDetailText(this);
@@ -231,6 +235,7 @@ public class AdvUser {
         );
     }
 
+    @JsonIgnore
     private String updateContentText() {
         if (Objects.equals(this.advStatus, AdvStatus.UNDER_APPROVAL)) {
             String resultText = """
@@ -273,12 +278,14 @@ public class AdvUser {
         return "\n" + sb.toString().trim();
     }
 
+    @JsonIgnore
     public String buildButtonName() {
         boolean noSetting = StrUtil.isBlank(this.advContent);
         return this.advType.getPrefix() + ":" +
                 StrHelper.buildSymbolName("|", keyword, noSetting ? "未配置" : this.advContent, this.advStatus.getDesc());
     }
 
+    @JsonIgnore
     public String buildUpdateText(String customUsername) {
         boolean equals = Objects.equals(this.advStatus, AdvStatus.APPROVAL_PASS);
         String title = equals ? "✅广告审批通过" : "❌广告审拒绝";
@@ -289,4 +296,15 @@ public class AdvUser {
                 title, customUsername
         );
     }
+
+    public String getAdvTypeText () {
+        return Objects.isNull(this.advType) ? "" : this.advType.getDesc();
+    }
+
+    public String getAdvStatusDesc () {
+        return Objects.isNull(this.advStatus) ? "" : this.advStatus.getDesc();
+    }
+
+
+
 }

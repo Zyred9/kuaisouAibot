@@ -7,6 +7,7 @@ import com.search.robots.database.entity.Included;
 import com.search.robots.database.service.IncludedService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -32,7 +33,7 @@ public class IncludedController {
 
 
     @PostMapping("/included_audit")
-    public Result<Void> includedAudit (@RequestBody IncludedAudit includedAudit) {
+    public Result<Void> includedAudit (@RequestBody @Validated IncludedAudit includedAudit) {
         this.includedService.includedAudit(includedAudit);
         return Result.success();
     }

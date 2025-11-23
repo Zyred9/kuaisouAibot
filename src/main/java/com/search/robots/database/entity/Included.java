@@ -226,4 +226,17 @@ public class Included {
                 this.getId(), this.getNewUsers(), seconds
         ));
     }
+
+    public String getIncludedTypeDesc () {
+        return Objects.isNull(this.includedType) ? "" : this.includedType.getDesc();
+    }
+    public String getIncludedStatusDesc () {
+        return Objects.isNull(this.includedStatus) ? "" : this.includedStatus.getDesc();
+    }
+    public String getPrivacyTypeDesc () {
+        return Objects.isNull(this.privacyType) ? "" : this.privacyType.getDesc();
+    }
+    public String getNewUsersDesc () {
+        return Objects.isNull(this.newUsers) ? "" : this.newUsers.getDesc();
+    }
 }

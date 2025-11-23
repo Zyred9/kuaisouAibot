@@ -3,6 +3,7 @@ package com.search.robots.beans.web.included;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 
@@ -16,7 +17,9 @@ import java.io.Serializable;
 @Getter
 public class IncludedAudit implements Serializable {
 
+    @NotNull("id为空")
     private Long includedId;
+    @NotNull("审核码错误")
     private Integer auditCode;
     private String rejectReason;
 

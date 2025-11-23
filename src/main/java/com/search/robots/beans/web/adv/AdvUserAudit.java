@@ -17,7 +17,7 @@ import java.io.Serializable;
 public class AdvUserAudit implements Serializable {
 
     /** 用户的广告id **/
-    private Long advUserId;
+    private Long id;
     /** 审批状态  0：审批拒绝，1: 审批通过 **/
     private Integer advStatus;
 

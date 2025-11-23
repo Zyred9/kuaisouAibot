@@ -3,10 +3,10 @@ bots:
   config:
     logs: false
     enable-proxy: false
-    background-group-id: 123456789001
+    background-group-id: -1002756411889
     notify-chat-id: -1002756411889
     tokens:
-      BOT_TOKEN: 7625159298:AAFGjgPTBlPtc2TaNfFo7Ph2FAZgVjK9Rno
+      BOT_TOKEN: 8570133524:AAEYNCazKDL7TJVD_f4ub0JATCeL91TpCy4
     qr-code-path: /usr/local/qr_code/
     history-url: http://localhost:8813/collect/td/history
 # -------------------部署需要修改---------------------

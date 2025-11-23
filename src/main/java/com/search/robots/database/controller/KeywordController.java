@@ -46,8 +46,20 @@ public class KeywordController {
         return Result.success();
     }
 
+    @PutMapping("/update")
+    public Result<Void> update(@Valid @RequestBody Keyword keyword) {
+        if (Objects.isNull(keyword.getId())) {
+            return Result.error("关键词ID不能为空");
+        }
+        keywordService.updateById(keyword);
+        if (Objects.nonNull(keyword.getStatus())) {
+            this.keywordService.updateStatus(keyword.getId(), keyword.getStatus());
+        }
+        return Result.success();
+    }
+
     @PutMapping("/status/{id}")
-    public Result<Void> updateStatus(@PathVariable Long id, @RequestParam Boolean status) {
+    public Result<Void> updateStatus(@PathVariable Long id, @RequestParam("status") Boolean status) {
         this.keywordService.updateStatus(id, status);
         return Result.success();
     }
