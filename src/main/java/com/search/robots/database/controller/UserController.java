@@ -66,6 +66,7 @@ public class UserController {
      * 编辑用户信息
      * <pre>
      * 仅支持编辑 grade、balance 字段。
+     * 更新后会自动同步缓存。
      * </pre>
      *
      * @param request 包含 userId、grade、balance 的 VO 对象
@@ -76,17 +77,23 @@ public class UserController {
         if (Objects.isNull(request.getUserId())) {
             return Result.error("用户ID不能为空");
         }
-        User user = this.userService.getById(request.getUserId());
+        
+        // 使用 select 方法从缓存优先查询
+        User user = this.userService.select(request.getUserId());
         if (Objects.isNull(user)) {
             return Result.error("用户不存在");
         }
+        
+        // 更新字段
         if (Objects.nonNull(request.getGrade())) {
             user.setGrade(request.getGrade());
         }
         if (Objects.nonNull(request.getBalance())) {
             user.setBalance(request.getBalance());
         }
-        this.userService.updateById(user);
+        
+        // 使用 update 方法更新（自动同步缓存）
+        this.userService.update(user);
         return Result.success();
     }
 }

@@ -26,4 +26,25 @@ public interface AdvLibraryService extends IService<AdvLibrary> {
      * @param keyword 关键词
      */
     void search(String keyword);
+
+    /**
+     * 新增广告库
+     *
+     * @param advLibrary 广告库实体
+     */
+    void addAdvLibrary(AdvLibrary advLibrary);
+
+    /**
+     * 编辑广告库
+     *
+     * @param advLibrary 广告库实体
+     */
+    void updateAdvLibrary(AdvLibrary advLibrary);
+
+    /**
+     * 删除广告库
+     *
+     * @param id 广告库ID
+     */
+    void removeAdvLibrary(Long id);
 }

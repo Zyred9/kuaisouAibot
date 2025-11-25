@@ -68,7 +68,7 @@ public class WithdrawalsServiceImpl extends ServiceImpl<WithdrawalsMapper, Withd
         user.setBalance(balance);
 
         this.baseMapper.insert(withdrawals);
-        this.userService.updateById(user);
+        this.userService.update(user);
         this.billService.save(bill);
     }
 
@@ -86,7 +86,7 @@ public class WithdrawalsServiceImpl extends ServiceImpl<WithdrawalsMapper, Withd
                             .eq(Bill::getBillNo, withdrawals.getWithdrawalNo())
                             .last("limit 1")
             );
-            User user = this.userService.getById(withdrawals.getUserId());
+            User user = this.userService.select(withdrawals.getUserId());
 
             if (Objects.equals(status, WithdrawalStatus.FAILED) ) {
                 Config config = this.configService.queryConfig();
@@ -95,7 +95,7 @@ public class WithdrawalsServiceImpl extends ServiceImpl<WithdrawalsMapper, Withd
                         .add(config.getWithdrawalServiceFee());
                 user.setBalance(total);
 
-                this.userService.updateById(user);
+                this.userService.update(user);
                 AsyncSender.async(
                         SendMessage.builder()
                                 .parseMode(ParseMode.MARKDOWN)

@@ -40,7 +40,7 @@ import java.util.Objects;
 @TableName(value = "t_included", autoResultMap = true)
 public class Included {
 
-    public static final String INCLUDED_PREFIX_KEY = "data:included:";
+    public static final String INCLUDED_PREFIX_KEY = Constants.PRE + ":data:included:";
 
     /** 频道id/群组id **/
     @TableId(type = IdType.INPUT)

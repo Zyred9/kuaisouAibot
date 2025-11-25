@@ -423,7 +423,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
         }
 
         user.setBalance(balance.subtract(need));
-        this.userService.updateById(user);
+        this.userService.update(user);
 
         Bill bill = Bill.buildAdvPaymentBill(user, balance, need, bt);
         this.billService.save(bill);
@@ -483,8 +483,8 @@ public class PrivateCallbackHandler extends AbstractHandler {
         // 回到我的
         if (StrUtil.equals(command.get(1), "self")) {
             // 删除缓存
-            CommonCache.removeDialogue(message.getFrom().getId());
-            User user = this.userService.user(message.getFrom());
+            CommonCache.removeDialogue(callbackQuery.getFrom().getId());
+            User user = this.userService.user(callbackQuery.getFrom());
             InlineKeyboardMarkup markup = KeyboardHelper.buildSelfKeyboard();
 
             if (command.size() == 2) {

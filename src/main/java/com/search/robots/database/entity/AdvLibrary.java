@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.search.robots.beans.view.vo.AdvShow;
+import com.search.robots.config.Constants;
 import com.search.robots.database.enums.adv.AdvTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,7 +36,7 @@ import java.util.List;
 @TableName(value = "t_adv_library", autoResultMap = true)
 public class AdvLibrary {
 
-    public static final String ADV_LIBRARY_KEY = "search:keyword:library";
+    public static final String ADV_LIBRARY_KEY = Constants.PRE + ":data:library";
 
     @TableId(type = IdType.AUTO)
     private Long id;

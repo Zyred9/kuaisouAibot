@@ -2,6 +2,7 @@ package com.search.robots.database.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -10,6 +11,7 @@ import com.search.robots.database.entity.User;
 import com.search.robots.database.mapper.UserMapper;
 import com.search.robots.database.service.UserService;
 import com.search.robots.helper.DecimalHelper;
+import com.search.robots.helper.RedisHelper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,13 +30,48 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Override
     public User user(org.telegram.telegrambots.meta.api.objects.User from) {
+        String cacheKey = User.USER_PREFIX_KEY + from.getId();
+
+        String cachedUserJson = RedisHelper.get(cacheKey);
+        if (StrUtil.isNotBlank(cachedUserJson)) {
+            return JSONUtil.toBean(cachedUserJson, User.class);
+        }
         User user = this.baseMapper.selectById(from.getId());
         if (Objects.nonNull(user)) {
+            RedisHelper.set(cacheKey, JSONUtil.toJsonStr(user));
             return user;
         }
         user = User.buildDefault(from);
-        this.baseMapper.insert(user);
+        if (!from.getIsBot()) {
+            this.baseMapper.insert(user);
+            RedisHelper.set(cacheKey, JSONUtil.toJsonStr(user));
+        } else {
+            RedisHelper.set(cacheKey, JSONUtil.toJsonStr(user));
+        }
         return user;
+    }
+
+    @Override
+    public User select(Long userId) {
+        String cacheKey = User.USER_PREFIX_KEY + userId;
+
+        String cachedUserJson = RedisHelper.get(cacheKey);
+        if (StrUtil.isNotBlank(cachedUserJson)) {
+            return JSONUtil.toBean(cachedUserJson, User.class);
+        }
+        User user = this.baseMapper.selectById(userId);
+        if (Objects.nonNull(user)) {
+            RedisHelper.set(cacheKey, JSONUtil.toJsonStr(user));
+            return user;
+        }
+        return null;
+    }
+
+    @Override
+    public void update(User user) {
+        this.baseMapper.updateById(user);
+        String cacheKey = User.USER_PREFIX_KEY + user.getUserId();
+        RedisHelper.delete(cacheKey);
     }
 
     @Override

@@ -125,6 +125,22 @@ public class PrivateChatHandler extends AbstractHandler{
                 InlineKeyboardMarkup markup = KeyboardHelper.buildAdvertisingKeyboard();
                 return markdown(message, config.getAdvertisingMarkdown(), markup);
             }
+            if (StrUtil.equals(commands.get(1), "ad_template")) {
+                Config config = configService.queryConfig();
+                if (StrUtil.isBlank(config.getHelpfulPopularizeFileId())) {
+                    return null;
+                }
+                InlineKeyboardMarkup keyboard = KeyboardHelper.keyboard(config.getHelpfulPopularizeKeyboard());
+                AsyncSender.async(
+                        photoMarkdownV2(message, config.getHelpfulPopularizeFileId(),
+                                config.getHelpfulPopularizeMarkdown(), keyboard)
+                );
+            }
+            if (StrUtil.equals(commands.get(1), "ad")) {
+                Config config = this.configService.queryConfig();
+                InlineKeyboardMarkup markup = KeyboardHelper.buildAdvertisingKeyboard();
+                return markdown(message, config.getAdvertisingMarkdown(), markup);
+            }
             this.processorStartWith(message, commands);
         }
 
@@ -205,7 +221,7 @@ public class PrivateChatHandler extends AbstractHandler{
         if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADDRESS)) {
 
             user.setTrAddr(message.getText());
-            this.userService.updateById(user);
+            this.userService.update(user);
 
             InlineKeyboardMarkup markup = KeyboardHelper.buildBindingTrcAddrSuccessKeyboard();
             String format = StrUtil.format(Constants.UPDATE_ADDR_TEXT, message.getText());
@@ -404,7 +420,7 @@ public class PrivateChatHandler extends AbstractHandler{
             return;
         }
 
-        User newOldUser = this.userService.getById(message.getFrom().getId());
+        User newOldUser = this.userService.select(message.getFrom().getId());
         if (Objects.nonNull(newOldUser)) {
             // 进的子邀请
             if (isChild) {
@@ -438,7 +454,7 @@ public class PrivateChatHandler extends AbstractHandler{
         if (insert) {
             this.userService.save(newOldUser);
         } else {
-            this.userService.updateById(newOldUser);
+            this.userService.update(newOldUser);
         }
 
         // 如果是广告，需要给上级发送

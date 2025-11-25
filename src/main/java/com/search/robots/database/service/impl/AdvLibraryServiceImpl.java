@@ -142,4 +142,51 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
         );
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addAdvLibrary(AdvLibrary advLibrary) {
+        // 插入数据库
+        this.baseMapper.insert(advLibrary);
+        
+        // 更新Redis缓存
+        RedisHelper.hPut(AdvLibrary.ADV_LIBRARY_KEY, advLibrary.getKeyword(), String.valueOf(advLibrary.getId()));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateAdvLibrary(AdvLibrary advLibrary) {
+        // 获取旧数据
+        AdvLibrary oldLibrary = this.baseMapper.selectById(advLibrary.getId());
+        if (Objects.isNull(oldLibrary)) {
+            return;
+        }
+        
+        // 更新数据库
+        this.baseMapper.updateById(advLibrary);
+        
+        // 如果关键词变了，需要更新Redis缓存
+        if (!StrUtil.equals(oldLibrary.getKeyword(), advLibrary.getKeyword())) {
+            // 删除旧关键词缓存
+            RedisHelper.hDelete(AdvLibrary.ADV_LIBRARY_KEY, oldLibrary.getKeyword());
+            // 添加新关键词缓存
+            RedisHelper.hPut(AdvLibrary.ADV_LIBRARY_KEY, advLibrary.getKeyword(), String.valueOf(advLibrary.getId()));
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeAdvLibrary(Long id) {
+        // 获取数据
+        AdvLibrary library = this.baseMapper.selectById(id);
+        if (Objects.isNull(library)) {
+            return;
+        }
+        
+        // 删除数据库记录
+        this.baseMapper.deleteById(id);
+        
+        // 删除Redis缓存
+        RedisHelper.hDelete(AdvLibrary.ADV_LIBRARY_KEY, library.getKeyword());
+    }
+
 }

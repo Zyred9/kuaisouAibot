@@ -3,6 +3,7 @@ package com.search.robots.database.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.search.robots.config.Constants;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -20,7 +21,7 @@ import java.time.LocalDateTime;
 @TableName("t_hot_search")
 public class HotSearch {
 
-    public static final String HOT_SEARCH_KEY = "search:keyword:hot_search";
+    public static final String HOT_SEARCH_KEY = Constants.PRE + ":data:hot_search";
 
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;

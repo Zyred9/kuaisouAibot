@@ -10,6 +10,8 @@ package com.search.robots.config;
  */
 public interface Constants {
 
+    String PRE = "kuai_sou_ai_bot";
+
     String TOKEN_KEY = "BOT_TOKEN";
 
     String SUCCESS = "✅操作成功";

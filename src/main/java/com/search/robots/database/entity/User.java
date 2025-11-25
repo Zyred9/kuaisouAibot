@@ -31,6 +31,8 @@ import java.util.List;
 @TableName("t_user")
 public class User {
 
+    public static final String USER_PREFIX_KEY = Constants.PRE + ":data:user:";
+
     @TableId(type = IdType.INPUT)
     private Long userId;
     private String username;

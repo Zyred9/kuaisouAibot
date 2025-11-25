@@ -16,6 +16,10 @@ public interface UserService extends IService<User> {
 
     User user(org.telegram.telegrambots.meta.api.objects.User from);
 
+    User select(Long userId);
+
+    void update(User user);
+
     User selectByInviteCode(String inviteCode);
 
     String getSpreadStatement(Long userId);

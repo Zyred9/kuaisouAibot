@@ -67,7 +67,7 @@ public class Trc20Handler extends AbstractHandler {
         List<TransferBean> transferBeans = this.doQuery(address, addressEntity.getPrevTimestamp());
 
         List<ListenReceive> listenReceives = new ArrayList<>(transferBeans.size());
-        User user = this.userService.getById(addressEntity.getUserId());
+        User user = this.userService.select(addressEntity.getUserId());
         List<Bill> bills = new ArrayList<>(transferBeans.size());
 
         for (TransferBean transferBean : transferBeans) {
@@ -97,7 +97,7 @@ public class Trc20Handler extends AbstractHandler {
         this.buildMessage(user, bills);
 
         if (CollUtil.isNotEmpty(listenReceives)) {
-            this.userService.updateById(user);
+            this.userService.update(user);
             this.receiveService.saveBatch(listenReceives);
         }
         if (CollUtil.isNotEmpty(bills)) {
