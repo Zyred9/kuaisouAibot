@@ -69,6 +69,9 @@ public class User {
     /** 累计入账奖励 **/
     private BigDecimal accumulativeTotalAward;
 
+    /** 是否首次私聊（用于私聊奖励）**/
+    private Boolean isFirstPrivateChat = true;
+
 
     public static User buildDefault(org.telegram.telegrambots.meta.api.objects.User user) {
         return new User()
@@ -81,7 +84,11 @@ public class User {
                 .setInviteCode(StrHelper.generateInviteCode())
                 .setUnderwayAmount(BigDecimal.ZERO)
                 .setWithdrawAmount(BigDecimal.ZERO)
-                .setAwardAmount(BigDecimal.ZERO);
+                .setAwardAmount(BigDecimal.ZERO)
+                .setTodayAward(BigDecimal.ZERO)
+                .setTotalAward(BigDecimal.ZERO)
+                .setAccumulativeTotalAward(BigDecimal.ZERO)
+                .setIsFirstPrivateChat(true);
     }
 
 

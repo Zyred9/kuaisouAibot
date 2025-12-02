@@ -63,6 +63,7 @@ public class PrivateChatHandler extends AbstractHandler{
     private final ChatQueryHandler chatQueryHandler;
     private final AdvLibraryService advLibraryService;
     private final WithdrawalsService withdrawalsService;
+    private final RewardRecordService rewardRecordService;
 
     @Override
     public boolean support(Update update) {
@@ -451,10 +452,56 @@ public class PrivateChatHandler extends AbstractHandler{
             newOldUser.setAdsParentId(master.getUserId());
         }
 
+        Config config = this.configService.queryConfig();
         if (insert) {
             this.userService.save(newOldUser);
+            
+            // 直接拉新奖励：给邀请人发放奖励
+            if (isChild && Objects.nonNull(config.getDirectNewUserReward()) && config.getDirectNewUserReward().compareTo(BigDecimal.ZERO) > 0) {
+                // 记录直接拉新奖励
+                this.rewardRecordService.recordDirectNewUserReward(master, newOldUser, config.getDirectNewUserReward());
+                // 更新邀请人的待入账金额
+                User updateMaster = new User();
+                updateMaster.setUserId(master.getUserId());
+                updateMaster.setTotalAward(master.getTotalAward().add(config.getDirectNewUserReward()));
+                this.userService.update(updateMaster);
+            }
+            
+            // 下级拉新奖励：如果邀请人有上级，给邀请人的上级发放奖励
+            if (isChild && Objects.nonNull(master.getParentId()) && Objects.nonNull(config.getNextNewReward()) && config.getNextNewReward().compareTo(BigDecimal.ZERO) > 0) {
+                User grandParent = this.userService.select(master.getParentId());
+                if (Objects.nonNull(grandParent)) {
+                    // 记录下级拉新奖励
+                    this.rewardRecordService.recordNextNewUserReward(grandParent, newOldUser, config.getNextNewReward());
+                    // 更新上上级的待入账金额
+                    User updateGrandParent = new User();
+                    updateGrandParent.setUserId(grandParent.getUserId());
+                    updateGrandParent.setTotalAward(grandParent.getTotalAward().add(config.getNextNewReward()));
+                    this.userService.update(updateGrandParent);
+                }
+            }
         } else {
             this.userService.update(newOldUser);
+            
+            // 处理首次私聊奖励：如果用户已存在但是首次私聊
+            if (isChild && Boolean.TRUE.equals(newOldUser.getIsFirstPrivateChat()) 
+                && Objects.nonNull(config.getPrivateChatReward()) 
+                && config.getPrivateChatReward().compareTo(BigDecimal.ZERO) > 0) {
+                // 记录私聊奖励
+                this.rewardRecordService.recordPrivateChatReward(master, newOldUser, config.getPrivateChatReward());
+                
+                // 更新上级用户的待入账金额
+                User updateMaster = new User();
+                updateMaster.setUserId(master.getUserId());
+                updateMaster.setTotalAward(master.getTotalAward().add(config.getPrivateChatReward()));
+                this.userService.update(updateMaster);
+                
+                // 标记为非首次私聊
+                User updateUser = new User();
+                updateUser.setUserId(newOldUser.getUserId());
+                updateUser.setIsFirstPrivateChat(false);
+                this.userService.update(updateUser);
+            }
         }
 
         // 如果是广告，需要给上级发送
@@ -466,7 +513,6 @@ public class PrivateChatHandler extends AbstractHandler{
             );
             AsyncSender.async(markdown(master.getUserId(), masterText));
 
-            Config config = this.configService.queryConfig();
             String format = StrUtil.format(Constants.MY_LEADER_TEXT, config.getPreferentialRate(), master.getUsername());
             AsyncSender.async(markdown(message.getFrom().getId(), format));
         }

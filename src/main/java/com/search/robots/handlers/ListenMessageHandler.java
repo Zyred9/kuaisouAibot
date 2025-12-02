@@ -2,10 +2,15 @@ package com.search.robots.handlers;
 
 import cn.hutool.core.util.StrUtil;
 import com.search.robots.beans.view.vo.search.SearchBean;
+import com.search.robots.database.entity.Config;
 import com.search.robots.database.entity.Included;
+import com.search.robots.database.entity.User;
 import com.search.robots.database.enums.content.SourceTypeEnum;
+import com.search.robots.database.service.ConfigService;
 import com.search.robots.database.service.IncludedService;
+import com.search.robots.database.service.RewardRecordService;
 import com.search.robots.database.service.SearchService;
+import com.search.robots.database.service.UserService;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +19,7 @@ import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -35,6 +41,9 @@ public class ListenMessageHandler extends AbstractHandler {
     private final SearchHandler searchHandler;
     private final IncludedService includedService;
     private final SearchService searchService;
+    private final UserService userService;
+    private final ConfigService configService;
+    private final RewardRecordService rewardRecordService;
 
     @Override
     public boolean support(Update update) {
@@ -68,6 +77,10 @@ public class ListenMessageHandler extends AbstractHandler {
             }
             // openFilterMinors
             BotApiMethod<?> result = this.searchHandler.processorChatSearch(message, chat.getOpenFilterMinors(), searchChat);
+            
+            // 群搜索奖励：给群主发放奖励
+            this.processGroupSearchReward(chat, message.getFrom().getId());
+            
             if (Boolean.TRUE.equals(chat.getOpenPrivacySearch())) {
                 AsyncSender.async(delete(message));
             }
@@ -226,5 +239,48 @@ public class ListenMessageHandler extends AbstractHandler {
                 .setTimes(times)
                 .setViews(0)
                 .setMarked(Boolean.FALSE);
+    }
+
+    /**
+     * 处理群搜索奖励
+     */
+    private void processGroupSearchReward(Included chat, Long searcherUserId) {
+        // 如果群组没有所有者，不处理
+        if (Objects.isNull(chat.getUserId())) {
+            return;
+        }
+        
+        Config config = this.configService.queryConfig();
+        // 如果没有配置奖励或奖励为0，不处理
+        if (Objects.isNull(config.getGroupSearchReward()) || config.getGroupSearchReward().compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        
+        // 获取群主信息
+        User groupOwner = this.userService.select(chat.getUserId());
+        if (Objects.isNull(groupOwner)) {
+            return;
+        }
+        
+        // 构建群组链接
+        String chatLink = "";
+        if (StrUtil.isNotBlank(chat.getIndexUsername())) {
+            chatLink = "https://t.me/" + chat.getIndexUsername();
+        }
+        
+        // 记录群搜索奖励
+        this.rewardRecordService.recordGroupSearchReward(
+            groupOwner, 
+            chat.getId(), 
+            chat.getIndexTitle(), 
+            chatLink, 
+            config.getGroupSearchReward()
+        );
+        
+        // 更新群主的待入账金额
+        User updateOwner = new User();
+        updateOwner.setUserId(groupOwner.getUserId());
+        updateOwner.setTotalAward(groupOwner.getTotalAward().add(config.getGroupSearchReward()));
+        this.userService.update(updateOwner);
     }
 }

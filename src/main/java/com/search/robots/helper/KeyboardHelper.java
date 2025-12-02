@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.search.robots.beans.view.ButtonTransfer;
 import com.search.robots.beans.view.KeyboardTransfer;
 import com.search.robots.beans.view.vo.search.SearchBean;
-import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
 import com.search.robots.database.entity.*;
 import com.search.robots.database.enums.Included.IncludedNewUserEnum;

@@ -1,7 +1,6 @@
 package com.search.robots.handlers;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.search.robots.database.entity.Config;
 import com.search.robots.database.entity.User;
 import com.search.robots.database.service.ConfigService;
@@ -18,7 +17,6 @@ import org.telegram.telegrambots.meta.api.objects.inlinequery.InlineQuery;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.inputmessagecontent.InputTextMessageContent;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResult;
 import org.telegram.telegrambots.meta.api.objects.inlinequery.result.InlineQueryResultArticle;
-import org.telegram.telegrambots.meta.api.objects.inlinequery.result.cached.InlineQueryResultCachedPhoto;
 
 import java.util.ArrayList;
 import java.util.List;

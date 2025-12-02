@@ -7,15 +7,21 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.search.robots.config.Constants;
+import com.search.robots.database.entity.RewardRecord;
 import com.search.robots.database.entity.User;
+import com.search.robots.database.enums.RewardTypeEnum;
 import com.search.robots.database.mapper.UserMapper;
+import com.search.robots.database.service.RewardRecordService;
 import com.search.robots.database.service.UserService;
 import com.search.robots.helper.DecimalHelper;
 import com.search.robots.helper.RedisHelper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Objects;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -26,7 +32,10 @@ import java.util.Objects;
  * @since v 0.0.1
  */
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+
+    private final RewardRecordService rewardRecordService;
 
     @Override
     public User user(org.telegram.telegrambots.meta.api.objects.User from) {
@@ -105,9 +114,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 Wrappers.<User>lambdaQuery()
                         .in(User::getAdsParentId, userId)
         );
-        // todo 查询最近三天拉新记录
-        // todo 查询最近三天拉新奖励
-        // todo 查新最近三天下级私聊奖励
+
+        // 一次性查询最近3天的所有奖励记录
+        List<RewardRecord> allRewards = rewardRecordService.listAllRecentRewards(userId, 3);
+        
+        // 按奖励类型分组
+        Map<RewardTypeEnum, List<RewardRecord>> rewardsByType = allRewards.stream()
+                .collect(Collectors.groupingBy(RewardRecord::getRewardType));
+        
+        // 格式化各种奖励文本
+        String directNewUserRewardText = formatRewardText(rewardsByType.get(RewardTypeEnum.DIRECT_NEW_USER));
+        String nextNewUserRewardText = formatRewardText(rewardsByType.get(RewardTypeEnum.NEXT_NEW_USER));
+        String privateChatRewardText = formatRewardText(rewardsByType.get(RewardTypeEnum.PRIVATE_CHAT));
+        String groupSearchRewardText = formatGroupSearchRewardText(rewardsByType.get(RewardTypeEnum.GROUP_SEARCH));
+        String adCommissionRewardText = formatRewardText(rewardsByType.get(RewardTypeEnum.AD_COMMISSION));
 
         return StrUtil.format(
                 Constants.SELF_PROMOTION_REPORT_TEXT,
@@ -116,8 +136,96 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 DecimalHelper.decimalParse(user.getTotalAward()),
                 DecimalHelper.decimalParse(user.getAccumulativeTotalAward()),
                 users.size(), grandsonCount, advCount,
-                "无", "无", "无", "无"
+                directNewUserRewardText, nextNewUserRewardText, privateChatRewardText, groupSearchRewardText, adCommissionRewardText
         );
+    }
+
+    /**
+     * 格式化奖励文本
+     */
+    private String formatRewardText(List<RewardRecord> rewards) {
+        if (CollUtil.isEmpty(rewards)) {
+            return "无";
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        StringBuilder sb = new StringBuilder();
+        for (RewardRecord reward : rewards) {
+            String line = String.format("`%s %s %s\\$`",
+                    reward.getCreateTime().format(formatter),
+                    StrUtil.isNotBlank(reward.getNickname()) ? reward.getNickname() : reward.getUsername(),
+                    DecimalHelper.decimalParse(reward.getRewardAmount())
+            );
+            sb.append(line).append("\n");
+        }
+        return sb.toString();
+    }
+
+    /**
+     * 格式化群搜索奖励文本（按日期分组）
+     */
+    private String formatGroupSearchRewardText(List<RewardRecord> rewards) {
+        if (CollUtil.isEmpty(rewards)) {
+            return "无";
+        }
+
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        StringBuilder sb = new StringBuilder();
+
+        // 按日期分组
+        Map<LocalDate, List<RewardRecord>> rewardsByDate = rewards.stream()
+                .collect(Collectors.groupingBy(
+                        reward -> reward.getCreateTime().toLocalDate(),
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        // 按日期倒序排列
+        List<Map.Entry<LocalDate, List<RewardRecord>>> sortedEntries = rewardsByDate.entrySet().stream()
+                .sorted(Map.Entry.<LocalDate, List<RewardRecord>>comparingByKey().reversed())
+                .toList();
+
+        for (Map.Entry<LocalDate, List<RewardRecord>> entry : sortedEntries) {
+            LocalDate date = entry.getKey();
+            List<RewardRecord> dayRewards = entry.getValue();
+
+            // 计算当日总奖励
+            java.math.BigDecimal totalReward = dayRewards.stream()
+                    .map(RewardRecord::getRewardAmount)
+                    .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+            // 日期行
+            sb.append(date.format(dateFormatter))
+                    .append(" 预估奖励：")
+                    .append(DecimalHelper.decimalParse(totalReward))
+                    .append("$ 状态：待入账⏳\n");
+
+            // 按群组统计搜索次数
+            Map<Long, List<RewardRecord>> rewardsByChat = dayRewards.stream()
+                    .collect(Collectors.groupingBy(RewardRecord::getSourceUserId));
+
+            for (Map.Entry<Long, List<RewardRecord>> chatEntry : rewardsByChat.entrySet()) {
+                List<RewardRecord> chatRewards = chatEntry.getValue();
+                RewardRecord firstRecord = chatRewards.get(0);
+                int searchCount = chatRewards.stream()
+                        .mapToInt(r -> r.getSearchCount() != null ? r.getSearchCount() : 1)
+                        .sum();
+
+                // 群组行
+                sb.append("          ");
+                if (StrUtil.isNotBlank(firstRecord.getSourceLink())) {
+                    sb.append("[").append(firstRecord.getSourceName()).append("](")
+                            .append(firstRecord.getSourceLink()).append(")");
+                } else {
+                    sb.append(firstRecord.getSourceName());
+                }
+                sb.append(" \\-  ")
+                        .append(searchCount)
+                        .append(" 次有效群搜索\n");
+            }
+        }
+
+        return sb.toString();
     }
 
     @Override

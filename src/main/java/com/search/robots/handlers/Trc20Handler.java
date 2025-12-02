@@ -58,6 +58,7 @@ public class Trc20Handler extends AbstractHandler {
     private final AddressService addressService;
     private final ListenReceiveService receiveService;
     private final ListenReceiveService listenReceiveService;
+    private final RewardRecordService rewardRecordService;
 
     public boolean processorListenAddress(Task expire) {
         String address = expire.getAddress();
@@ -87,9 +88,46 @@ public class Trc20Handler extends AbstractHandler {
             if (!DecimalHelper.compare(giftAmount, BigDecimal.ZERO)) {
                 balance = user.getBalance();
                 user.setBalance(user.getBalance().add(giftAmount));
-                bills.add(Bill.buildAdvPaymentBill(user, balance, giftAmount, BillTypeEnum.RECHARGE_GIFT));
+                
+                // 记录B用户的充值加赠到奖励表
+                this.rewardRecordService.recordRechargeGiftReward(user, giftAmount);
+                
+                // 更新B用户的待入账金额
+                BigDecimal userTotalAward = user.getTotalAward();
+                user.setTotalAward(userTotalAward.add(giftAmount));
+                
+                // 记录到账单表
+                bills.add(Bill.buildRewardBill(user, balance, giftAmount, BillTypeEnum.RECHARGE_GIFT));
             }
 
+            // 处理广告代理返佣
+            if (Objects.nonNull(user.getAdsParentId()) && Objects.nonNull(config.getAdCommissionRate()) && config.getAdCommissionRate() > 0) {
+                User adsParent = this.userService.select(user.getAdsParentId());
+                if (Objects.nonNull(adsParent)) {
+                    // 从配置中获取返佣比例
+                    BigDecimal commissionRate = BigDecimal.valueOf(config.getAdCommissionRate())
+                            .divide(oneHundred, 2, RoundingMode.HALF_UP);
+                    BigDecimal commissionAmount = amount.multiply(commissionRate);
+                    
+                    // 更新广告上级的待入账金额
+                    BigDecimal adsParentBalance = adsParent.getBalance();
+                    adsParent.setBalance(adsParentBalance.add(commissionAmount));
+                    BigDecimal adsParentTotalAward = adsParent.getTotalAward();
+                    adsParent.setTotalAward(adsParentTotalAward.add(commissionAmount));
+                    this.userService.update(adsParent);
+                    
+                    // 记录广告代理返佣到奖励表
+                    this.rewardRecordService.recordAdCommissionReward(adsParent, user, commissionAmount);
+                    
+                    // 创建账单记录（使用buildRewardBill构建奖励账单）
+                    Bill commissionBill = Bill.buildRewardBill(adsParent, adsParentBalance, commissionAmount, BillTypeEnum.AWARD);
+                    bills.add(commissionBill);
+                    
+                    log.info("[广告代理返佣] 充值用户：{}，充值金额：{}，广告上级：{}，返佣比例：{}%，返佣金额：{}", 
+                            user.getUserId(), amount, adsParent.getUserId(), config.getAdCommissionRate(), commissionAmount);
+                }
+            }
+            
             listenReceives.add(ListenReceive.buildPushAddress(address, transferBean));
             log.info("[交易监听] 推送用户：{}，地址：{}, 交易信息：{}", user.getUserId(), address, transferBeans.size());
         }

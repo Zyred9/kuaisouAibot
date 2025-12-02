@@ -532,7 +532,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
         // 推广报表
         if (StrUtil.equals(command.get(1), "get_spread_statement")) {
             String spreadStatementText = this.userService.getSpreadStatement(
-                    message.getFrom().getId());
+                    callbackQuery.getFrom().getId());
             InlineKeyboardMarkup markup = KeyboardHelper.buildSingleBackKeyboard("one#invite");
 
             AsyncSender.async(delete(message));

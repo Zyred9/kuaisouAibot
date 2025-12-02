@@ -36,10 +36,14 @@ public class Config {
     @TableId(type = IdType.INPUT)
     private Long chatId;
 
-    /** 拉新奖励金额 */
-    private BigDecimal newReward;
+    /** 直接拉新奖励金额 */
+    private BigDecimal directNewUserReward = new BigDecimal("0.30");
+    /** 下级拉新奖励金额 */
+    private BigDecimal nextNewReward = new BigDecimal("0.20");
     /** 下级私聊奖励金额 */
-    private BigDecimal privateChatReward;
+    private BigDecimal privateChatReward = new BigDecimal("0.10");
+    /** 群搜索奖励金额 */
+    private BigDecimal groupSearchReward = new BigDecimal("0.10");
 
     /** 启动日志 **/
     private String startMessage;
@@ -63,6 +67,8 @@ public class Config {
     private String chatExposureKeyboard;
     /** 广告优惠百分比 **/
     private Integer preferentialRate;
+    /** 广告代理返佣比例(%) **/
+    private Integer adCommissionRate = 5;
 
     // 参考推广文案配置
     /** 参考推广文案图片文件id **/

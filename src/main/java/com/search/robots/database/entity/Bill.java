@@ -65,6 +65,23 @@ public class Bill {
                 .setCreateTime(LocalDateTime.now());
     }
 
+    /**
+     * 构建奖励账单记录（如广告代理返佣等）
+     */
+    public static Bill buildRewardBill(User user, BigDecimal before,
+                                       BigDecimal amount, BillTypeEnum type) {
+        return new Bill()
+                .setUserId(user.getUserId())
+                .setUsername(user.getUsername())
+                .setNickname(user.getNickname())
+                .setBillNo(TimeHelper.build())
+                .setType(type)
+                .setDescription("")
+                .setBeforeAmount(before)
+                .setAmount(amount) // 奖励是正数，不需要negate
+                .setCreateTime(LocalDateTime.now());
+    }
+
     public static String buildBillText (List<Bill> bills) {
         if (CollUtil.isEmpty(bills)){
             return "暂无记录";
