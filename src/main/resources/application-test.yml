@@ -29,10 +29,10 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: Qj683k2^11299%nkjb
-    url: jdbc:mysql://127.0.0.1:3306/kuaisou_ai_bot?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Shanghai&useSSL=false&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://127.0.0.1:3306/search_engin?useUnicode=true&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Shanghai&useSSL=false&nullCatalogMeansCurrent=true&allowPublicKeyRetrieval=true
   elasticsearch:
     uris:
-      - http://149.28.214.142:9200
+      - http://localhost:9200
     username: elastic
     password: umEjOIAMYkf3vPq9YEaB
     connection-timeout: 5000

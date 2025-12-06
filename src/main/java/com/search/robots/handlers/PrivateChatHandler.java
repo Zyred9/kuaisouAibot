@@ -29,6 +29,7 @@ import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.chat.ChatFullInfo;
 import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
@@ -36,10 +37,7 @@ import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * <p>
@@ -83,6 +81,17 @@ public class PrivateChatHandler extends AbstractHandler{
 
         if (this.properties.isLogs()) {
             log.info("[文本] {}", text);
+        }
+
+        if (update.hasMessage()){
+            if (update.getMessage().hasPhoto()) {
+                List<PhotoSize> photo = message.getPhoto();
+                PhotoSize max = photo.stream().max(Comparator.comparingInt(PhotoSize::getFileSize)).orElse(photo.get(0));
+                log.info("[图片]: {}", max.getFileId());
+            }
+            if (update.getMessage().hasVideo()) {
+                log.info("[视频]: {}", update.getMessage().getVideo().getFileId());
+            }
         }
 
         BotApiMethod<?> method = this.processorCoreCommand(message);
