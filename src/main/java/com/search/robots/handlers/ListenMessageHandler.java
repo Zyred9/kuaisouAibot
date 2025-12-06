@@ -2,6 +2,7 @@ package com.search.robots.handlers;
 
 import cn.hutool.core.util.StrUtil;
 import com.search.robots.beans.view.vo.search.SearchBean;
+import com.search.robots.config.BotProperties;
 import com.search.robots.database.entity.Config;
 import com.search.robots.database.entity.Included;
 import com.search.robots.database.entity.User;
@@ -38,16 +39,18 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class ListenMessageHandler extends AbstractHandler {
 
-    private final SearchHandler searchHandler;
-    private final IncludedService includedService;
-    private final SearchService searchService;
     private final UserService userService;
+    private final BotProperties properties;
     private final ConfigService configService;
+    private final SearchHandler searchHandler;
+    private final SearchService searchService;
+    private final IncludedService includedService;
     private final RewardRecordService rewardRecordService;
 
     @Override
     public boolean support(Update update) {
         return update.hasMessage()
+                && (!Objects.equals(this.properties.getNotifyChatId(), update.getMessage().getChatId()))
                 && (update.getMessage().getChat().isGroupChat()
                 || update.getMessage().getChat().isSuperGroupChat()
                 || update.getMessage().getChat().isChannelChat());

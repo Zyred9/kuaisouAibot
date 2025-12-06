@@ -1,16 +1,16 @@
 # -------------------部署需要修改---------------------
 bots:
   config:
-    logs: true
+    logs: false
     enable-proxy: true
     proxy-host-name: 127.0.0.1
     proxy-port: 7890
     proxy-type: socks
     background-group-id: -1002756411889
-    notify-chat-id: -1002756411889
+    notify-chat-id: -1003448247064
     tokens:
       BOT_TOKEN: 8091103662:AAGhAp6lUMG2IK5VROdS9Uu9fMalLSAE91w
-    qr-code-path: D:\open_workspace\kuaisouAibot\
+    qr-code-path: D:\open_workspace\search_engine\search_bot\
     history-url: http://149.28.214.142:8813/collect/td/history
 # -------------------部署需要修改---------------------
 

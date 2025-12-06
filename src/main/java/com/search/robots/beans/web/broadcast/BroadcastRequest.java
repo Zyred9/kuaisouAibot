@@ -18,6 +18,8 @@ import java.io.Serializable;
 public class BroadcastRequest implements Serializable {
     /** 图片的id **/
     private String imageFileId;
+    /** 视频的id **/
+    private String videoFileId;
     /** markdown v2 语法的文案 **/
     private String markdownContent;
 }

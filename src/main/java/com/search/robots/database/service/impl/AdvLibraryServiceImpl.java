@@ -189,4 +189,14 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
         RedisHelper.hDelete(AdvLibrary.ADV_LIBRARY_KEY, library.getKeyword());
     }
 
+    @Override
+    public List<AdvLibrary> selectLibraries(AdvTypeEnum data, int limit) {
+        return this.baseMapper.selectList(
+                Wrappers.<AdvLibrary>lambdaQuery()
+                        .eq(AdvLibrary::getAdvType, data)
+                        .orderByDesc(AdvLibrary::getShowCount)
+                        .last("limit " + limit)
+        );
+    }
+
 }

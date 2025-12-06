@@ -156,21 +156,20 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
         if (CollUtil.isEmpty(advUsers)) {
             return null;
         }
-
         StringBuilder sb = new StringBuilder();
         for (AdvUser advUser : advUsers) {
             if (Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_TOP_LINK)
                     || Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_BOTTOM_BUTTON)) {
-                sb.append("\\[广告\\] ");
+                sb.append("[广告] ");
             }
             if (Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_KEYWORD_RANK)) {
                 sb.append(advUser.getAdvPosition().getIcon());
             }
-            sb.append("[")
-                    .append(StrHelper.specialResult(advUser.getAdvContentText()))
-                    .append("](")
+            sb.append("<a href=\"")
                     .append(advUser.getAdvUrlText())
-                    .append(")")
+                    .append("\">")
+                    .append(StrHelper.specialResult(advUser.getAdvContentText()))
+                    .append("</a>")
                     .append("\n");
         }
         return sb.toString();

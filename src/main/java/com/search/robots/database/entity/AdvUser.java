@@ -37,6 +37,7 @@ import java.util.Objects;
 public class AdvUser {
 
     public final static String KEYWORD_ADV_USER = "search:keyword:user:";
+    public final static String ADV_EXPIRE_KEY_PREFIX = "search:adv:expire:";
 
     @TableId(type = IdType.AUTO)
     private Long id;
@@ -81,6 +82,10 @@ public class AdvUser {
     
     /** 失效时间 **/
     private LocalDateTime expirationTime;
+
+    /** 到期时间 **/
+    @TableField("expire_time")
+    private LocalDateTime expireTime;
 
     /** 失效次数 */
     private Long expirationCount;
@@ -143,6 +148,7 @@ public class AdvUser {
                 .setAdvStatus(AdvStatus.UN_START)
                 .setEffectiveTime(now)
                 .setExpirationTime(now.plusMonths(1))
+                .setExpireTime(now.plusDays(30))
                 .setAdvSource(AdvSource.BUY)
                 .setAdvContent("")
                 .setAdvUrl("")
@@ -168,6 +174,7 @@ public class AdvUser {
                 .setAdvStatus(AdvStatus.UN_START)
                 .setEffectiveTime(now)
                 .setExpirationTime(null)
+                .setExpireTime(null)
                 .setExpirationCount(advButton.getShowNumber())
                 .setAdvSource(AdvSource.BUY)
                 .setAdvContent("")

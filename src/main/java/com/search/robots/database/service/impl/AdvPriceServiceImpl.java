@@ -8,10 +8,12 @@ import com.search.robots.database.entity.AdvPrice;
 import com.search.robots.database.enums.adv.AdvPositionEnum;
 import com.search.robots.database.mapper.AdvPriceMapper;
 import com.search.robots.database.service.AdvPriceService;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
 
@@ -121,5 +123,64 @@ public class AdvPriceServiceImpl extends ServiceImpl<AdvPriceMapper, AdvPrice> i
                         .orderByAsc(AdvPrice::getAdvPosition)
                         .orderByAsc(AdvPrice::getRanking)
         );
+    }
+
+    @Override
+    public Page<AdvPrice> pagePrices(Long libraryId, int current, int size) {
+        return this.page(Page.of(current, size),
+                Wrappers.<AdvPrice>lambdaQuery()
+                        .eq(AdvPrice::getLibraryId, libraryId)
+                        .orderByAsc(AdvPrice::getAdvPosition)
+                        .orderByAsc(AdvPrice::getRanking));
+    }
+
+    @Override
+    public boolean addPrice(Long libraryId, Integer advPositionCode, Integer ranking, BigDecimal monthlyPrice, String source, String remark) {
+        AdvPositionEnum position = toPosition(advPositionCode);
+        if (Objects.isNull(libraryId) || Objects.isNull(position) || Objects.isNull(monthlyPrice)) {
+            return false;
+        }
+        AdvPrice price = new AdvPrice()
+                .setLibraryId(libraryId)
+                .setAdvPosition(position)
+                .setMonthlyPrice(monthlyPrice)
+                .setCurrency("CNY")
+                .setVersion(1)
+                .setStatus(1)
+                .setIsSold(false)
+                .setRemark(remark == null ? "" : remark)
+                .setCreatedAt(LocalDateTime.now())
+                .setUpdatedAt(LocalDateTime.now())
+                .setSource(source);
+        if (position.isRankPosition()) {
+            price.setRanking(Objects.nonNull(ranking) ? ranking : 1);
+        } else {
+            price.setRanking(null);
+        }
+        return this.save(price);
+    }
+
+    @Override
+    public boolean editPrice(Long id, BigDecimal monthlyPrice) {
+        AdvPrice db = this.getById(id);
+        if (Objects.isNull(db) || Objects.isNull(monthlyPrice)) {
+            return false;
+        }
+        db.setMonthlyPrice(monthlyPrice);
+        db.setUpdatedAt(LocalDateTime.now());
+        return this.updateById(db);
+    }
+
+    @Override
+    public boolean deletePrice(Long id) {
+        return this.removeById(id);
+    }
+
+    private AdvPositionEnum toPosition(Integer code) {
+        if (Objects.isNull(code)) return null;
+        for (AdvPositionEnum e : AdvPositionEnum.values()) {
+            if (e.getCode() == code) return e;
+        }
+        return null;
     }
 }

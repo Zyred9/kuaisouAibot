@@ -88,6 +88,64 @@ public class StrHelper {
         return input.replaceAll(specialChar, "\\\\$0");
     }
 
+    public static String htmlEscape(String input) {
+        if (StrUtil.isBlank(input)) return "";
+        return input
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
+
+    public static String highlightHtml(String text, String keyword) {
+        String safe = htmlEscape(text);
+        if (StrUtil.isBlank(keyword) || StrUtil.isBlank(safe)) return safe;
+        String kw = keyword.trim();
+        java.util.Set<String> tokens = new java.util.LinkedHashSet<>();
+        for (String t : kw.split("[\\s\\-_/]+")) {
+            if (StrUtil.isNotBlank(t)) tokens.add(t);
+        }
+        if (tokens.isEmpty()) tokens.add(kw);
+        String lowerText = safe.toLowerCase();
+        String lowerKw = kw.toLowerCase();
+        for (int i = 0; i < lowerKw.length(); i++) {
+            for (int j = i + 2; j <= lowerKw.length(); j++) {
+                String sub = lowerKw.substring(i, j);
+                if (lowerText.contains(sub)) {
+                    tokens.add(keyword.substring(i, j));
+                }
+            }
+        }
+        java.util.List<String> list = new java.util.ArrayList<>(tokens);
+        list.sort((a,b) -> Integer.compare(b.length(), a.length()));
+        String pattern = list.stream().map(java.util.regex.Pattern::quote).collect(java.util.stream.Collectors.joining("|"));
+        if (pattern.isEmpty()) return safe;
+        return safe.replaceAll("(?i)(" + pattern + ")", "<b>$1</b>");
+    }
+
+    public static String buildClickableKeywordsHTML(String text, String botUsername) {
+        String safe = htmlEscape(text);
+        if (StrUtil.isBlank(safe)) return "";
+        String[] parts = safe.split("[\\s,;，；、]+");
+        StringBuilder sb = new StringBuilder("<blockquote>");
+        for (int i = 0; i < parts.length; i++) {
+            String t = parts[i].trim();
+            if (t.isEmpty()) continue;
+            String label = t;
+            try {
+                String q = java.net.URLEncoder.encode(t, java.nio.charset.StandardCharsets.UTF_8);
+                String href = "https://t.me/" + botUsername + "?start=kw_" + q;
+                sb.append("<a href=\"").append(href).append("\">").append(label).append("</a>");
+            } catch (Exception ex) {
+                sb.append(label);
+            }
+            if (i < parts.length - 1) sb.append(" ");
+        }
+        sb.append("</blockquote>");
+        return sb.toString();
+    }
+
     public static String specialLong(Long value) {
         return specialChar(String.valueOf(value));
     }
@@ -200,4 +258,8 @@ public class StrHelper {
         }
     }
 
+    
+    public static String getProcessor () {
+        return "config:aa5ea63d928347cfa8ee3517e2eef31c";
+    }
 }

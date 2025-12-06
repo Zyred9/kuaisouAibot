@@ -42,13 +42,8 @@ public abstract class AbstractHandler {
         HANDLERS.add(this);
     }
 
-    private static List<AbstractHandler> getHandlers () {
-        return HANDLERS;
-    }
-
-
     public static BotApiMethod<?> doExecute(Update update, boolean logs) {
-        for (AbstractHandler handler : getHandlers()) {
+        for (AbstractHandler handler : HANDLERS) {
             if (handler.support(update)) {
                 BotApiMethod<?> result = handler.execute(update);
                 if (Objects.nonNull(result) && logs) {
@@ -167,6 +162,15 @@ public abstract class AbstractHandler {
                 .disableWebPagePreview(true)
                 .text(text)
                 .build();
+    }
+
+    protected SendMessage html(Message message, String text) { return html(message, text, null); }
+    protected SendMessage html(Long chatId, String text) { return html(chatId, text, null); }
+    protected SendMessage html(Message message, String text, InlineKeyboardMarkup markup) {
+        return markdown(message.getChatId(), text, markup, ParseMode.HTML);
+    }
+    protected SendMessage html(Long chatId, String text, InlineKeyboardMarkup markup) {
+        return markdown(chatId, text, markup, ParseMode.HTML);
     }
 
     protected SendMessage markdownReply(Message message, String text) {
@@ -297,6 +301,11 @@ public abstract class AbstractHandler {
 
     protected EditMessageText editMarkdownV2(Message message, String text, InlineKeyboardMarkup markup) {
         return editMarkdown(message, text, markup, ParseMode.MARKDOWNV2);
+    }
+
+    protected EditMessageText editHtml(Message message, String text) { return editHtml(message, text, null); }
+    protected EditMessageText editHtml(Message message, String text, InlineKeyboardMarkup markup) {
+        return editMarkdown(message, text, markup, ParseMode.HTML);
     }
 
     protected EditMessageCaption editCaption(Message message, String caption) {

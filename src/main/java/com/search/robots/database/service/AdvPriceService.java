@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.search.robots.database.entity.AdvLibrary;
 import com.search.robots.database.entity.AdvPrice;
 import com.search.robots.database.enums.adv.AdvPositionEnum;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import java.math.BigDecimal;
 
 import java.util.List;
 
@@ -44,4 +46,12 @@ public interface AdvPriceService extends IService<AdvPrice> {
     List<AdvPrice> listEnabledByLibraryIds(List<Long> libraryIds);
 
     List<AdvPrice> saveTheLibraryPrice(AdvLibrary newLibrary);
+
+    Page<AdvPrice> pagePrices(Long libraryId, int current, int size);
+
+    boolean addPrice(Long libraryId, Integer advPositionCode, Integer ranking, BigDecimal monthlyPrice, String source, String remark);
+
+    boolean editPrice(Long id, BigDecimal monthlyPrice);
+
+    boolean deletePrice(Long id);
 }

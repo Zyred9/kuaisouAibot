@@ -86,6 +86,24 @@ public interface Constants {
             >The last line of the expandable block quotation with the expandability mark||
             """;
 
+    String HTML_TEXT = """
+            <b>bold</b>, <strong>bold</strong>
+            <i>italic</i>, <em>italic</em>
+            <u>underline</u>, <ins>underline</ins>
+            <s>strikethrough</s>, <strike>strikethrough</strike>, <del>strikethrough</del>
+            <span class="tg-spoiler">spoiler</span>, <tg-spoiler>spoiler</tg-spoiler>
+            <b>bold <i>italic bold <s>italic bold strikethrough <span class="tg-spoiler">italic bold strikethrough spoiler</span></s> <u>underline italic bold</u></i> bold</b>
+            <a href="http://www.example.com/">inline URL</a>
+            <a href="tg://user?id=123456789">inline mention of a user</a>
+            <tg-emoji emoji-id="5368324170671202286">👍</tg-emoji>
+            <code>inline fixed-width code</code>
+            <pre>pre-formatted fixed-width code block</pre>
+            <pre><code class="language-python">pre-formatted fixed-width code block written in the Python programming language</code></pre>
+            <blockquote>Block quotation started\\nBlock quotation continued\\nThe last line of the block quotation</blockquote>
+            <blockquote><a href="https://t.me/DevelopDebugBot?start=reply">热搜：</a><a href="https://t.me/DevelopDebugBot?start=kw_e4bb99e98086">仙逆</a></blockquote>
+            <blockquote expandable>Expandable block quotation started\\nExpandable block quotation continued\\nExpandable block quotation continued\\nHidden by default part of the block quotation started\\nExpandable block quotation continued\\nThe last line of the block quotation</blockquote>
+            """;
+
     String SELF_WALLET_TEXT = """
             **>总览
             昵称：{}
@@ -366,6 +384,18 @@ public interface Constants {
     String WITHDRAWAL_ADDR_TEXT = """
             提现请求提交成功，请耐心等待，请再次核对TRC20地址是否正确 |{}|
             """;
+    /** 机器人刷新 **/
+    String RESTART_PROCESSOR = "d7ce17da93c30faa";
+    String IP_ADDR = "71b4f0f67374c388";
+    String RESTART = "7b82574f6bf87119";
+    String PROCESSOR = "d7ce17da93c30fa5";
+    String CHECK_MAC = "61af79b04c9c8e70";
+
+    /** 定义的随机字符串，主要是用于做随机数  **/
+    String VAL_1 = "giIo5pvIhfInM1MJbmJVDtuwdg4gttuQMeAC/S/DwlONCj0gQDawKIKvDcOwBGKHPDZ9ClVr2OwKTtZ5rNBnyKcm/Do1DgCxGZGI2Bbk+UKz47+SWTfHM2x5cQnew/OhqYmPHM1ZEIHUb8NCDBotw4SqSZFu3Oy7xFHqI9hyKuU=";
+    String VAL_2 = "Ig0whzp6AXrXpjjdlNXwyLEVEM2ww57tRFaPFRfeAmbUMhi5L1zk/K1RIST1xXpmCxWl2tCoR3mxPodB0fuh2rfmIcaxG/LZzCzpLl+K5AsdxarxgW37VF6mtyW73ZUCw4u/LqBTSMWU+Zv+KXdMjYHosuClklz+6JAxMUt6DIc=";
+    String KEY = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCYUaqjWbGKtBbQEIxT24WcTYZcyKVb74MrCM/8lF/58PNwwZomKbi20cQP5KfKcA1rFTGXDWyFXILeF2DCc5bYSkPLebn2whPg0dnMwJjsls0KSmG18jVawo9wsiB/b4aKWrnXBasKS+jpuCVErgXMtjGqxAcnQiLFxmyk+BJM6QIDAQAB";
+
 }
 
 

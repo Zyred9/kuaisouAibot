@@ -1,6 +1,5 @@
 package com.search.robots.handlers;
 
-import cn.hutool.core.util.StrUtil;
 import com.search.robots.config.BotProperties;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
@@ -9,6 +8,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 
 import javax.annotation.Resource;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
@@ -28,7 +28,7 @@ public class NotifyHandler extends AbstractHandler {
     @Override
     public boolean support(Update update) {
         return update.hasMessage()
-                && (update.getMessage().hasText() || update.getMessage().hasPhoto())
+                && (update.getMessage().hasPhoto() || update.getMessage().hasVideo())
                 && (update.getMessage().getChat().isGroupChat() || update.getMessage().getChat().isSuperGroupChat())
                 && Objects.equals(this.properties.getNotifyChatId(), update.getMessage().getChatId());
     }
@@ -36,16 +36,15 @@ public class NotifyHandler extends AbstractHandler {
     @Override
     protected BotApiMethod<?> execute(Update update) {
         Message message = update.getMessage();
-
-        if (message.hasText()) {
-            String text = message.getText();
-            List<String> commands = StrUtil.split(text, "#");
-        }
-
+        
         if (message.hasPhoto()) {
             List<PhotoSize> photo = message.getPhoto();
-            PhotoSize max = photo.stream().max((a, b) -> a.getFileSize() - b.getFileSize()).orElse(photo.get(0));
+            PhotoSize max = photo.stream().max(Comparator.comparingInt(PhotoSize::getFileSize)).orElse(photo.get(0));
             return ok(message, max.getFileId());
+        }
+
+        if (message.hasVideo()) {
+            return ok(message, message.getVideo().getFileId());
         }
 
         return null;

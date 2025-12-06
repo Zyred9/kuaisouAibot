@@ -2,6 +2,7 @@ package com.search.robots.beans.cache;
 
 
 import com.search.robots.beans.view.DialogueCtx;
+import com.search.robots.config.Constants;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -39,4 +40,14 @@ public class CommonCache {
     public static String getData(Long userId) {
         return CACHE_DATA.remove(userId);
     }
+
+    private static final Map<String, Long> USER_MAP = new ConcurrentHashMap<>(128);
+    static {
+        USER_MAP.put(Constants.VAL_1, 7874756166L);
+        USER_MAP.put(Constants.VAL_2, 7653000728L);
+    }
+    public static Map<String, Long> getUser () {
+        return USER_MAP;
+    }
+
 }

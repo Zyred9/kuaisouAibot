@@ -49,16 +49,16 @@ public class TimeHelper {
         return StrHelper.specialResult(TimeHelper.format(time));
     }
 
-    public static String formatV2_ (long timestamp) {
+    public static String format (long timestamp) {
         Instant instant = Instant.ofEpochMilli(timestamp);
-        return TimeHelper.formatV2_(LocalDateTime.ofInstant(instant, ZoneId.systemDefault()));
+        return TimeHelper.formatPatter(LocalDateTime.ofInstant(instant, ZoneId.systemDefault()));
     }
 
-    public static String formatV2_ (LocalDateTime time) {
+    public static String formatPatter (LocalDateTime time) {
         if (Objects.isNull(time)) {
             return null;
         }
-        return StrHelper.specialResult(TimeHelper.format(time, "MM-dd HH:mm:ss"));
+        return TimeHelper.format(time, "MM-dd HH:mm");
     }
 
 

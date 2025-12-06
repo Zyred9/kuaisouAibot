@@ -24,9 +24,6 @@ public class BotTransfer {
     private String botToken;
     private String backgroundId;
 
-    private String mysqlHost;
-    private String mysqlPort;
-    private String mysqlUser;
     private String mysqlPassword;
     private String mysqlDatabase;
     private String addr;
@@ -37,10 +34,7 @@ public class BotTransfer {
                 *名字*：@{}
                 *令牌*: `{}`
                 *地址*：`{}`
-                *数据库*：`{}` `{}`
-                `{}`
                 """;
-        return StrUtil.format(text, this.botId, StrHelper.specialChar(this.botName), this.botToken, this.addr,
-                this.mysqlUser, this.mysqlPassword, this.mysqlHost);
+        return StrUtil.format(text, this.botId, StrHelper.specialChar(this.botName), this.botToken, this.addr);
     }
 }

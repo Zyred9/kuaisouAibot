@@ -269,17 +269,17 @@ public class KeyboardHelper {
         });
 
         rows.add(row(
-                buttonText("🔍相关热搜词", "one#hotsearch"),
+                buttonText("🔍相关热搜词", "one#hotsearch#" + data),
                 buttonText("⬅️返回", "one#keyword_rank")
         ));
         return InlineKeyboardMarkup.builder().keyboard(rows).build();
     }
 
-    public static InlineKeyboardMarkup buildBrandPageKeyboard() {
+    public static InlineKeyboardMarkup buildBrandPageKeyboard(String data) {
         return InlineKeyboardMarkup.builder()
                 .keyboardRow(row(
                         buttonText("⬅️返回", "one#advertising"),
-                        buttonText("\uD83D\uDD25热搜", "one#hotsearch")
+                        buttonText("\uD83D\uDD25热搜", "one#hotsearch#" + data)
                 )).build();
     }
 
@@ -521,6 +521,24 @@ public class KeyboardHelper {
                         ),
                         row(buttonText("⬅️返回", "two#self"))
                 )).build();
+    }
+
+    public static InlineKeyboardMarkup buildHotLibrariesKeyboard(List<AdvLibrary> libraries, String data) {
+        List<InlineKeyboardRow> rows = new ArrayList<>();
+        InlineKeyboardRow row = new InlineKeyboardRow();
+        rows.add(row);
+        for (int i = 0, idx = 0, max = 4; i < libraries.size(); i++) {
+            AdvLibrary lib = libraries.get(i);
+            if (idx == max) {
+                row = new InlineKeyboardRow();
+                rows.add(row);
+                idx = 0;
+            }
+            row.add(buttonText(lib.getKeyword(), StrHelper.buildName("one#query_keyword", data, lib.getId())));
+            idx++;
+        }
+        rows.add(row(buttonText("⬅️返回", "one#advertising")));
+        return InlineKeyboardMarkup.builder().keyboard(rows).build();
     }
 
     public static InlineKeyboardMarkup buildHotSearchKeyboard (List<HotSearch> hots, SearchPeriodEnum hit) {

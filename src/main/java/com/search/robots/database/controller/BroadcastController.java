@@ -8,7 +8,6 @@ import com.search.robots.beans.web.broadcast.BroadcastRequest;
 import com.search.robots.config.SelfException;
 import com.search.robots.database.entity.User;
 import com.search.robots.database.service.UserService;
-import com.search.robots.helper.StrHelper;
 import com.search.robots.sender.AsyncSender;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +20,7 @@ import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 
 import java.util.List;
 
@@ -40,7 +40,10 @@ public class BroadcastController {
 
     @PostMapping("/lunch")
     public Result<String> lunchBroadcast (@RequestBody @Validated BroadcastRequest request) {
-        if (StrUtil.isAllBlank(request.getImageFileId(), request.getMarkdownContent())) {
+        boolean hasImage = StrUtil.isNotBlank(request.getImageFileId());
+        boolean hasVideo = StrUtil.isNotBlank(request.getVideoFileId());
+        boolean hasText = StrUtil.isNotBlank(request.getMarkdownContent());
+        if ((hasImage && hasVideo) || (!hasImage && !hasVideo && !hasText)) {
             throw new SelfException("参数错误");
         }
 
@@ -49,33 +52,53 @@ public class BroadcastController {
                         .select(User::getUserId)
         );
 
-        if (StrUtil.isNotBlank(request.getMarkdownContent()) && StrUtil.isEmpty(request.getImageFileId())) {
+        if (hasText && !hasImage && !hasVideo) {
             for (User user : users) {
                 AsyncSender.async(SendMessage.builder()
                         .chatId(user.getUserId())
                         .disableWebPagePreview(true)
-                        .parseMode(ParseMode.MARKDOWNV2)
+                        .parseMode(ParseMode.MARKDOWN)
                         .text(request.getMarkdownContent())
                         .build());
             }
         }
 
-        if (StrUtil.isNotBlank(request.getMarkdownContent()) && StrUtil.isNotBlank(request.getImageFileId())) {
+        if (hasText && hasImage) {
             for (User user : users) {
                 AsyncSender.async(SendPhoto.builder()
                         .chatId(user.getUserId())
                         .photo(new InputFile(request.getImageFileId()))
-                        .parseMode(ParseMode.MARKDOWNV2)
+                        .parseMode(ParseMode.MARKDOWN)
                         .caption(request.getMarkdownContent())
                         .build());
             }
         }
 
-        if (StrUtil.isEmpty(request.getMarkdownContent()) && StrUtil.isNotBlank(request.getImageFileId())) {
+        if (!hasText && hasImage) {
             for (User user : users) {
                 AsyncSender.async(SendPhoto.builder()
                         .chatId(user.getUserId())
                         .photo(new InputFile(request.getImageFileId()))
+                        .build());
+            }
+        }
+
+        if (hasText && hasVideo) {
+            for (User user : users) {
+                AsyncSender.async(SendVideo.builder()
+                        .chatId(user.getUserId())
+                        .video(new InputFile(request.getVideoFileId()))
+                        .parseMode(ParseMode.MARKDOWN)
+                        .caption(request.getMarkdownContent())
+                        .build());
+            }
+        }
+
+        if (!hasText && hasVideo) {
+            for (User user : users) {
+                AsyncSender.async(SendVideo.builder()
+                        .chatId(user.getUserId())
+                        .video(new InputFile(request.getVideoFileId()))
                         .build());
             }
         }

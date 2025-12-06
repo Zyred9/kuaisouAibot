@@ -123,6 +123,11 @@ public class Config {
     /** 内敛模式频道主邀请按钮 **/
     private String inlineModelChannelKeyboard;
 
+    /** 新人教程文本（支持Markdown） **/
+    private String tutorialNewUserMarkdown;
+    /** 新人教程视频file_id **/
+    private String tutorialNewUserVideoId;
+
 
     public static Config buildDefault(Long chatId) {
         return new Config()

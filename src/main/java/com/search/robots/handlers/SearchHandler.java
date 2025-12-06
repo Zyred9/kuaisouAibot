@@ -1,6 +1,7 @@
 package com.search.robots.handlers;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.search.robots.beans.view.AsyncBean;
 import com.search.robots.beans.view.vo.search.SearchBean;
@@ -12,19 +13,18 @@ import com.search.robots.database.service.AdvUserService;
 import com.search.robots.database.service.HotSearchService;
 import com.search.robots.database.service.SearchService;
 import com.search.robots.helper.KeyboardHelper;
+import com.search.robots.helper.StrHelper;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  *
@@ -109,13 +109,14 @@ public class SearchHandler extends AbstractHandler {
 
         StringBuilder sb = new StringBuilder();
 
-        // 定向搜索
+        // 定向搜索（HTML）
         if (chatIds != null) {
-            sb.append("\uD83D\uDD14 关键词：`").append(keyword).append("`\n");
-            if (!chatIds.isEmpty()) {
+            sb.append("\uD83D\uDD14 关键词：<b>").append(keyword).append("</b>\n");
+            if (CollUtil.isNotEmpty(chatIds)) {
                 long count = this.searchService.countSource(chatIds);
-                sb.append("\uD83D\uDD14 当前为定向搜索：结果来自").append(chatIds.size())
-                        .append("个频道/群组，共").append(count).append("个资源。").append("\n");
+                sb.append("\uD83D\uDD14 \"当前为定向搜索：结果来自\"")
+                  .append(chatIds.size()).append("个频道/群组，共")
+                  .append(count).append("个资源。").append("\n");
             }
         }
 
@@ -129,12 +130,12 @@ public class SearchHandler extends AbstractHandler {
         // 数据的查询
         Page<SearchBean> search = this.searchService.search(keyword, sourceType, current, sort, chatIds, filter);
         if (!search.isEmpty()) {
-            search.forEach(a -> sb.append(a.buildLineText()));
+            search.forEach(a -> sb.append(a.buildLineHtmlText(keyword)));
             if (current != 0) {
                 sb.append("\uD83D\uDC47点击筛选类型，当前【第").append(current + 1).append("页】");
             } else {
                 if (Boolean.TRUE.equals(filter)) {
-                    sb.append("*已过滤因色情被系统限制访问的链接*");
+                    sb.append("<b>已过滤因色情被系统限制访问的链接</b>");
                 } else {
                     String hottest = this.hotSearchService.hottest();
                     if (StrUtil.isNotBlank(hottest)) {
@@ -154,7 +155,7 @@ public class SearchHandler extends AbstractHandler {
                 hitType, current, filter, sort, this.properties.getBotUsername(), search, keyword, buttonAdv, hasButton
         );
 
-        return send ? markdownV2(message, sb.toString(), markup) : editMarkdownV2(message, sb.toString(), markup);
+        return send ? html(message, sb.toString(), markup) : editHtml(message, sb.toString(), markup);
     }
 
 

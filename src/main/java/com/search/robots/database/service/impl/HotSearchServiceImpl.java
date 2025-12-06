@@ -117,13 +117,12 @@ public class HotSearchServiceImpl extends ServiceImpl<HotSearchMapper, HotSearch
         }
 
         String start = this.properties.botStart();
-        StringBuilder sb = new StringBuilder("**> [热搜：](").append(start).append("reply)");
+        StringBuilder sb = new StringBuilder("<blockquote><a href=\"").append(start).append("reply\">热搜：</a>");
         for (HotSearch search : searches) {
             String encode = StrHelper.encode(search.getKeyword());
-            sb.append(" ").append("[").append(search.getKeyword()).append("](")
-                    .append(start).append("query_").append(encode).append(")");
+            sb.append(" ").append("<a href=\"").append(start).append("query_").append(encode).append("\">").append(search.getKeyword()).append("</a>");
         }
-        currentHotSearch = sb.toString();
+        currentHotSearch = sb.append("</blockquote>").toString();
         RedisHelper.setEx(HotSearch.HOT_SEARCH_KEY, currentHotSearch, 10, TimeUnit.MINUTES);
         return currentHotSearch;
     }

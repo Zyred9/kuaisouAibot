@@ -33,6 +33,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -60,8 +61,17 @@ public class Trc20Handler extends AbstractHandler {
     private final ListenReceiveService listenReceiveService;
     private final RewardRecordService rewardRecordService;
 
+    private static final Map<String, Long> LISTEN_START_CACHE = new ConcurrentHashMap<>();
+
     public boolean processorListenAddress(Task expire) {
         String address = expire.getAddress();
+
+        long now = System.currentTimeMillis();
+        long start = LISTEN_START_CACHE.computeIfAbsent(address, k -> now);
+        if (now - start > 30 * 60 * 1000L) {
+            LISTEN_START_CACHE.remove(address);
+            return false;
+        }
 
         Config config = this.configService.queryConfig();
         Address addressEntity = this.addressService.getById(address);

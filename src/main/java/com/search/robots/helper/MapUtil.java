@@ -107,7 +107,6 @@ public class MapUtil {
             Runnable job = () -> {
                 try {
                     Integer dist = this.driving(originLocation, String.valueOf(item)); // 经纬度
-                    System.out.println(dist);
                     batchAccepted.add(item);
                 } catch (Exception ex) {
                     log.warn("[MapUtil] 单次驾车规划失败：{}", ex.getMessage());

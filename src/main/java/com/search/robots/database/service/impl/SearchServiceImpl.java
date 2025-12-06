@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.search.robots.beans.view.vo.search.SearchBean;
 import com.search.robots.database.enums.content.SortEnum;
 import com.search.robots.database.enums.content.SourceTypeEnum;
+import com.search.robots.database.enums.search.AuditStatusEnum;
 import com.search.robots.database.mapper.SearchRepository;
 import com.search.robots.database.service.SearchService;
 import lombok.RequiredArgsConstructor;
@@ -49,12 +50,11 @@ public class SearchServiceImpl implements SearchService {
             return Page.empty();
         }
 
-        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-
-        boolQuery.must(QueryBuilders.boolQuery()
-                .should(QueryBuilders.matchPhraseQuery("sourceName", text).boost(3.0f))
-                .should(QueryBuilders.matchQuery("sourceName", text).boost(1.0f))
-                .minimumShouldMatch(1));
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
+                .must(QueryBuilders.boolQuery()
+                .should(QueryBuilders.matchQuery("sourceName", text).boost(3.0f))
+                .minimumShouldMatch(1))
+                .must(QueryBuilders.termQuery("auditStatus", AuditStatusEnum.APPROVED.name()));
         if (Objects.nonNull(type)) {
             boolQuery.must(QueryBuilders.matchQuery("type", type.name()));
         }
@@ -80,10 +80,6 @@ public class SearchServiceImpl implements SearchService {
                 .withPageable(pageRequest)
                 .build();
 
-        if (Objects.nonNull(searchQuery.getQuery())) {
-            log.info("\n===\n{}\n===", StrUtil.removeAll(searchQuery.getQuery().toString(), '\n', ' '));
-        }
-
         SearchHits<SearchBean> searchHits = elasticsearchTemplate.search(searchQuery, SearchBean.class);
         List<SearchHit<SearchBean>> searchList = searchHits.getSearchHits();
         List<SearchBean> content = new ArrayList<>(searchList.size());
@@ -99,7 +95,9 @@ public class SearchServiceImpl implements SearchService {
             return 0L;
         }
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
-                .must(QueryBuilders.termsQuery("chatId", chatIds));
+                .must(QueryBuilders.termsQuery("chatId", chatIds))
+                // 统计时同样只计算已审核通过的数据
+                .must(QueryBuilders.termQuery("auditStatus", AuditStatusEnum.APPROVED.name()));
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
                 .withQuery(boolQuery)
                 .build();

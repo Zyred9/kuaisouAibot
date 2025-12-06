@@ -1,13 +1,13 @@
 package com.search.robots.handlers;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.search.robots.beans.chat.ChatQueryHandler;
 import com.search.robots.config.BotProperties;
 import com.search.robots.database.entity.Config;
 import com.search.robots.database.entity.Included;
 import com.search.robots.database.service.ConfigService;
 import com.search.robots.database.service.IncludedService;
+import com.search.robots.helper.CollectHelper;
 import com.search.robots.helper.KeyboardHelper;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +43,7 @@ public class BotJoinChatHandler extends AbstractHandler {
 
 
     private final BotProperties properties;
-    private final OkHttpClient okHttpClient;
+    private final CollectHelper collectHelper;
     private final ConfigService configService;
     private final IncludedService includedService;
     private final ChatQueryHandler chatQueryHandler;
@@ -111,34 +111,10 @@ public class BotJoinChatHandler extends AbstractHandler {
             if (StrUtil.isNotEmpty(chatInfo.getUserName())) {
                 url = "https://t.me/" + chatInfo.getUserName();
             }
-            this.history(url, chatInfo.getInviteLink());
+            this.collectHelper.history(url, chatInfo.getInviteLink());
         }
         return null;
     }
 
 
-    private void history (String url, String inviteLink) {
-        log.info("[获取历史聊天记录] 开始 {}， {}", url, inviteLink);
-        String fullUrl = this.properties.getHistoryUrl()
-                + "?link=" + url
-                + "&inviteLink=" + inviteLink
-                + "&count=10000";
-
-        Call call = this.okHttpClient.newCall(
-                new Request.Builder()
-                        .get()
-                        .url(fullUrl)
-                        .build()
-        );
-        try (Response execute = call.execute()) {
-            if (execute.isSuccessful() && Objects.nonNull(execute.body())) {
-                String body = execute.body().string();
-                log.info("[获取历史聊天记录] 结果 {}， {}, 结果：{}", url, inviteLink, body);
-            } else {
-                log.info("[获取历史聊天记录] 失败 {}， {}，错误码：{}", url, inviteLink, execute.code());
-            }
-        } catch (IOException e) {
-            log.error("[获取历史聊天记录] 异常 {}， {}", url, inviteLink, e);
-        }
-    }
 }

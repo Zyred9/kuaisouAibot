@@ -2,6 +2,9 @@ package com.search.robots.database.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.search.robots.database.entity.AdvLibrary;
+import com.search.robots.database.enums.adv.AdvTypeEnum;
+
+import java.util.List;
 
 /**
  * 广告库Service
@@ -47,4 +50,6 @@ public interface AdvLibraryService extends IService<AdvLibrary> {
      * @param id 广告库ID
      */
     void removeAdvLibrary(Long id);
+
+    List<AdvLibrary> selectLibraries(AdvTypeEnum data, int limit);
 }

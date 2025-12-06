@@ -3,6 +3,7 @@ package com.search.robots.beans.view.vo.search;
 
 import cn.hutool.core.util.StrUtil;
 import com.search.robots.database.enums.content.SourceTypeEnum;
+import com.search.robots.database.enums.search.AuditStatusEnum;
 import com.search.robots.helper.StrHelper;
 import com.search.robots.helper.TimeHelper;
 import lombok.Getter;
@@ -78,27 +79,42 @@ public class SearchBean {
 
     private Boolean marked;
 
-    public String buildLineText() {
+   /** 审核状态(PENDING/APPROVED/REJECTED) **/
+    @Field(type = FieldType.Keyword)
+    private AuditStatusEnum auditStatus;
+
+    /** 审核备注 **/
+    private String auditRemark;
+
+    /** 审核人 **/
+    @Field(type = FieldType.Keyword)
+    private String auditedBy;
+
+    /** 审核时间 (epoch millis) **/
+    @Field(type = FieldType.Long)
+    private Long auditedAt;
+
+
+    public String buildLineHtmlText(String keyword) {
         StringBuilder sb = new StringBuilder(type.getIcon());
         if (Objects.equals(this.type, SourceTypeEnum.VIDEO)
                 || Objects.equals(this.type, SourceTypeEnum.AUDIO)) {
-            sb.append("\\[").append(StrHelper.formatSecondsToTime(this.times)).append("\\]");
+            sb.append("[").append(StrHelper.formatSecondsToTime(this.times)).append("]");
         }
         if (Objects.equals(this.type, SourceTypeEnum.TEXT)) {
-            sb.append(TimeHelper.formatV2_(this.collectTime));
+            sb.append(TimeHelper.format(this.collectTime));
         }
-        sb.append(" [")
-                .append(StrHelper.specialResult(this.sourceName))
-                .append("](")
-                .append(this.sourceUrl).append(")");
+        String name = StrHelper.highlightHtml(this.sourceName, keyword);
+        sb.append(" <a href=\"").append(this.sourceUrl).append("\">")
+                .append(name)
+                .append("</a>");
         if (Boolean.TRUE.equals(this.marked)) {
             sb.append("\uD83D\uDD1E");
         }
-
         if (Objects.equals(type, SourceTypeEnum.CHANNEL)
                 || Objects.equals(type, SourceTypeEnum.GROUP)) {
             if (StrUtil.isNotBlank(this.subscribers)) {
-                sb.append(" ").append(StrHelper.specialResult(this.subscribers));
+                sb.append(" ").append(this.subscribers);
             }
         }
         sb.append("\n");

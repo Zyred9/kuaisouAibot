@@ -63,7 +63,6 @@ public class PrivateCallbackHandler extends AbstractHandler {
     private final AddressService addressService;
     private final AdvPriceService advPriceService;
     private final IncludedService includedService;
-    private final RechargeService rechargeService;
     private final HotSearchService hotSearchService;
     private final AdvLibraryService advLibraryService;
     private final ExhibitionService exhibitionService;
@@ -350,6 +349,13 @@ public class PrivateCallbackHandler extends AbstractHandler {
 
             AdvUser advUser = AdvUser.buildKeywordAdvUserDefault(user, library, price);
             this.advUserService.save(advUser);
+
+            java.time.LocalDateTime expireAt = java.time.LocalDateTime.now().plusDays(30);
+            AdvUser update = new AdvUser().setId(advUser.getId()).setExpireTime(expireAt);
+            this.advUserService.updateById(update);
+
+            String expireKey = AdvUser.ADV_EXPIRE_KEY_PREFIX + advUser.getId();
+            RedisHelper.setEx(expireKey, "1", 30, java.util.concurrent.TimeUnit.DAYS);
 
             InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
             return editMarkdownV2(message, advUser.getAdvText(), markup);
@@ -654,6 +660,12 @@ public class PrivateCallbackHandler extends AbstractHandler {
     }
 
     private BotApiMethod<?> processorLevelOne(CallbackQuery callbackQuery, Message message, List<String> command) {
+        if (StrUtil.equals(command.get(1), "hotsearch")) {
+            AdvTypeEnum data = AdvTypeEnum.ofData(command.get(2));
+            List<AdvLibrary> libraries = this.advLibraryService.selectLibraries(data, 40);
+            InlineKeyboardMarkup markup = KeyboardHelper.buildHotLibrariesKeyboard(libraries, command.get(2));
+            return editMarkdown(message, "👇 点击下面按钮来查询热搜词价格", markup);
+        }
         // 广告投放
         if (StrUtil.equals(command.get(1), "advertising")) {
             Config config = this.configService.queryConfig();
@@ -783,7 +795,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
                 return null;
             }
 
-            InlineKeyboardMarkup markup = KeyboardHelper.buildBrandPageKeyboard();
+            InlineKeyboardMarkup markup = KeyboardHelper.buildBrandPageKeyboard(command.get(1));
             return editMarkdown(message, resultText, markup);
         }
 
