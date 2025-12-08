@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Redis 工具类
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 @Component

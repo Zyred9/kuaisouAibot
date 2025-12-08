@@ -7,7 +7,7 @@ import lombok.Getter;
 /**
  * 收录的类型
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/2 15:39
  */
 @Getter

@@ -6,7 +6,7 @@ import com.search.robots.database.entity.AdvUser;
 /**
  * 用户广告购买记录Mapper
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 public interface AdvUserMapper extends BaseMapper<AdvUser> {

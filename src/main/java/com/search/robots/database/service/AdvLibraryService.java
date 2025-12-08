@@ -13,7 +13,7 @@ import java.util.List;
  * 支持一次性关联查询,避免N+1查询问题
  * </pre>
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 public interface AdvLibraryService extends IService<AdvLibrary> {

@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 /**
  * TRC20充值地址实体类
  * 
- * @author zyred
+ * @author admin
  * @since 2025/01/17
  */
 @Setter

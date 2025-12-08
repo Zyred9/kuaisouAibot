@@ -15,7 +15,7 @@ import java.util.List;
  * 提供价格配置的增删改查功能
  * </pre>
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 public interface AdvPriceService extends IService<AdvPrice> {

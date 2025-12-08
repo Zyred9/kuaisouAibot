@@ -22,7 +22,7 @@ import java.util.Objects;
  * Assert.notEmpty(list, "列表不能为空");
  * </pre>
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/9 16:51
  */
 public class Assert {

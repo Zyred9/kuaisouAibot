@@ -10,7 +10,7 @@ import java.util.Objects;
 /**
  *  收录审批状态
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/2 15:41
  */
 @Getter

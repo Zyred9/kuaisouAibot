@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 奖励记录Mapper
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/25
  */
 @Mapper

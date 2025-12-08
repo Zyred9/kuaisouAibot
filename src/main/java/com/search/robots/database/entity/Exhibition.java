@@ -13,7 +13,7 @@ import java.time.LocalDate;
 /**
  * 搜索结果展示统计
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/4 20:31
  */
 @Setter

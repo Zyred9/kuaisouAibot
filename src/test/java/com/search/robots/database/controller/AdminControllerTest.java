@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 /**
  * AdminController单元测试
  * 
- * @author zyred
+ * @author admin
  * @since 2025/01/17
  */
 @DisplayName("后台统计接口测试")

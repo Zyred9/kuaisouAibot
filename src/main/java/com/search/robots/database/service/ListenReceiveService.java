@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * TRC20地址服务接口
  * 
- * @author zyred
+ * @author admin
  * @since 2025/01/17
  */
 public interface ListenReceiveService extends IService<ListenReceive> {

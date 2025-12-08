@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * - uniqueUser: 独立用户数
  * </pre>
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 @Getter

@@ -31,7 +31,7 @@ import java.util.Objects;
 /**
  * Elasticsearch 搜索服务实现类
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/9 20:16
  */
 @Slf4j

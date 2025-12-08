@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 /**
  * 奖励记录实体类
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/25
  */
 @Setter

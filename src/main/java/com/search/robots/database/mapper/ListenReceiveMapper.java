@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * TRC20地址 Mapper
  * 
- * @author zyred
+ * @author admin
  * @since 2025/01/17
  */
 @Mapper

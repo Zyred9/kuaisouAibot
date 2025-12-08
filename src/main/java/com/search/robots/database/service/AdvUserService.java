@@ -16,7 +16,7 @@ import java.util.Set;
  * 提供广告购买、续费、查询等功能
  * </pre>
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 public interface AdvUserService extends IService<AdvUser> {

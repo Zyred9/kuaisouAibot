@@ -28,7 +28,7 @@ import java.util.Objects;
  *   <li>支持频道/群组信息关联查询</li>
  * </ul>
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/9 22:02
  */
 @Setter

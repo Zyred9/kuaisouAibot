@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * 实现广告购买、续费、查询等功能
  * </pre>
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 @Service

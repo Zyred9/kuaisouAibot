@@ -7,7 +7,7 @@ import lombok.Getter;
 /**
  * 奖励类型枚举
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/25
  */
 @Getter

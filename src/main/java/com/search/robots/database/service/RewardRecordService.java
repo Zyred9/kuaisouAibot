@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 奖励记录Service
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/25
  */
 public interface RewardRecordService extends IService<RewardRecord> {

@@ -14,7 +14,7 @@ import lombok.Getter;
  * - RELATED_PAGE: 关键词关联搜索专页
  * </pre>
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 @Getter

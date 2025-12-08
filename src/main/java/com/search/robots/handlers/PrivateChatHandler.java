@@ -83,17 +83,6 @@ public class PrivateChatHandler extends AbstractHandler{
             log.info("[文本] {}", text);
         }
 
-        if (update.hasMessage()){
-            if (update.getMessage().hasPhoto()) {
-                List<PhotoSize> photo = message.getPhoto();
-                PhotoSize max = photo.stream().max(Comparator.comparingInt(PhotoSize::getFileSize)).orElse(photo.get(0));
-                log.info("[图片]: {}", max.getFileId());
-            }
-            if (update.getMessage().hasVideo()) {
-                log.info("[视频]: {}", update.getMessage().getVideo().getFileId());
-            }
-        }
-
         BotApiMethod<?> method = this.processorCoreCommand(message);
         if (Objects.nonNull(method)) {
             return method;

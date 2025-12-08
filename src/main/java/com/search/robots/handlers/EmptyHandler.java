@@ -18,7 +18,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 /**
  *
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/9 17:04
  */
 @Component

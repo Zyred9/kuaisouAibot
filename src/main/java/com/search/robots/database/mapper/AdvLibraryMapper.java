@@ -10,7 +10,7 @@ import com.search.robots.database.entity.AdvLibrary;
  * 复杂关联查询已迁移至Service层实现,避免XML依赖
  * </pre>
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 public interface AdvLibraryMapper extends BaseMapper<AdvLibrary> {

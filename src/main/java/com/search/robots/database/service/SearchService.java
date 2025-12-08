@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Elasticsearch 搜索服务接口
  *
- * @author zyred
+ * @author admin
  * @since 2025/11/9 20:15
  */
 public interface SearchService {

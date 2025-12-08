@@ -27,7 +27,7 @@ import java.util.List;
  * priceList 为非持久化字段,通过关联查询填充
  * </pre>
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 @Setter

@@ -6,7 +6,7 @@ import com.search.robots.database.entity.AdvPrice;
 /**
  * 广告价格Mapper
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 public interface AdvPriceMapper extends BaseMapper<AdvPrice> {

@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 /**
  * Dashboard核心指标数据
  * 
- * @author zyred
+ * @author admin
  * @since 2025/01/17
  */
 @Data

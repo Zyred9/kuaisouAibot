@@ -8,7 +8,7 @@ import com.search.robots.beans.web.statistics.UserGrowthVO;
 /**
  * 后台统计Service接口
  * 
- * @author zyred
+ * @author admin
  * @since 2025/01/17
  */
 public interface AdminService {

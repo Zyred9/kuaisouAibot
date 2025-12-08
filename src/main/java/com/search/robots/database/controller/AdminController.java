@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 后台统计控制器
  * 
- * @author zyred
+ * @author admin
  * @since 2025/01/17
  */
 @Slf4j

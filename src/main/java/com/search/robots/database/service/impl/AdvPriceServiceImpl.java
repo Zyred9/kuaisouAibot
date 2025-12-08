@@ -23,7 +23,7 @@ import java.util.Objects;
  * 实现价格配置的增删改查功能
  * </pre>
  *
- * @author zyred
+ * @author admin
  * @since 1.0
  */
 @Service
