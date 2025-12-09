@@ -6,11 +6,12 @@ import com.search.robots.beans.web.statistics.DashboardVO;
 import com.search.robots.beans.web.statistics.FinanceStatVO;
 import com.search.robots.beans.web.statistics.UserGrowthVO;
 import com.search.robots.database.service.AdminService;
-import com.search.robots.database.service.ConfigService;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 
 /**
@@ -25,7 +26,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AdminController {
 
-    private final ConfigService configService;
     private final AdminService adminService;
 
     /**
@@ -35,7 +35,6 @@ public class AdminController {
      */
     @GetMapping("/dashboard")
     public Result<DashboardVO> getDashboard() {
-        log.info("获取Dashboard核心指标数据");
         try {
             DashboardVO dashboard = adminService.getDashboard();
             return Result.success(dashboard);
@@ -53,7 +52,6 @@ public class AdminController {
      */
     @GetMapping("/user/growth")
     public Result<UserGrowthVO> getUserGrowth(@RequestParam(defaultValue = "30") Integer days) {
-        log.info("获取用户增长趋势统计, days={}", days);
         try {
             UserGrowthVO growth = adminService.getUserGrowth(days);
             return Result.success(growth);
@@ -71,7 +69,6 @@ public class AdminController {
      */
     @GetMapping("/finance/stats")
     public Result<FinanceStatVO> getFinanceStats(@RequestParam(defaultValue = "30") Integer days) {
-        log.info("获取财务收支统计, days={}", days);
         try {
             FinanceStatVO stats = adminService.getFinanceStats(days);
             return Result.success(stats);
@@ -89,7 +86,6 @@ public class AdminController {
      */
     @GetMapping("/adv/stats")
     public Result<AdvStatVO> getAdvStats(@RequestParam(defaultValue = "30") Integer days) {
-        log.info("获取广告投放效果统计, days={}", days);
         try {
             AdvStatVO stats = adminService.getAdvStats(days);
             return Result.success(stats);

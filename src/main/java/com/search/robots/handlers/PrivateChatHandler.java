@@ -124,12 +124,22 @@ public class PrivateChatHandler extends AbstractHandler{
             }
             if (StrUtil.startWith(commands.get(1), "query_")) {
                 String encode = StrUtil.removeAll(commands.get(1), "query_");
+                if (StrUtil.equals(encode, "5br5pCc")) {
+                    Config config = this.configService.queryConfig();
+                    String imageId = config.getProfessionalPreviewImageId();
+                    String markdownText = config.getProfessionalPreviewMarkdown();
+                    AsyncSender.async(photoMarkdown(message, imageId, markdownText));
+                    return null;
+                }
+                if (StrUtil.isEmpty(encode)) {
+                    return null;
+                }
                 String decode = StrHelper.decode(encode);
                 return this.searchHandler.processorStartSearch(message, decode, true);
             }
             if (StrUtil.equals(commands.get(1), "ad_null")) {
                 Config config = this.configService.queryConfig();
-                InlineKeyboardMarkup markup = KeyboardHelper.buildAdvertisingKeyboard();
+                InlineKeyboardMarkup markup = KeyboardHelper.buildAdvertisingKeyboard();    
                 return markdown(message, config.getAdvertisingMarkdown(), markup);
             }
             if (StrUtil.equals(commands.get(1), "ad_template")) {
@@ -404,7 +414,8 @@ public class PrivateChatHandler extends AbstractHandler{
                 library.getKeyword(),
                 dailyStats.toString(),
                 totalShowCount > 0 ? String.valueOf(totalShowCount / 30) : "0",
-                String.valueOf(totalShowCount)
+                String.valueOf(totalShowCount),
+                this.properties.getBotUsername()
         );
         InlineKeyboardMarkup keyboard = KeyboardHelper.buildKeywordQueryKeyboard(library.getPriceList(), data);
         return markdown(message, responseText, keyboard);

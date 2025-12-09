@@ -7,6 +7,7 @@ import com.search.robots.config.BotProperties;
 import com.search.robots.database.entity.Address;
 import com.search.robots.database.mapper.AddressMapper;
 import com.search.robots.database.service.AddressService;
+import com.search.robots.helper.Assert;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -98,5 +99,32 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address> impl
         this.saveBatch(newAddresses);
         log.info("成功导入 {} 个地址", newAddresses.size());
         return newAddresses.size();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addAddress(String address) {
+        Assert.isTrue(StrUtil.isBlank(address), "TRC20地址不能为空");
+        String trimmedAddress = address.trim();
+        Address existed = this.getById(trimmedAddress);
+        Assert.isTrue(Objects.nonNull(existed), "TRC20地址已存在");
+
+        Address entity = new Address()
+                .setAddress(trimmedAddress)
+                .setListenCount(0)
+                .setPrevTimestamp(0L);
+        this.save(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deleteAddress(String address) {
+        Assert.isTrue(StrUtil.isBlank(address), "TRC20地址不能为空");
+        String trimmedAddress = address.trim();
+        Address existed = this.getById(trimmedAddress);
+        Assert.isNull(existed, "TRC20地址不存在");
+        Assert.isTrue(Objects.nonNull(existed.getUserId()), "地址已分配用户，无法删除");
+
+        this.removeById(trimmedAddress);
     }
 }

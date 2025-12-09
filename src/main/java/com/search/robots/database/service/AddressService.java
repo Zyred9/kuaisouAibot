@@ -29,4 +29,18 @@ public interface AddressService extends IService<Address> {
      */
     int batchImport(List<String> addresses);
 
+    /**
+     * 新增单个TRC20地址
+     *
+     * @param address TRC20地址
+     */
+    void addAddress(String address);
+
+    /**
+     * 删除指定TRC20地址
+     *
+     * @param address TRC20地址
+     */
+    void deleteAddress(String address);
+
 }

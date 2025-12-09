@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.search.robots.beans.web.addr.AddressAddRequest;
 import com.search.robots.beans.view.base.Result;
 import com.search.robots.database.entity.Address;
 import com.search.robots.database.service.AddressService;
@@ -100,6 +101,33 @@ public class AddressController {
             log.error("导入地址失败", e);
             return Result.error("导入失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 手动新增TRC20地址
+     *
+     * @param request 新增请求参数
+     * @return 操作结果
+     */
+    @PostMapping("/add")
+    public Result<Void> add(@RequestBody(required = false) AddressAddRequest request) {
+        if (request == null) {
+            return Result.error("请求参数不能为空");
+        }
+        addressService.addAddress(request.getAddress());
+        return Result.success();
+    }
+
+    /**
+     * 删除指定TRC20地址
+     *
+     * @param address 地址
+     * @return 操作结果
+     */
+    @DeleteMapping("/{address}")
+    public Result<Void> delete(@PathVariable String address) {
+        addressService.deleteAddress(address);
+        return Result.success();
     }
 
     /**

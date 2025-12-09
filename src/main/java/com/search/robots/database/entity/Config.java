@@ -101,6 +101,10 @@ public class Config {
     // 品牌专页配置
     /** 品牌专业回复内容 **/
     private String brandPageText;
+    /** 专业预览图文件id **/
+    private String professionalPreviewImageId;
+    /** 专业预览Markdown文本 **/
+    private String professionalPreviewMarkdown;
     /** 关键词专页 **/
     private String keywordPageText;
     /** 关键词排行 **/
