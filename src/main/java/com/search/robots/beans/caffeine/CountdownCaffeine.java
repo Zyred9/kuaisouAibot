@@ -59,6 +59,9 @@ public class CountdownCaffeine extends Thread {
             if (Objects.equals(expire.getNode(), TaskNode.RECHARGE)) {
                 return expire.getNode().getTimeUnit().toNanos(expire.getNode().getLoop());
             }
+            if (Objects.equals(expire.getNode(), TaskNode.REUSE_RECHARGE)) {
+                return expire.getNode().getTimeUnit().toNanos(expire.getNode().getLoop());
+            }
             if (Objects.isNull(expire.getUnit())) {
                 return expire.getNode().getTimeUnit().toNanos(expire.getDays().getCode());
             } else {

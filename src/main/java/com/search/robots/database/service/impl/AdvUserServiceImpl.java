@@ -315,6 +315,28 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
         return advStatistics;
     }
 
+    @Override
+    public void updateStatus(Long id, Boolean status) {
+        AdvUser advUser = this.baseMapper.selectById(id);
+        Assert.isNull(advUser, "用户广告不存在");
+        advUser.setStatus(status);
+
+        if (Boolean.TRUE.equals(status)) {
+            advUser.setAdvStatus(AdvStatus.PROMOTION_ING);
+            if (StrUtil.isNotBlank(advUser.getKeyword())) {
+                String key = AdvUser.KEYWORD_ADV_USER + advUser.getKeyword();
+                RedisHelper.sAdd(key, String.valueOf(advUser.getId()));
+            }
+        } else if (Boolean.FALSE.equals(status)) {
+            advUser.setAdvStatus(AdvStatus.THE_END);
+            if (StrUtil.isNotBlank(advUser.getKeyword())) {
+                String key = AdvUser.KEYWORD_ADV_USER + advUser.getKeyword();
+                RedisHelper.sRemove(key, String.valueOf(advUser.getId()));
+            }
+        }
+
+        this.baseMapper.updateById(advUser);
+    }
 
     public List<AdvUser> topLinkRandAdvList() {
         List<AdvUser> advUsers = this.baseMapper.selectList(

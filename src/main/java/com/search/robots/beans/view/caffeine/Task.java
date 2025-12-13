@@ -41,6 +41,11 @@ public class Task {
                 .setNode(TaskNode.RECHARGE)
                 .setAddress(address);
     }
+    public static Task buildReuseRecharge (String address) {
+        return new Task()
+                .setNode(TaskNode.REUSE_RECHARGE)
+                .setAddress(address);
+    }
 
 
     public static Task buildEveryAdv (Long chatId, IncludedNewUserEnum days) {

@@ -110,11 +110,21 @@ public class Config {
     /** 关键词排行 **/
     private String keywordRankText;
 
+    /** 充值超时时间（分钟），用于控制监听充值地址的有效期 **/
+    private Integer rechargeTimeoutMinutes;
+    /** 最低充值金额（USDT） **/
+    private BigDecimal minRechargeAmount;
+    /** 最高充值金额（USDT） **/
+    private BigDecimal maxRechargeAmount;
     /** 充值提示文本：点击充值按钮后展示的Markdown文案，支持包含充值说明、到账时间、注意事项等。 **/
     private String rechargeTipMarkdown;
+    /** 复用地址充值提示文本：使用复用地址充值时展示的Markdown文案。 **/
+    private String reuseRechargeTipMarkdown;
 
     /** 客服 **/
     private String customUsername;
+
+
 
 
     // 内敛模式
@@ -146,8 +156,12 @@ public class Config {
                 .setAddTargetedSearch(Constants.ADD_TARGETED_SEARCH_TEXT)
                 .setJoinSendMessage(Constants.JOIN_SEND_MESSAGE_TEXT)
                 .setWithdrawalThreshold(BigDecimal.TEN)
-                .setPreferentialRate(5);
+                .setPreferentialRate(5)
+                .setRechargeTimeoutMinutes(30)
+                .setMinRechargeAmount(new BigDecimal("10"))
+                .setMaxRechargeAmount(new BigDecimal("99999"));
     }
+
 
     public String buildInviteText(String botUsername, String inviteCode) {
         String activity = "";

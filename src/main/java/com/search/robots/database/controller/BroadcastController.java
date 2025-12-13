@@ -1,12 +1,16 @@
 package com.search.robots.database.controller;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.search.robots.beans.view.base.Result;
 import com.search.robots.beans.web.broadcast.BroadcastRequest;
 import com.search.robots.config.SelfException;
+import com.search.robots.database.entity.Included;
 import com.search.robots.database.entity.User;
+import com.search.robots.database.enums.Included.IncludedStatusEnum;
+import com.search.robots.database.service.IncludedService;
 import com.search.robots.database.service.UserService;
 import com.search.robots.sender.AsyncSender;
 import lombok.Setter;
@@ -23,6 +27,8 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -36,6 +42,8 @@ public class BroadcastController {
 
     @Setter(onMethod_ = @Autowired)
     private UserService userService;
+    @Setter(onMethod_ = @Autowired)
+    private IncludedService includedService;
 
 
     @PostMapping("/lunch")
@@ -109,6 +117,78 @@ public class BroadcastController {
     }
 
 
+    @PostMapping("/included")
+    public Result<String> includedBroadcast(@RequestBody @Validated BroadcastRequest request) {
+        boolean hasImage = StrUtil.isNotBlank(request.getImageFileId());
+        boolean hasVideo = StrUtil.isNotBlank(request.getVideoFileId());
+        boolean hasText = StrUtil.isNotBlank(request.getMarkdownContent());
+        if ((hasImage && hasVideo) || (!hasImage && !hasVideo && !hasText)) {
+            throw new SelfException("参数错误");
+        }
 
+        List<Included> includedList = this.includedService.list(
+                Wrappers.<Included>lambdaQuery()
+                        .eq(Included::getIncludedStatus, IncludedStatusEnum.PASS)
+        );
+        if (CollUtil.isEmpty(includedList)) {
+            return Result.success("暂无可广播的群组/频道");
+        }
+
+        Set<Long> chatIdSet = includedList.stream().map(Included::getId).collect(Collectors.toSet());
+
+        if (hasText && !hasImage && !hasVideo) {
+            for (Long chatId : chatIdSet) {
+                AsyncSender.async(SendMessage.builder()
+                        .chatId(chatId)
+                        .disableWebPagePreview(true)
+                        .parseMode(ParseMode.MARKDOWN)
+                        .text(request.getMarkdownContent())
+                        .build());
+            }
+        }
+
+        if (hasText && hasImage) {
+            for (Long chatId : chatIdSet) {
+                AsyncSender.async(SendPhoto.builder()
+                        .chatId(chatId)
+                        .photo(new InputFile(request.getImageFileId()))
+                        .parseMode(ParseMode.MARKDOWN)
+                        .caption(request.getMarkdownContent())
+                        .build());
+            }
+        }
+
+        if (!hasText && hasImage) {
+            for (Long chatId : chatIdSet) {
+                AsyncSender.async(SendPhoto.builder()
+                        .chatId(chatId)
+                        .photo(new InputFile(request.getImageFileId()))
+                        .build());
+            }
+        }
+
+        if (hasText && hasVideo) {
+            for (Long chatId : chatIdSet) {
+                AsyncSender.async(SendVideo.builder()
+                        .chatId(chatId)
+                        .video(new InputFile(request.getVideoFileId()))
+                        .parseMode(ParseMode.MARKDOWN)
+                        .caption(request.getMarkdownContent())
+                        .build());
+            }
+        }
+
+        if (!hasText && hasVideo) {
+            for (Long chatId : chatIdSet) {
+                AsyncSender.async(SendVideo.builder()
+                        .chatId(chatId)
+                        .video(new InputFile(request.getVideoFileId()))
+                        .build());
+            }
+        }
+
+        int sec = chatIdSet.size() / 20;
+        return Result.success(StrUtil.format("{}个群组/频道，预计{}内完成广播", chatIdSet.size(), sec));
+    }
 
 }

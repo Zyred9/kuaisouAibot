@@ -33,18 +33,25 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address> impl
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Address selectEmptyAddress(Long userId) {
+
+        // 启用了循环使用
+        if (this.properties.isRecycling()) {
+            return this.baseMapper.selectOne(
+                    Wrappers.<Address>lambdaQuery()
+                        .last("ORDER BY RAND() LIMIT 1")
+            );
+        }
+
         Address address = this.baseMapper.selectOne(
                 Wrappers.<Address>lambdaQuery()
                         .isNull(Address::getUserId)
                         .orderByAsc(Address::getAddress)
                         .last(" limit 1")
         );
-
         Long remain = this.baseMapper.selectCount(
                 Wrappers.<Address>lambdaQuery()
                         .isNull(Address::getUserId)
         );
-
         if (remain <= 10 && Objects.isNull(this.properties.getNotifyChatId())) {
             AsyncSender.async(
                     SendMessage.builder()
@@ -53,11 +60,9 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address> impl
                             .build()
             );
         }
-
         if (Objects.nonNull(address) && Objects.nonNull(userId)) {
             address.setUserId(userId);
         }
-
         return address;
     }
 
@@ -123,8 +128,9 @@ public class AddressServiceImpl extends ServiceImpl<AddressMapper, Address> impl
         String trimmedAddress = address.trim();
         Address existed = this.getById(trimmedAddress);
         Assert.isNull(existed, "TRC20地址不存在");
-        Assert.isTrue(Objects.nonNull(existed.getUserId()), "地址已分配用户，无法删除");
-
+        if (!this.properties.isRecycling()) {
+            Assert.isTrue(Objects.nonNull(existed.getUserId()), "地址已分配用户，无法删除");
+        }
         this.removeById(trimmedAddress);
     }
 }

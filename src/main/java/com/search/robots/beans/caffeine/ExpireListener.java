@@ -59,6 +59,10 @@ public class ExpireListener extends AbstractHandler implements RemovalListener<S
                 reset = this.trc20Handler.processorListenAddress(expire);
             }
 
+            if (Objects.equals(TaskNode.REUSE_RECHARGE, node)) {
+                reset = this.trc20Handler.processorReuseListenAddress(expire);
+            }
+
             if (Objects.equals(TaskNode.EVERY_ADV, node)) {
                 reset = this.processorEveryAdv(expire);
             }

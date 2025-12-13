@@ -13,6 +13,7 @@ import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
 import com.search.robots.database.entity.*;
 import com.search.robots.database.enums.BillTypeEnum;
+import com.search.robots.database.enums.RechargeStatus;
 import com.search.robots.database.service.*;
 import com.search.robots.helper.DecimalHelper;
 import com.search.robots.helper.TimeHelper;
@@ -32,6 +33,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -57,23 +59,178 @@ public class Trc20Handler extends AbstractHandler {
     private final OkHttpClient okHttpClient;
     private final ConfigService configService;
     private final AddressService addressService;
+    private final RechargeService rechargeService;
     private final ListenReceiveService receiveService;
     private final ListenReceiveService listenReceiveService;
     private final RewardRecordService rewardRecordService;
 
     private static final Map<String, Long> LISTEN_START_CACHE = new ConcurrentHashMap<>();
 
+
+    public boolean processorReuseListenAddress(Task expire) {
+        Config config = this.configService.queryConfig();
+        String address = expire.getAddress();
+
+        List<Recharge> recharges = this.rechargeService.list(
+                Wrappers.<Recharge>lambdaQuery()
+                        .eq(Recharge::getStatus, RechargeStatus.PROCESS)
+        );
+        if (CollUtil.isEmpty(recharges)) {
+            return false;
+        }
+        List<TransferBean> transferBeans = this.doQuery(address, System.currentTimeMillis() - (30 * 1000));
+
+        List<Recharge> timeouts = new ArrayList<>(recharges.size());
+        for (Recharge recharge : recharges) {
+            LocalDateTime createTime = recharge.getCreateTime();
+            LocalDateTime now = LocalDateTime.now();
+            long diff = TimeHelper.diffInMinutes(createTime, now);
+            if (diff > config.getRechargeTimeoutMinutes()) {
+                timeouts.add(recharge);
+            }
+        }
+
+        if (CollUtil.isEmpty(transferBeans) && CollUtil.isEmpty(timeouts)) {
+            return true;
+        }
+        Set<Long> userIds = recharges.stream().map(Recharge::getUserId).collect(Collectors.toSet());
+        List<User> users = this.userService.listByIds(userIds);
+        Map<Long, User> userMap = users.stream().collect(Collectors.toMap(User::getUserId, Function.identity()));
+
+        Map<BigDecimal, Recharge> map = recharges.stream().collect(Collectors.toMap(Recharge::getPointer, Function.identity()));
+
+        List<Recharge> updatesRecharge = new ArrayList<>(transferBeans.size());
+        List<Bill> bills = new ArrayList<>(transferBeans.size() * 2);
+        Map<Long, List<Bill>> userBillsMap = new HashMap<>();
+        Set<Long> changedUserIds = new HashSet<>();
+
+        BigDecimal oneHundred = BigDecimal.TEN.multiply(BigDecimal.TEN);
+        Integer preferentialRate = config.getPreferentialRate();
+        Integer adCommissionRate = config.getAdCommissionRate();
+
+        for (TransferBean bean : transferBeans) {
+            BigDecimal amount = bean.parseValue();
+            BigDecimal pointer = DecimalHelper.getFractionalPart(amount);
+            Recharge recharge = map.get(pointer);
+            if (Objects.isNull(recharge)) {
+                continue;
+            }
+
+            recharge
+                    .setStatus(RechargeStatus.SUCCESS)
+                    .setTransactionId(bean.getTransactionId())
+                    .setAmount(DecimalHelper.decimalParse(amount))
+                    .setTransactionDate(TimeHelper.format(LocalDateTime.now()));
+            updatesRecharge.add(recharge);
+
+            User user = userMap.get(recharge.getUserId());
+            if (Objects.isNull(user)) {
+                continue;
+            }
+
+            BigDecimal beforeBalance = user.getBalance();
+            user.setBalance(beforeBalance.add(amount));
+            changedUserIds.add(user.getUserId());
+
+            Bill rechargeBill = Bill.buildAdvPaymentBill(user, beforeBalance, amount, BillTypeEnum.RECHARGE);
+            bills.add(rechargeBill);
+            userBillsMap.computeIfAbsent(user.getUserId(), k -> new ArrayList<>()).add(rechargeBill);
+
+            if (Objects.nonNull(preferentialRate) && preferentialRate > 0) {
+                BigDecimal rate = BigDecimal.valueOf(preferentialRate)
+                        .divide(oneHundred, 2, RoundingMode.HALF_UP);
+                BigDecimal giftAmount = amount.multiply(rate);
+
+                if (!DecimalHelper.compare(giftAmount, BigDecimal.ZERO)) {
+                    BigDecimal balanceAfterRecharge = user.getBalance();
+                    user.setBalance(balanceAfterRecharge.add(giftAmount));
+
+                    this.rewardRecordService.recordRechargeGiftReward(user, giftAmount);
+
+                    BigDecimal userTotalAward = user.getTotalAward();
+                    user.setTotalAward(userTotalAward.add(giftAmount));
+
+                    Bill giftBill = Bill.buildRewardBill(user, balanceAfterRecharge, giftAmount, BillTypeEnum.RECHARGE_GIFT);
+                    bills.add(giftBill);
+                    userBillsMap.get(user.getUserId()).add(giftBill);
+                }
+            }
+
+            if (Objects.nonNull(user.getAdsParentId())
+                    && Objects.nonNull(adCommissionRate)
+                    && adCommissionRate > 0) {
+                User adsParent = this.userService.select(user.getAdsParentId());
+                if (Objects.nonNull(adsParent)) {
+                    BigDecimal commissionRate = BigDecimal.valueOf(adCommissionRate)
+                            .divide(oneHundred, 2, RoundingMode.HALF_UP);
+                    BigDecimal commissionAmount = amount.multiply(commissionRate);
+
+                    BigDecimal adsParentBalance = adsParent.getBalance();
+                    adsParent.setBalance(adsParentBalance.add(commissionAmount));
+
+                    BigDecimal adsParentTotalAward = adsParent.getTotalAward();
+                    adsParent.setTotalAward(adsParentTotalAward.add(commissionAmount));
+                    this.userService.update(adsParent);
+
+                    this.rewardRecordService.recordAdCommissionReward(adsParent, user, commissionAmount);
+
+                    Bill commissionBill = Bill.buildRewardBill(adsParent, adsParentBalance, commissionAmount, BillTypeEnum.AWARD);
+                    bills.add(commissionBill);
+
+                    log.info("[广告代理返佣] 充值用户：{}，充值金额：{}，广告上级：{}，返佣比例：{}%，返佣金额：{}",
+                            user.getUserId(), amount, adsParent.getUserId(), adCommissionRate, commissionAmount);
+                }
+            }
+        }
+
+        Set<Long> collect = updatesRecharge.stream().map(Recharge::getId).collect(Collectors.toSet());
+        if (CollUtil.isNotEmpty(timeouts)) {
+            timeouts.removeIf(a -> collect.contains(a.getId()));
+        }
+
+        for (Recharge timeout : timeouts) {
+            timeout.setStatus(RechargeStatus.TIMEOUT);
+        }
+
+        updatesRecharge.addAll(timeouts);
+        this.rechargeService.updateBatchById(updatesRecharge);
+
+        if (CollUtil.isNotEmpty(changedUserIds)) {
+            for (Long userId : changedUserIds) {
+                User user = userMap.get(userId);
+                if (Objects.nonNull(user)) {
+                    this.userService.update(user);
+                }
+            }
+        }
+
+        if (CollUtil.isNotEmpty(bills)) {
+            this.billService.saveBatch(bills);
+            for (Map.Entry<Long, List<Bill>> entry : userBillsMap.entrySet()) {
+                User user = userMap.get(entry.getKey());
+                if (Objects.nonNull(user)) {
+                    this.buildMessage(user, entry.getValue());
+                }
+            }
+        }
+
+        return true;
+    }
+
+
+
     public boolean processorListenAddress(Task expire) {
+        Config config = this.configService.queryConfig();
         String address = expire.getAddress();
 
         long now = System.currentTimeMillis();
         long start = LISTEN_START_CACHE.computeIfAbsent(address, k -> now);
-        if (now - start > 30 * 60 * 1000L) {
+        if (now - start > config.getRechargeTimeoutMinutes() * 60 * 1000L) {
             LISTEN_START_CACHE.remove(address);
             return false;
         }
 
-        Config config = this.configService.queryConfig();
+
         Address addressEntity = this.addressService.getById(address);
         List<TransferBean> transferBeans = this.doQuery(address, addressEntity.getPrevTimestamp());
 
@@ -217,5 +374,6 @@ public class Trc20Handler extends AbstractHandler {
         }
         return JSONUtil.parseObj(body);
     }
+
 
 }

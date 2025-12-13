@@ -35,6 +35,8 @@ public class BotProperties {
     private String qrCodePath;
     private Long notifyChatId;
     private String historyUrl;
+    /** 是否循环使用充值地址 **/
+    private Boolean recycling;
 
 
     public String getToken () {
@@ -62,5 +64,9 @@ public class BotProperties {
 
     public String botStart () {
         return StrUtil.format(Constants.BOT_START_URL, this.botUsername);
+    }
+
+    public boolean isRecycling () {
+        return Boolean.TRUE.equals(this.getRecycling());
     }
 }

@@ -7,8 +7,9 @@ bots:
     notify-chat-id: -1003319507819
     tokens:
       BOT_TOKEN: 7625159298:AAFGjgPTBlPtc2TaNfFo7Ph2FAZgVjK9Rno
-    qr-code-path: /usr/local/qr_code/
+    qr-code-path: /home/bots/search/images
     history-url: http://localhost:8813/collect/td/history
+    recycling: true
 # -------------------部署需要修改---------------------
 
 mybatis-plus:

@@ -17,7 +17,9 @@ import java.util.concurrent.TimeUnit;
 public enum TaskNode {
 
     RECHARGE(0, 30, TimeUnit.SECONDS, "充值"),
-    EVERY_ADV(1, -1, TimeUnit.DAYS, "每日拉新广告")
+    EVERY_ADV(1, -1, TimeUnit.DAYS, "每日拉新广告"),
+
+    REUSE_RECHARGE(2, 30, TimeUnit.SECONDS, "地址复用充值"),
     ;
 
     private final int code;

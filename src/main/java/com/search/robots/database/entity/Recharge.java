@@ -12,6 +12,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -34,8 +35,12 @@ public class Recharge {
     private String transactionId;
     /** 订单号，唯一标识每一笔充值记录 **/
     private Long userId;
-    /** 用户ID **/
+    /** 充值金额 **/
     private String amount;
+    /** 下单时间 **/
+    private LocalDateTime createTime;
+    /** 充值小数点 **/
+    private BigDecimal pointer;
     /** 充值金额，支持高精度数字表示 **/
     private Currency currency;
     /** 充值货币类型，如 USDT **/
@@ -55,5 +60,15 @@ public class Recharge {
                 .setPaymentMethod("Tron")
                 .setTransactionDate(TimeHelper.format(LocalDateTime.now()))
                 .setStatus(RechargeStatus.SUCCESS);
+    }
+
+    public static Recharge build (Long userId, BigDecimal pointer, BigDecimal rechargeAmount) {
+        return new Recharge()
+                .setUserId(userId)
+                .setAmount(DecimalHelper.decimalParse(rechargeAmount))
+                .setPointer(pointer)
+                .setPaymentMethod("Tron")
+                .setTransactionDate(TimeHelper.format(LocalDateTime.now()))
+                .setStatus(RechargeStatus.PROCESS);
     }
 }

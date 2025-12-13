@@ -24,7 +24,10 @@ public enum Dialogue {
     // 等待输入广告标题
     INPUT_ADV_TITLE(3),
     // 等待输入广告链接
-    INPUT_ADV_LINK(4)
+    INPUT_ADV_LINK(4),
+
+    // 等待输入充值金额
+    INPUT_RECHARGE_AMOUNT(5)
     ;
 
 

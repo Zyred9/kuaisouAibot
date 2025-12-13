@@ -7,9 +7,11 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.search.robots.SearchRobot;
 import com.search.robots.beans.cache.CommonCache;
+import com.search.robots.beans.caffeine.CountdownCaffeine;
 import com.search.robots.beans.chat.ChatQueryHandler;
 import com.search.robots.beans.keywords.KeywordsHelper;
 import com.search.robots.beans.view.DialogueCtx;
+import com.search.robots.beans.view.caffeine.Task;
 import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
 import com.search.robots.database.entity.*;
@@ -19,9 +21,9 @@ import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.service.*;
 import com.search.robots.helper.*;
 import com.search.robots.sender.AsyncSender;
+import com.search.robots.sender.SyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
@@ -36,6 +38,7 @@ import org.telegram.telegrambots.meta.api.objects.commands.BotCommand;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -57,8 +60,10 @@ public class PrivateChatHandler extends AbstractHandler{
     private final SearchHandler searchHandler;
     private final CollectHelper collectHelper;
     private final ConfigService configService;
+    private final AddressService addressService;
     private final KeywordService keywordService;
     private final AdvUserService advUserService;
+    private final RechargeService rechargeService;
     private final IncludedService includedService;
     private final HotSearchService hotSearchService;
     private final ChatQueryHandler chatQueryHandler;
@@ -235,6 +240,55 @@ public class PrivateChatHandler extends AbstractHandler{
         BotApiMethod<?> result = null;
         DialogueCtx dialogueCtx = CommonCache.getDialogue(message.getFrom().getId());
         User user = this.userService.user(message.getFrom());
+
+        // 输入了充值金额
+        if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_RECHARGE_AMOUNT)) {
+            BigDecimal rechargeAmount;
+            try {
+                rechargeAmount = new BigDecimal(message.getText());
+            } catch (Exception ex) {
+                return ok(message, "请输入有效的数字");
+            }
+            Config config = this.configService.queryConfig();
+            if (DecimalHelper.compare(rechargeAmount, config.getMinRechargeAmount())) {
+                return ok(message, StrUtil.format("最低充值不能低于{}U", config.getMinRechargeAmount()));
+            }
+            if (DecimalHelper.compare(config.getMaxRechargeAmount(), rechargeAmount)) {
+                return ok(message, StrUtil.format("充值金额不能高于{}U", config.getMaxRechargeAmount()));
+            }
+
+            BigDecimal pointer = DecimalHelper.generateDecimal();
+            Recharge recharge = Recharge.build(message.getFrom().getId(), pointer, rechargeAmount);
+            this.rechargeService.save(recharge);
+
+            Address address = this.addressService.selectEmptyAddress(message.getFrom().getId());
+            String tip = config.getReuseRechargeTipMarkdown();
+
+            BigDecimal total = pointer.add(rechargeAmount);
+            tip = StrUtil.format(tip, DecimalHelper.decimalParse(total), address.getAddress());
+
+            InlineKeyboardMarkup backKb = KeyboardHelper.buildSingleBackKeyboard("one#self_adv_center_new#");
+            if (StrUtil.isBlank(address.getImageId())) {
+                File file = QRCodeGenerator.buildQrCode(
+                        address.getAddress(),
+                        message.getFrom().getId(),
+                        this.properties.getQrCodePath()
+                );
+                Message send = SyncSender.send(photoMarkdown(message, file, tip, backKb));
+                PhotoSize photoSize = send.getPhoto().stream().
+                        max(Comparator.comparingInt(PhotoSize::getFileSize)).orElse(null);
+
+                if (Objects.nonNull(photoSize)) {
+                    address.setImageId(photoSize.getFileId());
+                    this.addressService.updateById(address);
+                }
+            } else {
+                AsyncSender.async(
+                        photoMarkdown(message, address.getImageId(), tip, backKb)
+                );
+            }
+            CountdownCaffeine.set(Task.buildReuseRecharge(address.getAddress()));
+        }
 
         // 输入了地址
         if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADDRESS)) {

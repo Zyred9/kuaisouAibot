@@ -45,7 +45,9 @@ public class HotSearchServiceImpl extends ServiceImpl<HotSearchMapper, HotSearch
         );
 
         if (CollUtil.isEmpty(searches)) {
-            this.baseMapper.insert(HotSearch.buildSearch(keyword));
+            if (keyword.length() <= 4) {
+                this.baseMapper.insert(HotSearch.buildSearch(keyword));
+            }
             return;
         }
 

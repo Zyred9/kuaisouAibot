@@ -52,4 +52,12 @@ public interface AdvUserService extends IService<AdvUser> {
     AdvUser buttonAdv();
 
     String advStatistics(Long userId);
+
+    /**
+     * 更新广告启用状态
+     *
+     * @param id     广告ID
+     * @param status 启用状态
+     */
+    void updateStatus(Long id, Boolean status);
 }

@@ -597,9 +597,20 @@ public class PrivateCallbackHandler extends AbstractHandler {
         // 充值
         if (StrUtil.equals(command.get(1), "adv_recharge")) {
             Config config = this.configService.queryConfig();
-            Address address = this.addressService.selectEmptyAddress(callbackQuery.getFrom().getId());
 
+            // 如果启用了复用
+            if (this.properties.isRecycling()) {
+                CommonCache.putDialogue(callbackQuery.getFrom().getId(), new DialogueCtx(Dialogue.INPUT_RECHARGE_AMOUNT));
+                return ok(message, StrUtil.format("请输入充值的金额，注意，最低充值{}U，最高充值：{}",
+                        DecimalHelper.decimalParse(config.getMinRechargeAmount()),
+                        DecimalHelper.decimalParse(config.getMaxRechargeAmount())));
+            }
+
+
+            Address address = this.addressService.selectEmptyAddress(callbackQuery.getFrom().getId());
             String tipMarkdown = config.getRechargeTipMarkdown();
+            tipMarkdown = StrUtil.format(tipMarkdown, address.getAddress());
+
             InlineKeyboardMarkup backKb = KeyboardHelper.buildSingleBackKeyboard("one#self_adv_center_new");
 
             if (StrUtil.isBlank(address.getImageId())) {

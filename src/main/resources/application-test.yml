@@ -5,9 +5,10 @@ bots:
     enable-proxy: false
     background-group-id: -1002756411889
     notify-chat-id: -1002756411889
+    recycling: true
     tokens:
       BOT_TOKEN: 8570133524:AAEYNCazKDL7TJVD_f4ub0JATCeL91TpCy4
-    qr-code-path: /usr/local/qr_code/
+    qr-code-path: /home/bots/search/images
     history-url: http://localhost:8813/collect/td/history
 # -------------------部署需要修改---------------------
 

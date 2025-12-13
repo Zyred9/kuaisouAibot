@@ -136,4 +136,9 @@ public class TimeHelper {
     public static String build() {
         return TimeHelper.format(LocalDateTime.now(), "yyyyMMddHHmmddSSS");
     }
+
+    public static long diffInMinutes(LocalDateTime createTime, LocalDateTime now) {
+        Duration duration = Duration.between(createTime, now).abs();
+        return duration.toMinutes();
+    }
 }

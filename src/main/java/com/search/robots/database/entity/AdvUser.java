@@ -93,6 +93,9 @@ public class AdvUser {
     /** 购买来源 **/
     private AdvSource advSource;
 
+    /** 启用状态：true-启用，false-禁用 **/
+    private Boolean status;
+
     /** 广告文本 **/
     private String advContent;
     /** 广告链接 **/
@@ -150,6 +153,7 @@ public class AdvUser {
                 .setExpirationTime(now.plusMonths(1))
                 .setExpireTime(now.plusDays(30))
                 .setAdvSource(AdvSource.BUY)
+                .setStatus(Boolean.TRUE)
                 .setAdvContent("")
                 .setAdvUrl("")
                 .setShowCount(0L)
@@ -177,6 +181,7 @@ public class AdvUser {
                 .setExpireTime(null)
                 .setExpirationCount(advButton.getShowNumber())
                 .setAdvSource(AdvSource.BUY)
+                .setStatus(Boolean.TRUE)
                 .setAdvContent("")
                 .setAdvUrl("")
                 .setTempContent("")

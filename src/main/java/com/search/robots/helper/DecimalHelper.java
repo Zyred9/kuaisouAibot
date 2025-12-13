@@ -5,10 +5,8 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.Objects;
-import java.math.BigDecimal;
-import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
-import java.util.Locale;
+import java.util.Random;
+
 /**
  * <p>
  *
@@ -57,4 +55,19 @@ public class DecimalHelper {
     }
 
 
+    public static BigDecimal generateDecimal() {
+        Random random = new Random();
+        StringBuilder fractionalBuilder = new StringBuilder();
+        for (int i = 0; i < 4; i++) {
+            int digit = random.nextInt(9) + 1;
+            fractionalBuilder.append(digit);
+        }
+        return new BigDecimal("0." + fractionalBuilder);
+    }
+
+    public static BigDecimal getFractionalPart(BigDecimal number) {
+        final BigDecimal ONE = BigDecimal.ONE;
+        BigDecimal fractionalPart = number.remainder(ONE);
+        return fractionalPart.stripTrailingZeros();
+    }
 }

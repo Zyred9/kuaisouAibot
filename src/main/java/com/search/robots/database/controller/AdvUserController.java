@@ -10,7 +10,9 @@ import com.search.robots.database.entity.AdvUser;
 import com.search.robots.database.service.AdvUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -61,6 +63,18 @@ public class AdvUserController {
         return Result.success();
     }
 
+    /**
+     * 更新广告启用状态
+     *
+     * @param id     广告ID
+     * @param status 启用状态
+     * @return 结果
+     */
+    @PutMapping("/status/{id}")
+    public Result<Void> updateStatus(@PathVariable Long id, @RequestParam("status") Boolean status) {
+        this.advUserService.updateStatus(id, status);
+        return Result.success();
+    }
 
 }
 
