@@ -138,7 +138,11 @@ public class TimeHelper {
     }
 
     public static long diffInMinutes(LocalDateTime createTime, LocalDateTime now) {
+        if (Objects.isNull(createTime) || Objects.isNull(now)) {
+            return 0L;
+        }
         Duration duration = Duration.between(createTime, now).abs();
         return duration.toMinutes();
     }
 }
+

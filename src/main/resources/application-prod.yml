@@ -1,4 +1,3 @@
-# -------------------部署需要修改---------------------
 bots:
   config:
     logs: false
@@ -39,8 +38,9 @@ spring:
       idle-timeout: 600000            # 空闲连接超时10分钟
       max-lifetime: 1800000           # 连接最大存活30分钟
       connection-test-query: SELECT 1  # 连接测试查询
-      leak-detection-threshold: 60000  # 连接泄漏检浃60秒
+      leak-detection-threshold: 60000  # 连接泄漏检测60秒
       pool-name: BotHikariPool        # 连接池名称
+      initialization-fail-timeout: -1  # 初始化失败不阻塞启动
   elasticsearch:
     uris:
       - http://localhost:9200

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -174,6 +175,27 @@ public class AdvPriceServiceImpl extends ServiceImpl<AdvPriceMapper, AdvPrice> i
     @Override
     public boolean deletePrice(Long id) {
         return this.removeById(id);
+    }
+
+    @Override
+    public void processorDefault() {
+        List<AdvPrice> defaultPrices = this.selectDefault();
+        if (CollUtil.isNotEmpty(defaultPrices)) {
+            return;
+        }
+        List<AdvPrice> inserts = new ArrayList<>();
+        List<Integer> positions = List.of(1, 2, 3, 4 ,5 ,6 , 7, 101, 102);
+        List<Integer> priceList = List.of(36, 34, 31, 29, 26, 24, 21, 519, 512);
+        List<BigDecimal> decimals = new ArrayList<>(priceList.size());
+
+        for (Integer i : priceList) {
+            decimals.add(BigDecimal.valueOf(i));
+        }
+
+        for (int i = 0; i < positions.size(); i++) {
+            inserts.add(AdvPrice.buildDefault(i, positions.get(i), decimals.get(i)));
+        }
+        this.batchInsert(inserts);
     }
 
     private AdvPositionEnum toPosition(Integer code) {

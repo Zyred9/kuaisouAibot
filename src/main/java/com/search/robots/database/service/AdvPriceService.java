@@ -54,4 +54,8 @@ public interface AdvPriceService extends IService<AdvPrice> {
     boolean editPrice(Long id, BigDecimal monthlyPrice);
 
     boolean deletePrice(Long id);
+
+    void processorDefault();
+
+
 }

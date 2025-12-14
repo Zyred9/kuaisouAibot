@@ -80,6 +80,14 @@ public class AdvPrice {
     /** 更新时间 **/
     private LocalDateTime updatedAt;
 
+    public static AdvPrice buildDefault(int index, Integer posi, BigDecimal bigDecimal) {
+        return new AdvPrice().setLibraryId(0L)
+                .setId((long) index + 1).setSource("direct").setRanking(index)
+                .setAdvPosition(AdvPositionEnum.of(posi))
+                .setMonthlyPrice(bigDecimal).setStatus(1).setVersion(1).setIsSold(false)
+                .setCreatedAt(LocalDateTime.now()).setUpdatedAt(LocalDateTime.now());
+    }
+
 
     public String buildToBuyText(AdvLibrary library) {
         return StrUtil.format(Constants.TO_BUY_ADV_TEXT,

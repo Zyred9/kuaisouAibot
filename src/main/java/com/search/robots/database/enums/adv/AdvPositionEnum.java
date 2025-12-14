@@ -5,6 +5,9 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 /**
  * 广告位置枚举
  * <pre>
@@ -37,6 +40,12 @@ public enum AdvPositionEnum {
     private final int code;
     private final String desc;
     private final String icon;
+
+    public static AdvPositionEnum of (int code) {
+        return Arrays.stream(AdvPositionEnum.values())
+                .filter(a -> Objects.equals(code, a.getCode()))
+                .findFirst().orElse(null);
+    }
 
     /**
      * 判断是否为榜单排名位置

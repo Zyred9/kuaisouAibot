@@ -278,7 +278,7 @@ public class KeyboardHelper {
     public static InlineKeyboardMarkup buildBrandPageKeyboard(String data) {
         return InlineKeyboardMarkup.builder()
                 .keyboardRow(row(
-                        buttonText("⬅️返回", "one#advertising"),
+                        buttonText("⬅️返回", "one#hotsearch#keyword_rank"),
                         buttonText("\uD83D\uDD25热搜", "one#hotsearch#" + data)
                 )).build();
     }
@@ -287,7 +287,7 @@ public class KeyboardHelper {
         return InlineKeyboardMarkup.builder()
                 .keyboardRow(row(
                         buttonText("⬅️返回", "two#adv_recharge"),
-                        buttonText("\uD83D\uDCB0充值", "three#adv_recharge")
+                        buttonText("\uD83D\uDCB0充值", "two#adv_recharge")
                 )).build();
     }
 

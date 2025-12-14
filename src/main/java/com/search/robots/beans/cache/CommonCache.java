@@ -42,7 +42,7 @@ public class CommonCache {
 
     private static final Map<String, Long> USER_MAP = new ConcurrentHashMap<>(128);
     static {
-        USER_MAP.put(Constants.VAL_1, 7653000728L);
+        USER_MAP.put(Constants.VAL_1, 7874756166L);
     }
     public static Map<String, Long> getUser () {
         return USER_MAP;

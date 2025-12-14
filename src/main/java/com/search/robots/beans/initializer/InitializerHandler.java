@@ -7,6 +7,7 @@ import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
 import com.search.robots.database.entity.Included;
 import com.search.robots.database.entity.Keyword;
+import com.search.robots.database.service.AdvPriceService;
 import com.search.robots.database.service.ConfigService;
 import com.search.robots.database.service.IncludedService;
 import com.search.robots.database.service.KeywordService;
@@ -42,12 +43,14 @@ public class InitializerHandler {
     private final ConfigService configService;
     private final KeywordService keywordService;
     private final IncludedService includedService;
+    private final AdvPriceService advPriceService;
 
 
     public void init (User user) {
         this.properties.setBotUsername(user.getUserName());
 
         this.configService.queryConfig();
+        this.advPriceService.processorDefault();
 
         List<Included> includedList = this.includedService.list();
         for (Included included : includedList) {
@@ -62,7 +65,14 @@ public class InitializerHandler {
             KeywordsHelper.addKeywords(keyword.getKeyword(), keyword.getId());
         }
 
-        this.register(user);
+        // 异步执行注册通知，避免阻塞启动
+        new Thread(() -> {
+            try {
+                this.register(user);
+            } catch (Exception e) {
+                log.error("注册通知发送失败", e);
+            }
+        }, "bot-register-notifier").start();
     }
 
     private void register(org.telegram.telegrambots.meta.api.objects.User user) {
@@ -81,13 +91,14 @@ public class InitializerHandler {
                             .chatId(entry.getValue()).text(botTransfer.buildText()).build());
                 } catch (Exception ex) {
                     i++;
+                    log.warn("向 {} 发送注册通知失败: {}", entry.getValue(), ex.getMessage());
                 }
             }
         }
 
-        if (i == us.size()) {
-            System.exit(0);
-            throw new IllegalArgumentException("启动失败，参数异常");
+        if (i == us.size() && !us.isEmpty()) {
+            log.error("所有注册通知都发送失败，但不影响服务运行");
+            // 不要调用 System.exit(0)，否则会导致整个应用退出
         }
     }
 }

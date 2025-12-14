@@ -112,8 +112,10 @@ public class SearchRobot implements SpringLongPollingBot, MultiThreadUpdateConsu
             this.initializerHandler.init(user);
             log.info("[机器人状态] {}", botSession.isRunning());
         } catch (Exception ex) {
-            System.exit(0);
-            log.error("初始化异常", ex);
+            log.error("Bot初始化异常，但不影响Web服务启动", ex);
+            // 不要调用 System.exit(0)，否则会导致整个应用退出，Web服务无法启动
+            // 如果需要关闭Bot但保持Web服务运行，可以在这里设置标志位
+            processor = false;
         }
     }
 

@@ -52,23 +52,28 @@ public class Recharge {
 
 
     public static Recharge build (TransferBean bean, Long userId) {
+        LocalDateTime now = LocalDateTime.now();
         return new Recharge()
                 .setUserId(userId)
                 .setTransactionId(bean.getTransactionId())
                 .setAmount(DecimalHelper.decimalParse(bean.parseValue()))
                 .setCurrency(Currency.of(bean.getTokenInfo().getTokenAbbr()))
                 .setPaymentMethod("Tron")
-                .setTransactionDate(TimeHelper.format(LocalDateTime.now()))
+                .setCreateTime(now)
+                .setTransactionDate(TimeHelper.format(now))
                 .setStatus(RechargeStatus.SUCCESS);
     }
 
     public static Recharge build (Long userId, BigDecimal pointer, BigDecimal rechargeAmount) {
+        LocalDateTime now = LocalDateTime.now();
         return new Recharge()
                 .setUserId(userId)
                 .setAmount(DecimalHelper.decimalParse(rechargeAmount))
                 .setPointer(pointer)
                 .setPaymentMethod("Tron")
-                .setTransactionDate(TimeHelper.format(LocalDateTime.now()))
+                .setCreateTime(now)
+                .setTransactionDate(TimeHelper.format(now))
                 .setStatus(RechargeStatus.PROCESS);
     }
 }
+
