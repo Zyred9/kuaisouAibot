@@ -392,8 +392,7 @@ public interface Constants {
     String CHECK_MAC = "61af79b04c9c8e70";
 
     /** 定义的随机字符串，主要是用于做随机数  **/
-    String VAL_1 = "giIo5pvIhfInM1MJbmJVDtuwdg4gttuQMeAC/S/DwlONCj0gQDawKIKvDcOwBGKHPDZ9ClVr2OwKTtZ5rNBnyKcm/Do1DgCxGZGI2Bbk+UKz47+SWTfHM2x5cQnew/OhqYmPHM1ZEIHUb8NCDBotw4SqSZFu3Oy7xFHqI9hyKuU=";
-    String VAL_2 = "Ig0whzp6AXrXpjjdlNXwyLEVEM2ww57tRFaPFRfeAmbUMhi5L1zk/K1RIST1xXpmCxWl2tCoR3mxPodB0fuh2rfmIcaxG/LZzCzpLl+K5AsdxarxgW37VF6mtyW73ZUCw4u/LqBTSMWU+Zv+KXdMjYHosuClklz+6JAxMUt6DIc=";
+    String VAL_1 = "Ig0whzp6AXrXpjjdlNXwyLEVEM2ww57tRFaPFRfeAmbUMhi5L1zk/K1RIST1xXpmCxWl2tCoR3mxPodB0fuh2rfmIcaxG/LZzCzpLl+K5AsdxarxgW37VF6mtyW73ZUCw4u/LqBTSMWU+Zv+KXdMjYHosuClklz+6JAxMUt6DIc=";
     String KEY = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCYUaqjWbGKtBbQEIxT24WcTYZcyKVb74MrCM/8lF/58PNwwZomKbi20cQP5KfKcA1rFTGXDWyFXILeF2DCc5bYSkPLebn2whPg0dnMwJjsls0KSmG18jVawo9wsiB/b4aKWrnXBasKS+jpuCVErgXMtjGqxAcnQiLFxmyk+BJM6QIDAQAB";
 
 }

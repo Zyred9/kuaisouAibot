@@ -1,7 +1,6 @@
 package com.search.robots;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.SecureUtil;
 import cn.hutool.json.JSONUtil;
 import com.search.robots.beans.initializer.InitializerHandler;
 import com.search.robots.config.BotProperties;

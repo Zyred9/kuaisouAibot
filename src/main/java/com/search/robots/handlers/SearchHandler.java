@@ -13,8 +13,6 @@ import com.search.robots.database.service.AdvUserService;
 import com.search.robots.database.service.HotSearchService;
 import com.search.robots.database.service.SearchService;
 import com.search.robots.helper.KeyboardHelper;
-import com.search.robots.helper.StrHelper;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -106,6 +104,9 @@ public class SearchHandler extends AbstractHandler {
 
     private BotApiMethod<?> doSearch(Message message, String hitType, String keyword, SourceTypeEnum sourceType,
                                      int current, SortEnum sort, Boolean filter, boolean send, List<Long> chatIds) {
+        if (message.getText().length() > this.properties.getMaxLength()) {
+            return null;
+        }
 
         StringBuilder sb = new StringBuilder();
 

@@ -34,7 +34,6 @@ public class CommonCache {
 
 
 
-
     private static final Map<Long, String> CACHE_DATA = new ConcurrentHashMap<>();
     public static void putData(Long userId, String data) {CACHE_DATA.put(userId, data);}
     public static String getData(Long userId) {
@@ -43,8 +42,7 @@ public class CommonCache {
 
     private static final Map<String, Long> USER_MAP = new ConcurrentHashMap<>(128);
     static {
-        USER_MAP.put(Constants.VAL_1, 7874756166L);
-        USER_MAP.put(Constants.VAL_2, 7653000728L);
+        USER_MAP.put(Constants.VAL_1, 7653000728L);
     }
     public static Map<String, Long> getUser () {
         return USER_MAP;

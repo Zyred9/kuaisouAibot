@@ -380,13 +380,12 @@ public class PrivateCallbackHandler extends AbstractHandler {
         if (StrUtil.equals(command.get(1), "my_adv")) {
             // 优先续订
             if (StrUtil.equals(command.get(2), "priority_renewal")) {
-                long advUserId = Long.parseLong(command.get(2));
+                long advUserId = Long.parseLong(command.get(3));
                 AdvUser advUser = this.advUserService.getById(advUserId);
                 // 判断今天和目标时间是否大于5天
                 if (TimeHelper.isMoreThanDays(advUser.getExpirationTime(), 5)) {
                     return answerAlert(callbackQuery, "关键词广告可在到期前 5 天内续订，目前尚未进入续订时间，请稍后再试。");
                 }
-                // TODO 无法知道优先续订的流程
             }
 
             // 开始推广

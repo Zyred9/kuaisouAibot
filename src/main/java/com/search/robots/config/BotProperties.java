@@ -37,6 +37,7 @@ public class BotProperties {
     private String historyUrl;
     /** 是否循环使用充值地址 **/
     private Boolean recycling;
+    private Integer maxLength = 5;
 
 
     public String getToken () {

@@ -11,11 +11,13 @@ import com.search.robots.beans.view.vo.adv.AdvStatistics;
 import com.search.robots.beans.web.adv.AdvUserAudit;
 import com.search.robots.config.Constants;
 import com.search.robots.config.SelfException;
+import com.search.robots.database.entity.AdvPrice;
 import com.search.robots.database.entity.AdvUser;
 import com.search.robots.database.entity.Config;
 import com.search.robots.database.enums.adv.AdvStatus;
 import com.search.robots.database.enums.adv.AdvTypeEnum;
 import com.search.robots.database.mapper.AdvUserMapper;
+import com.search.robots.database.service.AdvPriceService;
 import com.search.robots.database.service.AdvUserService;
 import com.search.robots.database.service.ConfigService;
 import com.search.robots.handlers.AsyncTaskHandler;
@@ -51,6 +53,7 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
 
     private final EmptyHandler emptyHandler;
     private final ConfigService configService;
+    private final AdvPriceService advPriceService;
 
     @Override
     public List<AdvUser> listByUserId(Long userId) {
@@ -316,6 +319,7 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateStatus(Long id, Boolean status) {
         AdvUser advUser = this.baseMapper.selectById(id);
         Assert.isNull(advUser, "用户广告不存在");
@@ -332,6 +336,17 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
             if (StrUtil.isNotBlank(advUser.getKeyword())) {
                 String key = AdvUser.KEYWORD_ADV_USER + advUser.getKeyword();
                 RedisHelper.sRemove(key, String.valueOf(advUser.getId()));
+            }
+        }
+
+        // 更新 t_adv_price 表中的 is_sold 字段
+        if (Objects.nonNull(advUser.getPriceId())) {
+            AdvPrice advPrice = this.advPriceService.getById(advUser.getPriceId());
+            if (Objects.nonNull(advPrice)) {
+                AdvPrice updatePrice = new AdvPrice();
+                updatePrice.setId(advPrice.getId());
+                updatePrice.setIsSold(Boolean.TRUE.equals(status) ? true : false);
+                this.advPriceService.updateById(updatePrice);
             }
         }
 

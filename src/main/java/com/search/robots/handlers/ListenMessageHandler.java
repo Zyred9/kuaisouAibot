@@ -79,13 +79,15 @@ public class ListenMessageHandler extends AbstractHandler {
                 searchChat = chat.getTargetedSearchIndexIds();
             }
             // openFilterMinors
-            BotApiMethod<?> result = this.searchHandler.processorChatSearch(message, chat.getOpenFilterMinors(), searchChat);
-            
-            // 群搜索奖励：给群主发放奖励
-            this.processGroupSearchReward(chat, message.getFrom().getId());
-            
-            if (Boolean.TRUE.equals(chat.getOpenPrivacySearch())) {
-                AsyncSender.async(delete(message));
+            BotApiMethod<?> result = null;
+            if (message.getText().length() <= this.properties.getMaxLength()) {
+                result = this.searchHandler.processorChatSearch(message, chat.getOpenFilterMinors(), searchChat);
+                // 群搜索奖励：给群主发放奖励
+                this.processGroupSearchReward(chat);
+
+                if (Boolean.TRUE.equals(chat.getOpenPrivacySearch())) {
+                    AsyncSender.async(delete(message));
+                }
             }
             return result;
         }
@@ -247,7 +249,7 @@ public class ListenMessageHandler extends AbstractHandler {
     /**
      * 处理群搜索奖励
      */
-    private void processGroupSearchReward(Included chat, Long searcherUserId) {
+    private void processGroupSearchReward(Included chat) {
         // 如果群组没有所有者，不处理
         if (Objects.isNull(chat.getUserId())) {
             return;
