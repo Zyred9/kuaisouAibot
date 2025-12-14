@@ -29,6 +29,7 @@ public class BotProperties {
     private String proxyHostName = "";
     /** 代理 **/
     private String botUsername;
+    private String botUsernameSelf;
     private Long backgroundGroupId;
     private Map<String, String> tokens;
 
@@ -49,6 +50,7 @@ public class BotProperties {
     }
 
     public void setBotUsername(String botUsername) {
+        this.botUsernameSelf = botUsername;
         if (StrUtil.contains(botUsername, "_")) {
             botUsername = StrUtil.replace(botUsername, "_", "\\_");
         }
@@ -65,6 +67,10 @@ public class BotProperties {
 
     public String botStart () {
         return StrUtil.format(Constants.BOT_START_URL, this.botUsername);
+    }
+
+    public String botStartSelf () {
+        return StrUtil.format(Constants.BOT_START_URL, this.botUsernameSelf);
     }
 
     public boolean isRecycling () {

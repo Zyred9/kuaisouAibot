@@ -104,7 +104,7 @@ public class SearchHandler extends AbstractHandler {
 
     private BotApiMethod<?> doSearch(Message message, String hitType, String keyword, SourceTypeEnum sourceType,
                                      int current, SortEnum sort, Boolean filter, boolean send, List<Long> chatIds) {
-        if (message.getText().length() > this.properties.getMaxLength()) {
+        if (StrUtil.length(keyword) > this.properties.getMaxLength()) {
             return null;
         }
 

@@ -393,6 +393,11 @@ public class PrivateCallbackHandler extends AbstractHandler {
                 long advUserId = Long.parseLong(command.get(3));
                 AdvUser advUser = this.advUserService.getById(advUserId);
 
+                // 检查是否在审核中
+                if (Objects.equals(advUser.getAdvStatus(), AdvStatus.UNDER_APPROVAL)) {
+                    return answerAlert(callbackQuery, "审核通过后才能推广，请联系管理员审核！");
+                }
+
                 if (StrUtil.isBlank(advUser.getAdvContent()) || StrUtil.isBlank(advUser.getAdvUrl())) {
                     return answerAlert(callbackQuery, "请先补充广告内的配置");
                 }

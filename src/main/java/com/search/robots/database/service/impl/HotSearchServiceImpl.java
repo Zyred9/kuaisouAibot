@@ -118,7 +118,7 @@ public class HotSearchServiceImpl extends ServiceImpl<HotSearchMapper, HotSearch
             return null;
         }
 
-        String start = this.properties.botStart();
+        String start = this.properties.botStartSelf();
         StringBuilder sb = new StringBuilder("<blockquote><a href=\"").append(start).append("reply\">热搜：</a>");
         for (HotSearch search : searches) {
             String encode = StrHelper.encode(search.getKeyword());
