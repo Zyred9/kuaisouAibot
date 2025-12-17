@@ -398,6 +398,10 @@ public class PrivateCallbackHandler extends AbstractHandler {
                     return answerAlert(callbackQuery, "审核通过后才能推广，请联系管理员审核！");
                 }
 
+                if (Boolean.FALSE.equals(advUser.getStatus())) {
+                    return answerAlert(callbackQuery, "您的广告已被管理员禁用，请联系管理员！");
+                }
+
                 if (StrUtil.isBlank(advUser.getAdvContent()) || StrUtil.isBlank(advUser.getAdvUrl())) {
                     return answerAlert(callbackQuery, "请先补充广告内的配置");
                 }

@@ -364,15 +364,19 @@ public class Trc20Handler extends AbstractHandler {
         String url = StrUtil.format(Constants.TRANSFER_QUERY, address, prevTimestamp);
         Request request = new Request.Builder().url(url).build();
         Response response = this.okHttpClient.newCall(request).execute();
-        if (!response.isSuccessful() || Objects.isNull(response.body())) {
-            return null;
+        try {
+            okhttp3.ResponseBody responseBody = response.body();
+            if (!response.isSuccessful() || responseBody == null) {
+                return null;
+            }
+            String body = responseBody.string();
+            if (this.properties.isLogs()) {
+                log.info("[查询结果] 地址：{}，结果：{}", address, body);
+            }
+            return JSONUtil.parseObj(body);
+        } finally {
+            response.close();
         }
-
-        String body = response.body().string();
-        if (this.properties.isLogs()) {
-            log.info("[查询结果] 地址：{}，结果：{}", address, body);
-        }
-        return JSONUtil.parseObj(body);
     }
 
 

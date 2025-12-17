@@ -100,7 +100,7 @@ public class AsyncSender {
                     log.warn("[消费者] 线程被中断，停止发送");
                     break;
                 } catch (TelegramApiException e) {
-                    log.error("[发送失败] 消息内容: {}, 错误: {}", JSONUtil.toJsonStr(message), e.getMessage(), e);
+                    log.error("[发送失败] 消息内容: {}, 错误: {}", JSONUtil.toJsonStr(message), e.getMessage());
                 }
             }
         });

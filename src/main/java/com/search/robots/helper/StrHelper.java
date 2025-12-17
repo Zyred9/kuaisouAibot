@@ -121,7 +121,7 @@ public class StrHelper {
         list.sort((a,b) -> Integer.compare(b.length(), a.length()));
         String pattern = list.stream().map(java.util.regex.Pattern::quote).collect(java.util.stream.Collectors.joining("|"));
         if (pattern.isEmpty()) return safe;
-        return safe.replaceAll("(?i)(" + pattern + ")", "<b>$1</b>");
+        return safe.replaceAll("(?i)(" + pattern + ")", "<b><u>$1</u></b>");
     }
 
     public static String buildClickableKeywordsHTML(String text, String botUsername) {

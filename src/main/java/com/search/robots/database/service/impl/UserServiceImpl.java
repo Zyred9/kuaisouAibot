@@ -152,7 +152,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         StringBuilder sb = new StringBuilder();
         for (RewardRecord reward : rewards) {
             String line = String.format("`%s %s %s\\$`",
-                    reward.getCreateTime().format(formatter),
+                    reward.getCreateTime().format(formatter).replace("-", "\\-"),
                     StrUtil.isNotBlank(reward.getNickname()) ? reward.getNickname() : reward.getUsername(),
                     DecimalHelper.decimalParse(reward.getRewardAmount())
             );
@@ -195,7 +195,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
 
             // 日期行
-            sb.append(date.format(dateFormatter))
+            sb.append(date.format(dateFormatter).replace("-", "\\-"))
                     .append(" 预估奖励：")
                     .append(DecimalHelper.decimalParse(totalReward))
                     .append("$ 状态：待入账⏳\n");

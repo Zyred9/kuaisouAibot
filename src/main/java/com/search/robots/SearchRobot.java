@@ -53,18 +53,6 @@ public class SearchRobot implements SpringLongPollingBot, MultiThreadUpdateConsu
     public void consume(Update update) {
         BotApiMethod<?> message = null;
         try {
-
-            if (update.hasMessage()){
-                if (update.getMessage().hasPhoto()) {
-                    List<PhotoSize> photo = update.getMessage().getPhoto();
-                    PhotoSize max = photo.stream().max(Comparator.comparingInt(PhotoSize::getFileSize)).orElse(photo.get(0));
-                    log.info("[图片]: {}", max.getFileId());
-                }
-                if (update.getMessage().hasVideo()) {
-                    log.info("[视频]: {}", update.getMessage().getVideo().getFileId());
-                }
-            }
-
             if (processor) {
                 message = AbstractHandler.doExecute(update, this.properties.isLogs());
             } else {
@@ -79,8 +67,8 @@ public class SearchRobot implements SpringLongPollingBot, MultiThreadUpdateConsu
                 this.telegramClient.execute(message);
             }
         } catch (TelegramApiException e) {
-            log.error("【同步消息异常】消息内容：{} \n 异常消息：{}",
-                    JSONUtil.toJsonStr(message), e.getMessage(), e);
+            log.error("【同步消息异常】异常消息：{} \n  进入消息{} \n  响应消息：{} \n ",
+                    e.getMessage(), JSONUtil.toJsonStr(update), JSONUtil.toJsonStr(message));
         }
     }
 

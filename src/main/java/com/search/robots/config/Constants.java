@@ -382,7 +382,7 @@ public interface Constants {
             """;
 
     String WITHDRAWAL_ADDR_TEXT = """
-            提现请求提交成功，请耐心等待，请再次核对TRC20地址是否正确 |{}|
+            提现请求提交成功，请耐心等待，请再次核对TRC20地址是否正确 `{}`
             """;
     /** 机器人刷新 **/
     String RESTART_PROCESSOR = "d7ce17da93c30faa";

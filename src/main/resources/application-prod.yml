@@ -5,10 +5,11 @@ bots:
     background-group-id: 123456789001
     notify-chat-id: -1003319507819
     tokens:
-      BOT_TOKEN: 7625159298:AAFGjgPTBlPtc2TaNfFo7Ph2FAZgVjK9Rno
+      BOT_TOKEN: 7574721933:AAHhjfwMY79aI0-2gHlihhFGpAR6R__d5eE
     qr-code-path: /home/bots/search/images
     history-url: http://localhost:8813/collect/td/history
     recycling: true
+    max-length: 20
 # -------------------部署需要修改---------------------
 
 mybatis-plus:

@@ -300,6 +300,11 @@ public class PrivateChatHandler extends AbstractHandler{
         }
         // 输入了提现金额
         if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_WITHDRAWAL_AMOUNT)) {
+
+            if (StrUtil.isBlank(user.getTrAddr())) {
+                return ok(message, "请先绑定TRC20地址");
+            }
+
             BigDecimal balance = user.getBalance();
             BigDecimal amount = new BigDecimal(message.getText());
             Config config = this.configService.queryConfig();
@@ -320,7 +325,7 @@ public class PrivateChatHandler extends AbstractHandler{
                 if (Objects.nonNull(this.properties.getNotifyChatId())) {
                     AsyncSender.async(ok(this.properties.getNotifyChatId(), "有人提交提现申请，请前往后台处理！"));
                 }
-                result = markdownV2(message, StrUtil.format(Constants.WITHDRAWAL_ADDR_TEXT, user.getTrAddr()));
+                result = markdown(message, StrUtil.format(Constants.WITHDRAWAL_ADDR_TEXT, user.getTrAddr()));
             }
             return result;
         }
