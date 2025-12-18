@@ -78,7 +78,7 @@ public class Trc20Handler extends AbstractHandler {
         if (CollUtil.isEmpty(recharges)) {
             return false;
         }
-        List<TransferBean> transferBeans = this.doQuery(address, System.currentTimeMillis() - (30 * 1000));
+        List<TransferBean> transferBeans = this.doQuery(address, 0L);
 
         List<Recharge> timeouts = new ArrayList<>(recharges.size());
         for (Recharge recharge : recharges) {
@@ -97,7 +97,7 @@ public class Trc20Handler extends AbstractHandler {
         List<User> users = this.userService.listByIds(userIds);
         Map<Long, User> userMap = users.stream().collect(Collectors.toMap(User::getUserId, Function.identity()));
 
-        Map<BigDecimal, Recharge> map = recharges.stream().collect(Collectors.toMap(Recharge::getPointer, Function.identity()));
+        Map<String, Recharge> map = recharges.stream().collect(Collectors.toMap(a -> DecimalHelper.decimalParse(a.getPointer()), Function.identity()));
 
         List<Recharge> updatesRecharge = new ArrayList<>(transferBeans.size());
         List<Bill> bills = new ArrayList<>(transferBeans.size() * 2);
@@ -111,7 +111,7 @@ public class Trc20Handler extends AbstractHandler {
         for (TransferBean bean : transferBeans) {
             BigDecimal amount = bean.parseValue();
             BigDecimal pointer = DecimalHelper.getFractionalPart(amount);
-            Recharge recharge = map.get(pointer);
+            Recharge recharge = map.get(DecimalHelper.decimalParse(pointer));
             if (Objects.isNull(recharge)) {
                 continue;
             }
