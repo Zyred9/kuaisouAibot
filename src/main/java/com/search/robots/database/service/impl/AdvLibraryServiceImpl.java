@@ -49,7 +49,7 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
         List<AdvPrice> advPrices = this.advPriceService.saveTheLibraryPrice(newLibrary);
         newLibrary.setPriceList(advPrices);
 
-        RedisHelper.hPut(AdvLibrary.ADV_LIBRARY_KEY, keyword, String.valueOf(newLibrary.getId()));
+        RedisHelper.hPut(AdvLibrary.ADV_LIBRARY_KEY + data, keyword, String.valueOf(newLibrary.getId()));
         return newLibrary;
     }
 
@@ -61,30 +61,32 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
             return null;
         }
         AdvLibrary library = null;
-        if (RedisHelper.hExists(AdvLibrary.ADV_LIBRARY_KEY, keyword)) {
+        if (RedisHelper.hExists(AdvLibrary.ADV_LIBRARY_KEY + data, keyword)) {
             try {
-                String libraryIdStr = RedisHelper.hGet(AdvLibrary.ADV_LIBRARY_KEY, keyword);
+                String libraryIdStr = RedisHelper.hGet(AdvLibrary.ADV_LIBRARY_KEY + data, keyword);
                 if (StrUtil.isNotBlank(libraryIdStr)) {
                     long libraryId = Long.parseLong(libraryIdStr);
                     library = this.baseMapper.selectById(libraryId);
                     if (Objects.isNull(library)) {
-                        RedisHelper.hDelete(AdvLibrary.ADV_LIBRARY_KEY, keyword);
+                        RedisHelper.hDelete(AdvLibrary.ADV_LIBRARY_KEY + data, keyword);
                     }
                 }
             } catch (NumberFormatException e) {
-                RedisHelper.hDelete(AdvLibrary.ADV_LIBRARY_KEY, keyword);
+                RedisHelper.hDelete(AdvLibrary.ADV_LIBRARY_KEY + data, keyword);
             }
         }
         if (Objects.isNull(library)) {
-            library = this.selectByKeyword(keyword);
+            AdvTypeEnum type = AdvTypeEnum.ofData(data);
+            type = Objects.isNull(type) ? AdvTypeEnum.BUY_KEYWORD_RANK : type;
+            library = this.selectByKeyword(keyword, type);
         }
         if (Objects.isNull(library)) {
-            return this.buildDefault(keyword, data);
+            library = this.buildDefault(keyword, data);
         }
         if (Objects.nonNull(library.getId())) {
             library.setPriceList(this.advPriceService.listEnabledByLibraryId(library.getId()));
         }
-        
+        RedisHelper.hPut(AdvLibrary.ADV_LIBRARY_KEY + data, keyword, String.valueOf(library.getId()));
         return library;
     }
 
@@ -133,10 +135,11 @@ public class AdvLibraryServiceImpl extends ServiceImpl<AdvLibraryMapper, AdvLibr
     }
 
 
-    private AdvLibrary selectByKeyword (String keyword) {
+    private AdvLibrary selectByKeyword (String keyword, AdvTypeEnum type) {
         return this.baseMapper.selectOne(
                 Wrappers.<AdvLibrary>lambdaQuery()
                         .eq(AdvLibrary::getKeyword, keyword)
+                        .eq(AdvLibrary::getAdvType, type)
                         .orderByDesc(AdvLibrary::getShowCount)
                         .last("LIMIT 1")
         );

@@ -13,6 +13,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.script.Script;
+import org.elasticsearch.search.sort.ScriptSortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -65,19 +69,33 @@ public class SearchServiceImpl implements SearchService {
             boolQuery.must(QueryBuilders.termsQuery("marked", false));
         }
 
-        Sort orders;
+        // 自定义脚本排序：CHANNEL(0) 和 GROUP(1) 优先
+        String scriptSource = 
+                "if (doc['type'].size() == 0) { return 2; } " +
+                "String type = doc['type'].value; " +
+                "if (type == 'CHANNEL' || type == 'GROUP') { return 0; } " +
+                "return 1;";
+        ScriptSortBuilder scriptSort = SortBuilders.scriptSort(
+                new Script(scriptSource),
+                ScriptSortBuilder.ScriptSortType.NUMBER
+        ).order(SortOrder.ASC);
+
+        // 构建排序：先按类型优先级，再按分数，最后按用户指定字段或时间
+        List<org.elasticsearch.search.sort.SortBuilder<?>> sortBuilders = new ArrayList<>();
+        sortBuilders.add(scriptSort);
+        sortBuilders.add(SortBuilders.scoreSort().order(SortOrder.DESC));
+        
         if (Objects.nonNull(sort) && !Objects.equals(sort, SortEnum.EMPTY)) {
-            orders = Sort.by(Sort.Direction.DESC, "_score")
-                    .and(Sort.by(Sort.Direction.DESC, sort.getFields()));
+            sortBuilders.add(SortBuilders.fieldSort(sort.getFields()).order(SortOrder.DESC));
         } else {
-            orders = Sort.by(Sort.Direction.DESC, "_score")
-                    .and(Sort.by(Sort.Direction.DESC, "collectTime"));
+            sortBuilders.add(SortBuilders.fieldSort("collectTime").order(SortOrder.DESC));
         }
 
-        PageRequest pageRequest = PageRequest.of(current, PAGE_SIZE, orders);
+        PageRequest pageRequest = PageRequest.of(current, PAGE_SIZE);
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
                 .withQuery(boolQuery)
                 .withPageable(pageRequest)
+                .withSorts(sortBuilders.toArray(new org.elasticsearch.search.sort.SortBuilder<?>[0]))
                 .build();
 
         SearchHits<SearchBean> searchHits = elasticsearchTemplate.search(searchQuery, SearchBean.class);

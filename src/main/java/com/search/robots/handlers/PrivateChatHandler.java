@@ -94,7 +94,12 @@ public class PrivateChatHandler extends AbstractHandler{
         }
 
         if (StrUtil.equals(text, "/start")) {
-            return this.processorStart(message);
+            AsyncSender.async(this.processorStart(message));
+
+            SearchPeriodEnum hit = SearchPeriodEnum.LAST_3_DAYS;
+            List<HotSearch> keywords = this.hotSearchService.keywords(hit);
+            InlineKeyboardMarkup markup = KeyboardHelper.buildHotSearchKeyboard(keywords, hit);
+            return markdownReply(message, "近期热门搜索排行榜", markup);
         }
 
         // 关键词专页
@@ -390,8 +395,8 @@ public class PrivateChatHandler extends AbstractHandler{
             int length = message.getText().length();
 
             if (Objects.equals(dialogueCtx.getDialogue(), Dialogue.INPUT_ADV_TITLE)) {
-                if (length < 2 || length > 25) {
-                    return ok(message, "广告文本长度限制2-25字，请再次发送：");
+                if (length < 2 || length > 60) {
+                    return ok(message, "广告文本长度限制2-60字，请再次发送：");
                 }
             }
 

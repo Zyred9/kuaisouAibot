@@ -12,10 +12,6 @@ import com.search.robots.helper.KeyboardHelper;
 import com.search.robots.sender.AsyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -25,7 +21,6 @@ import org.telegram.telegrambots.meta.api.objects.chat.ChatFullInfo;
 import org.telegram.telegrambots.meta.api.objects.chatmember.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
-import java.io.IOException;
 import java.util.Objects;
 
 /**
@@ -65,7 +60,7 @@ public class BotJoinChatHandler extends AbstractHandler {
             return null;
         }
         // 不是当前机器人
-        String botUsername = this.properties.getBotUsername();
+        String botUsername = this.properties.getBotUsernameSelf();
         if (!StrUtil.equals(botUsername, user.getUserName())) {
             return null;
         }
@@ -86,8 +81,7 @@ public class BotJoinChatHandler extends AbstractHandler {
         }
 
         // 升级成管理员
-        if (StrUtil.equals(oldMember.getStatus(), ChatMemberMember.STATUS)
-                && StrUtil.equals(newMember.getStatus(), ChatMemberAdministrator.STATUS)) {
+        if (StrUtil.equals(newMember.getStatus(), ChatMemberAdministrator.STATUS)) {
             Config config = this.configService.queryConfig();
 
             // 查询该群组是否已经存在，或者是别人的附属群组

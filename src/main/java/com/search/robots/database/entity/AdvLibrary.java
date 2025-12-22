@@ -36,7 +36,7 @@ import java.util.List;
 @TableName(value = "t_adv_library", autoResultMap = true)
 public class AdvLibrary {
 
-    public static final String ADV_LIBRARY_KEY = Constants.PRE + ":data:library";
+    public static final String ADV_LIBRARY_KEY = Constants.PRE + ":data:library:";
 
     @TableId(type = IdType.AUTO)
     private Long id;

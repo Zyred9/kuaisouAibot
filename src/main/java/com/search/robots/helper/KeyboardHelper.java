@@ -314,7 +314,7 @@ public class KeyboardHelper {
         List<InlineKeyboardRow> rows = new ArrayList<>(8);
         rows.add(row(buttonText("\uD83E\uDD47关键词排行", "one#keyword_rank")));
         rows.add(row(buttonText("\uD83E\uDD47关键词专页", "one#keyword_page")));
-        rows.add(row(buttonText("\uD83D\uDCCC品牌专页", "one#brand_page")));
+        // rows.add(row(buttonText("\uD83D\uDCCC品牌专页", "one#brand_page")));
         rows.add(row(buttonText("\uD83C\uDF10顶部链接", "one#top_link")));
         rows.add(row(buttonText("\uD83C\uDF10底部按钮", "one#bottom_button")));
         rows.add(row(buttonText("\uD83D\uDC64个人广告中心", "one#self_adv_center")));

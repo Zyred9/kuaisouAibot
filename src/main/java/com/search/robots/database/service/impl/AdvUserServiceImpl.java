@@ -165,6 +165,9 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
                     || Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_BOTTOM_BUTTON)) {
                 sb.append("[广告] ");
             }
+            if (Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_KEYWORD_PAGE_RANK)) {
+                sb.append("[专页广告] ");
+            }
             if (Objects.equals(advUser.getAdvType(), AdvTypeEnum.BUY_KEYWORD_RANK)) {
                 sb.append(advUser.getAdvPosition().getIcon());
             }
@@ -345,7 +348,7 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
             if (Objects.nonNull(advPrice)) {
                 AdvPrice updatePrice = new AdvPrice();
                 updatePrice.setId(advPrice.getId());
-                updatePrice.setIsSold(Boolean.TRUE.equals(status) ? true : false);
+                updatePrice.setIsSold(Boolean.TRUE.equals(status));
                 this.advPriceService.updateById(updatePrice);
             }
         }
@@ -356,7 +359,7 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
     public List<AdvUser> topLinkRandAdvList() {
         List<AdvUser> advUsers = this.baseMapper.selectList(
                 Wrappers.<AdvUser>lambdaQuery()
-                        .eq(AdvUser::getAdvType, AdvTypeEnum.BUY_TOP_LINK)
+                        .in(AdvUser::getAdvType, AdvTypeEnum.BUY_TOP_LINK, AdvTypeEnum.BUY_KEYWORD_PAGE_RANK)
                         .eq(AdvUser::getAdvStatus, AdvStatus.PROMOTION_ING)
                         .last(" order by rand() limit 2")
         );
@@ -372,7 +375,6 @@ public class AdvUserServiceImpl extends ServiceImpl<AdvUserMapper, AdvUser> impl
         List<AdvUser> advUsers = this.baseMapper.selectList(
                 Wrappers.<AdvUser>lambdaQuery()
                         .in(AdvUser::getId, longIds)
-                        .eq(AdvUser::getAdvType, AdvTypeEnum.BUY_KEYWORD_RANK)
                         .eq(AdvUser::getAdvStatus, AdvStatus.PROMOTION_ING)
                         .orderByAsc(AdvUser::getRanking)
                         .last(" limit 7")
