@@ -13,12 +13,15 @@ import com.search.robots.handlers.AbstractHandler;
 import com.search.robots.handlers.Trc20Handler;
 import com.search.robots.helper.KeyboardHelper;
 import com.search.robots.sender.AsyncSender;
+import com.search.robots.sender.SyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.pinnedmessages.PinChatMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
 import java.time.LocalDateTime;
@@ -64,7 +67,7 @@ public class ExpireListener extends AbstractHandler implements RemovalListener<S
             }
 
             if (Objects.equals(TaskNode.EVERY_ADV, node)) {
-                reset = this.processorEveryAdv(expire);
+                this.processorEveryAdv(expire.getChatId());
             }
         } catch (Exception ex) {
             log.error("[caffeine监听] 错误原因：{}", ex.getMessage(), ex);
@@ -81,31 +84,38 @@ public class ExpireListener extends AbstractHandler implements RemovalListener<S
      * @param expire    过期得对象
      * @return          结果
      */
-    private boolean processorEveryAdv(Task expire) {
+    public void processorEveryAdv(Long chatId) {
+        if (Objects.isNull(chatId)) {
+            return;
+        }
+
         Config config = this.configService.queryConfig();
         InlineKeyboardMarkup keyboard = KeyboardHelper.keyboard(config.getHelpfulPopularizeKeyboard());
-
+        Message send = null;
         if (StrUtil.isAllNotBlank(config.getHelpfulPopularizeMarkdown(),
                 config.getHelpfulPopularizeFileId())) {
-            AsyncSender.async(
-                    photoMarkdownV2(expire.getChatId(), config.getHelpfulPopularizeFileId(),
-                            config.getHelpfulPopularizeMarkdown(), keyboard)
-            );
+            send = SyncSender.send(photoMarkdownV2(chatId, config.getHelpfulPopularizeFileId(),
+                    config.getHelpfulPopularizeMarkdown(), keyboard));
         }
-
         if (StrUtil.isEmpty(config.getHelpfulPopularizeFileId())
                 && StrUtil.isNotEmpty(config.getHelpfulPopularizeMarkdown())) {
-            AsyncSender.async(
-                    markdownV2(expire.getChatId(), config.getHelpfulPopularizeMarkdown(), keyboard)
-            );
+            send = SyncSender.send(markdownV2(chatId, config.getHelpfulPopularizeMarkdown(), keyboard));
+        }
+        if (Objects.isNull(send)) {
+            return;
         }
 
-        Included included = this.includedService.get(expire.getChatId());
+        Included included = this.includedService.get(chatId);
         if (Objects.nonNull(included)) {
             included.buildEveryAdv();
         }
         included.setSendNewTime(LocalDateTime.now());
         this.includedService.updateSelf(included);
-        return false;
+        AsyncSender.async(
+                PinChatMessage.builder()
+                        .chatId(chatId)
+                        .messageId(send.getMessageId())
+                        .build()
+        );
     }
 }

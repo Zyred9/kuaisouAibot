@@ -1,6 +1,7 @@
 package com.search.robots.handlers;
 
 import cn.hutool.core.util.StrUtil;
+import com.search.robots.beans.caffeine.ExpireListener;
 import com.search.robots.beans.chat.ChatQueryHandler;
 import com.search.robots.config.BotProperties;
 import com.search.robots.database.entity.Config;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod;
+import org.telegram.telegrambots.meta.api.methods.pinnedmessages.PinChatMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.chat.Chat;
@@ -40,6 +42,7 @@ public class BotJoinChatHandler extends AbstractHandler {
     private final BotProperties properties;
     private final CollectHelper collectHelper;
     private final ConfigService configService;
+    private final ExpireListener expireListener;
     private final IncludedService includedService;
     private final ChatQueryHandler chatQueryHandler;
 
@@ -106,6 +109,7 @@ public class BotJoinChatHandler extends AbstractHandler {
                 url = "https://t.me/" + chatInfo.getUserName();
             }
             this.collectHelper.history(url, chatInfo.getInviteLink());
+            this.expireListener.processorEveryAdv(chat.getId());
         }
         return null;
     }
