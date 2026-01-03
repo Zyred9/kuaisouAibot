@@ -191,9 +191,13 @@ public abstract class AbstractHandler {
 
 
     protected DeleteMessage delete(Message message) {
+        return delete(message.getChatId(), message.getMessageId());
+    }
+
+    protected DeleteMessage delete(Long chatId, Integer messageId) {
         return DeleteMessage.builder()
-                .chatId(message.getChatId())
-                .messageId(message.getMessageId())
+                .chatId(chatId)
+                .messageId(messageId)
                 .build();
     }
 

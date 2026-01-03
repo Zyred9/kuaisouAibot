@@ -52,7 +52,9 @@ public class SearchRobot implements SpringLongPollingBot, MultiThreadUpdateConsu
     @Override
     public void consume(Update update) {
         BotApiMethod<?> message = null;
-        log.info(JSONUtil.toJsonStr(update));
+        if (this.properties.isLogs()) {
+            log.info(JSONUtil.toJsonStr(update));
+        }
         try {
             if (processor) {
                 message = AbstractHandler.doExecute(update, this.properties.isLogs());

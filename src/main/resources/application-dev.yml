@@ -48,9 +48,9 @@ spring:
       pool-name: BotHikariPool
   elasticsearch:
     uris:
-      - http://149.28.214.142:9200
-    username: elastic
-    password: umEjOIAMYkf3vPq9YEaB
+      - http://localhost:9200
+#    username: elastic
+#    password: umEjOIAMYkf3vPq9YEaB
     connection-timeout: 5000
     socket-timeout: 60000
   data:

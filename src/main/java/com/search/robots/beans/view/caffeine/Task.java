@@ -6,6 +6,7 @@ import com.search.robots.database.enums.caffeine.TaskNode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.util.concurrent.TimeUnit;
 
@@ -34,6 +35,8 @@ public class Task {
     private TimeUnit unit;
     /** 剩余分钟数 **/
     private Integer minutes;
+    /** 消息id **/
+    private Integer messageId;
     /// ------------------------------------
 
     public static Task buildRecharge (String address) {
@@ -63,4 +66,13 @@ public class Task {
                 .setMinutes(minutes);
 
     }
+
+    // 构建机器人收录消息后消息提示的删除逻辑
+    public static Task buildDeleteMessage (Long chatId, Integer messageId) {
+        return new Task()
+                .setNode(TaskNode.DELETE_COUNTDOWN)
+                .setChatId(chatId)
+                .setMessageId(messageId);
+    }
+
 }

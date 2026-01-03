@@ -69,6 +69,10 @@ public class ExpireListener extends AbstractHandler implements RemovalListener<S
             if (Objects.equals(TaskNode.EVERY_ADV, node)) {
                 this.processorEveryAdv(expire.getChatId());
             }
+
+            if (Objects.equals(TaskNode.DELETE_COUNTDOWN, node)) {
+                AsyncSender.async(delete(expire.getChatId(), expire.getMessageId()));
+            }
         } catch (Exception ex) {
             log.error("[caffeine监听] 错误原因：{}", ex.getMessage(), ex);
         } finally {

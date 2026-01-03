@@ -1,11 +1,16 @@
 package com.search.robots.handlers;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.search.robots.beans.caffeine.CountdownCaffeine;
+import com.search.robots.beans.view.caffeine.Task;
 import com.search.robots.beans.view.vo.search.SearchBean;
 import com.search.robots.config.BotProperties;
+import com.search.robots.config.Constants;
 import com.search.robots.database.entity.Config;
 import com.search.robots.database.entity.Included;
 import com.search.robots.database.entity.User;
+import com.search.robots.database.enums.caffeine.TaskNode;
 import com.search.robots.database.enums.content.SourceTypeEnum;
 import com.search.robots.database.service.ConfigService;
 import com.search.robots.database.service.IncludedService;
@@ -13,6 +18,7 @@ import com.search.robots.database.service.RewardRecordService;
 import com.search.robots.database.service.SearchService;
 import com.search.robots.database.service.UserService;
 import com.search.robots.sender.AsyncSender;
+import com.search.robots.sender.SyncSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -49,7 +55,10 @@ public class ListenMessageHandler extends AbstractHandler {
 
     @Override
     public boolean support(Update update) {
-        return update.hasMessage()
+        if (update.hasChannelPost()) {
+            return true;
+        }
+        return update.hasMessage() && CollUtil.isEmpty(update.getMessage().getNewChatMembers())
                 && (!Objects.equals(this.properties.getNotifyChatId(), update.getMessage().getChatId()))
                 && (update.getMessage().getChat().isGroupChat()
                 || update.getMessage().getChat().isSuperGroupChat()
@@ -60,6 +69,10 @@ public class ListenMessageHandler extends AbstractHandler {
     @Override
     protected BotApiMethod<?> execute(Update update) {
         Message message = update.getMessage();
+        if (update.hasChannelPost()) {
+            message = update.getChannelPost();
+        }
+
         // 过滤机器人消息
         if (message.getFrom() != null && message.getFrom().getIsBot()) {
             return null;
@@ -97,6 +110,14 @@ public class ListenMessageHandler extends AbstractHandler {
             SearchBean bean = this.buildSearchBean(message, chat);
             if (Objects.nonNull(bean)) {
                 this.searchService.save(bean);
+
+                if (StrUtil.contains(bean.getSourceName(), "#")) {
+                    String format = StrUtil.format(Constants.INCLUDE_TEXT,
+                            this.properties.groupStart(),
+                            TaskNode.DELETE_COUNTDOWN.getLoop());
+                    Message send = SyncSender.send(markdownReply(message, format));
+                    CountdownCaffeine.set(Task.buildDeleteMessage(send.getChatId(), send.getMessageId()));
+                }
             }
         }
 

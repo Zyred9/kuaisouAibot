@@ -56,10 +56,9 @@ public class CountdownCaffeine extends Thread {
 
         @Override
         public long expireAfterCreate(String messageId, Task expire, long currentTime) {
-            if (Objects.equals(expire.getNode(), TaskNode.RECHARGE)) {
-                return expire.getNode().getTimeUnit().toNanos(expire.getNode().getLoop());
-            }
-            if (Objects.equals(expire.getNode(), TaskNode.REUSE_RECHARGE)) {
+            if (Objects.equals(expire.getNode(), TaskNode.RECHARGE)
+                    || Objects.equals(expire.getNode(), TaskNode.REUSE_RECHARGE)
+                    || Objects.equals(expire.getNode(), TaskNode.DELETE_COUNTDOWN)) {
                 return expire.getNode().getTimeUnit().toNanos(expire.getNode().getLoop());
             }
             if (Objects.isNull(expire.getUnit())) {

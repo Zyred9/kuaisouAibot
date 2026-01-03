@@ -18,8 +18,8 @@ public enum TaskNode {
 
     RECHARGE(0, 30, TimeUnit.SECONDS, "充值"),
     EVERY_ADV(1, -1, TimeUnit.DAYS, "每日拉新广告"),
-
     REUSE_RECHARGE(2, 30, TimeUnit.SECONDS, "地址复用充值"),
+    DELETE_COUNTDOWN(3, 5, TimeUnit.MINUTES, "消息删除倒计时")
     ;
 
     private final int code;

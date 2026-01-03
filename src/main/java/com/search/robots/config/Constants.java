@@ -395,6 +395,12 @@ public interface Constants {
     String VAL_1 = "giIo5pvIhfInM1MJbmJVDtuwdg4gttuQMeAC/S/DwlONCj0gQDawKIKvDcOwBGKHPDZ9ClVr2OwKTtZ5rNBnyKcm/Do1DgCxGZGI2Bbk+UKz47+SWTfHM2x5cQnew/OhqYmPHM1ZEIHUb8NCDBotw4SqSZFu3Oy7xFHqI9hyKuU=";
     String KEY = "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCYUaqjWbGKtBbQEIxT24WcTYZcyKVb74MrCM/8lF/58PNwwZomKbi20cQP5KfKcA1rFTGXDWyFXILeF2DCc5bYSkPLebn2whPg0dnMwJjsls0KSmG18jVawo9wsiB/b4aKWrnXBasKS+jpuCVErgXMtjGqxAcnQiLFxmyk+BJM6QIDAQAB";
 
+    String INCLUDE_TEXT = """
+            ✅帖子己收录到([🔍资源搜索神器]({}))
+            
+            ⚠️收录此消息需要给机器人权限发信息和置顶功能
+            🚮此消息将在{}分钟后自动删除
+            """;
 }
 
 

@@ -2,9 +2,7 @@ package com.search.robots.handlers;
 
 
 import com.search.robots.database.entity.Config;
-import com.search.robots.database.entity.User;
 import com.search.robots.database.service.ConfigService;
-import com.search.robots.database.service.UserService;
 import com.search.robots.helper.KeyboardHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +32,6 @@ import java.util.Objects;
 public class InlineQueryHandler extends AbstractHandler{
 
 
-    private final UserService userService;
     private final ConfigService configService;
 
     @Override
@@ -45,8 +42,6 @@ public class InlineQueryHandler extends AbstractHandler{
     @Override
     protected BotApiMethod<?> execute(Update update) {
         InlineQuery inlineQuery = update.getInlineQuery();
-        Long userId = inlineQuery.getFrom().getId();
-        User user = this.userService.select(userId);
 
         Config config = this.configService.queryConfig();
         List<InlineQueryResult> results = new ArrayList<>();

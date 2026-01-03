@@ -708,14 +708,13 @@ public class PrivateCallbackHandler extends AbstractHandler {
         }
         // 邀请赚钱
         if (StrUtil.equals(command.get(1), "invite")) {
+            AsyncSender.async(delete(message));
             User user = this.userService.user(callbackQuery.getFrom());
             Config config = this.configService.queryConfig();
             String inviteText = config.buildInviteText(this.properties.getBotUsername(), user.getInviteCode());
             String uri = this.properties.groupStart();
 
             InlineKeyboardMarkup markup = KeyboardHelper.buildInviteKeyboard(uri);
-            AsyncSender.async(delete(message));
-            ThreadHelper.sleepMs(50);
             AsyncSender.async(photoMarkdownV2(message, config.getInviteImageId(), inviteText, markup));
             return null;
         }
