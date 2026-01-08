@@ -59,7 +59,7 @@ spring:
         enabled: true
   redis:
     host: localhost
-    port: 6379
+    port: 6380
     database: 0
     # Lettuce 连接池配置
     lettuce:

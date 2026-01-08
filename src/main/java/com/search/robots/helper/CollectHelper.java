@@ -1,5 +1,6 @@
 package com.search.robots.helper;
 
+import cn.hutool.core.util.StrUtil;
 import com.search.robots.config.BotProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class CollectHelper {
 
 
     public void history (String url, String inviteLink) {
+        inviteLink = StrUtil.removeAll(inviteLink, "+");
         log.info("[获取历史聊天记录] 开始 {}， {}", url, inviteLink);
         String fullUrl = this.properties.getHistoryUrl()
                 + "?link=" + url
