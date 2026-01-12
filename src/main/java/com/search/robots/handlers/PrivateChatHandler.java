@@ -15,6 +15,7 @@ import com.search.robots.beans.view.caffeine.Task;
 import com.search.robots.config.BotProperties;
 import com.search.robots.config.Constants;
 import com.search.robots.database.entity.*;
+import com.search.robots.database.enums.BillTypeEnum;
 import com.search.robots.database.enums.Dialogue;
 import com.search.robots.database.enums.SearchPeriodEnum;
 import com.search.robots.database.enums.adv.AdvStatus;
@@ -55,6 +56,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class PrivateChatHandler extends AbstractHandler{
 
+    private final BillService billService;
     private final UserService userService;
     private final BotProperties properties;
     private final SearchHandler searchHandler;
@@ -544,8 +546,13 @@ public class PrivateChatHandler extends AbstractHandler{
                 // 更新邀请人的待入账金额
                 User updateMaster = new User();
                 updateMaster.setUserId(master.getUserId());
-                updateMaster.setTotalAward(master.getTotalAward().add(config.getDirectNewUserReward()));
+                updateMaster.setBalance(master.getBalance()
+                        .add(config.getDirectNewUserReward()));
                 this.userService.update(updateMaster);
+
+                Bill bill = Bill.buildAdvPaymentBill(master, master.getBalance(),
+                        config.getDirectNewUserReward(), BillTypeEnum.AWARD);
+                this.billService.save(bill);
             }
             
             // 下级拉新奖励：如果邀请人有上级，给邀请人的上级发放奖励
@@ -557,8 +564,13 @@ public class PrivateChatHandler extends AbstractHandler{
                     // 更新上上级的待入账金额
                     User updateGrandParent = new User();
                     updateGrandParent.setUserId(grandParent.getUserId());
-                    updateGrandParent.setTotalAward(grandParent.getTotalAward().add(config.getNextNewReward()));
+                    updateGrandParent.setBalance(grandParent.getTotalAward()
+                            .add(config.getNextNewReward()));
                     this.userService.update(updateGrandParent);
+
+                    Bill bill = Bill.buildAdvPaymentBill(grandParent, grandParent.getBalance(),
+                            config.getNextNewReward(), BillTypeEnum.AWARD);
+                    this.billService.save(bill);
                 }
             }
         } else {
@@ -574,7 +586,8 @@ public class PrivateChatHandler extends AbstractHandler{
                 // 更新上级用户的待入账金额
                 User updateMaster = new User();
                 updateMaster.setUserId(master.getUserId());
-                updateMaster.setTotalAward(master.getTotalAward().add(config.getPrivateChatReward()));
+                updateMaster.setBalance(master.getTotalAward()
+                        .add(config.getPrivateChatReward()));
                 this.userService.update(updateMaster);
                 
                 // 标记为非首次私聊
@@ -582,6 +595,10 @@ public class PrivateChatHandler extends AbstractHandler{
                 updateUser.setUserId(newOldUser.getUserId());
                 updateUser.setIsFirstPrivateChat(false);
                 this.userService.update(updateUser);
+
+                Bill bill = Bill.buildAdvPaymentBill(master, master.getBalance(),
+                        config.getNextNewReward(), BillTypeEnum.AWARD);
+                this.billService.save(bill);
             }
         }
 

@@ -85,8 +85,7 @@ public class ExpireListener extends AbstractHandler implements RemovalListener<S
     /**
      * 处理每天的广告
      *
-     * @param expire    过期得对象
-     * @return          结果
+     * @param chatId    过期得对象
      */
     public void processorEveryAdv(Long chatId) {
         if (Objects.isNull(chatId)) {

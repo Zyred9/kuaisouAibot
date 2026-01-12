@@ -70,6 +70,9 @@ public class SearchRobot implements SpringLongPollingBot, MultiThreadUpdateConsu
                 this.telegramClient.execute(message);
             }
         } catch (TelegramApiException e) {
+            if (StrUtil.contains(e.getMessage(), "BUTTON_DATA_INVALID")) {
+                return;
+            }
             log.error("【同步消息异常】异常消息：{} \n  进入消息{} \n  响应消息：{} \n ",
                     e.getMessage(), JSONUtil.toJsonStr(update), JSONUtil.toJsonStr(message));
         }

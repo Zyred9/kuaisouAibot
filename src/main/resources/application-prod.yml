@@ -9,7 +9,7 @@ bots:
     qr-code-path: /home/bots/search/images
     history-url: http://localhost:8813/collect/td/history
     recycling: true
-    max-length: 60
+    max-length: 25
 # -------------------部署需要修改---------------------
 
 mybatis-plus:

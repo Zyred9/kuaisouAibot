@@ -39,7 +39,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -52,7 +54,7 @@ import java.util.*;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PrivateCallbackHandler extends AbstractHandler {
+public class CallbackHandler extends AbstractHandler {
 
     private final BillService billService;
     private final UserService userService;
@@ -70,11 +72,18 @@ public class PrivateCallbackHandler extends AbstractHandler {
 
     @Override
     public boolean support(Update update) {
-        return Objects.nonNull(update.getCallbackQuery())
-                && Objects.nonNull(update.getCallbackQuery().getMessage())
-                && (update.getCallbackQuery().getMessage().isUserMessage()
-                || update.getCallbackQuery().getMessage().isSuperGroupMessage()
-                || update.getCallbackQuery().getMessage().isGroupMessage());
+        if (Objects.isNull(update.getCallbackQuery())) {
+            return false;
+        }
+
+        Message message = (Message) update.getCallbackQuery().getMessage();
+
+        return Objects.nonNull(message)
+                && (message.isUserMessage()
+                || message.isSuperGroupMessage()
+                || message.isGroupMessage()
+                || message.isChannelMessage()
+        );
     }
 
     @Override
@@ -315,7 +324,7 @@ public class PrivateCallbackHandler extends AbstractHandler {
 
             List<String> priceList = StrUtil.split(command.get(3), "_");
             long showCount = Long.parseLong(priceList.get(0));
-            java.math.BigDecimal need = new java.math.BigDecimal(priceList.get(1));
+            BigDecimal need = new BigDecimal(priceList.get(1));
 
             User user = this.userService.user(callbackQuery.getFrom());
 
@@ -350,12 +359,12 @@ public class PrivateCallbackHandler extends AbstractHandler {
             AdvUser advUser = AdvUser.buildKeywordAdvUserDefault(user, library, price);
             this.advUserService.save(advUser);
 
-            java.time.LocalDateTime expireAt = java.time.LocalDateTime.now().plusDays(30);
+            LocalDateTime expireAt = LocalDateTime.now().plusDays(30);
             AdvUser update = new AdvUser().setId(advUser.getId()).setExpireTime(expireAt);
             this.advUserService.updateById(update);
 
             String expireKey = AdvUser.ADV_EXPIRE_KEY_PREFIX + advUser.getId();
-            RedisHelper.setEx(expireKey, "1", 30, java.util.concurrent.TimeUnit.DAYS);
+            RedisHelper.setEx(expireKey, "1", 30, TimeUnit.DAYS);
 
             InlineKeyboardMarkup markup = KeyboardHelper.buildAdvUserDetailKeyboard(advUser);
             return editMarkdownV2(message, advUser.getAdvText(), markup);
