@@ -45,9 +45,14 @@ public class ExpireListener extends AbstractHandler implements RemovalListener<S
     private final IncludedService includedService;
 
     @Override
-    public boolean support(Update update) {return false;}
+    public boolean support(Update update) {
+        return false;
+    }
+
     @Override
-    protected BotApiMethod<?> execute(Update update) {return null;}
+    protected BotApiMethod<?> execute(Update update) {
+        return null;
+    }
 
     @Override
     public void onRemoval(@Nullable String key, @Nullable Task expire, RemovalCause cause) {
@@ -95,19 +100,23 @@ public class ExpireListener extends AbstractHandler implements RemovalListener<S
         Config config = this.configService.queryConfig();
         InlineKeyboardMarkup keyboard = KeyboardHelper.keyboard(config.getHelpfulPopularizeKeyboard());
         Message send = null;
-        if (StrUtil.isAllNotBlank(config.getHelpfulPopularizeMarkdown(),
-                config.getHelpfulPopularizeFileId())) {
-            send = SyncSender.send(photoMarkdownV2(chatId, config.getHelpfulPopularizeFileId(),
-                    config.getHelpfulPopularizeMarkdown(), keyboard));
-        }
-        if (StrUtil.isEmpty(config.getHelpfulPopularizeFileId())
-                && StrUtil.isNotEmpty(config.getHelpfulPopularizeMarkdown())) {
-            send = SyncSender.send(markdownV2(chatId, config.getHelpfulPopularizeMarkdown(), keyboard));
+        try {
+            if (StrUtil.isAllNotBlank(config.getHelpfulPopularizeMarkdown(),
+                    config.getHelpfulPopularizeFileId())) {
+                send = SyncSender.send(photoMarkdownV2(chatId, config.getHelpfulPopularizeFileId(),
+                        config.getHelpfulPopularizeMarkdown(), keyboard));
+
+            }
+            if (StrUtil.isEmpty(config.getHelpfulPopularizeFileId())
+                    && StrUtil.isNotEmpty(config.getHelpfulPopularizeMarkdown())) {
+                send = SyncSender.send(markdownV2(chatId, config.getHelpfulPopularizeMarkdown(), keyboard));
+            }
+        } catch (Exception ex) {
+            this.includedService.removeById(chatId);
         }
         if (Objects.isNull(send)) {
             return;
         }
-
         Included included = this.includedService.get(chatId);
         if (Objects.nonNull(included)) {
             included.buildEveryAdv();
