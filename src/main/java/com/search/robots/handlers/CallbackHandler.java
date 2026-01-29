@@ -508,7 +508,10 @@ public class CallbackHandler extends AbstractHandler {
             // 删除缓存
             CommonCache.removeDialogue(callbackQuery.getFrom().getId());
             User user = this.userService.user(callbackQuery.getFrom());
-            InlineKeyboardMarkup markup = KeyboardHelper.buildSelfKeyboard();
+            
+            // 检查是否为频道聊天
+            boolean isChannel = "channel".equals(message.getChat().getType());
+            InlineKeyboardMarkup markup = KeyboardHelper.buildSelfKeyboard(isChannel);
 
             if (command.size() == 2) {
                 return editMarkdown(message, user.buildText(), markup);

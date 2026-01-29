@@ -570,18 +570,25 @@ public class KeyboardHelper {
 
 
     public static InlineKeyboardMarkup buildSelfKeyboard() {
-        return InlineKeyboardMarkup.builder()
-                .keyboard(List.of(
-                        rowChosen("\uD83C\uDF81分享", "invite"),
-                        row(
-                                buttonText("\uD83D\uDCB5我的钱包", "one#wallet"),
-                                buttonText("\uD83D\uDCB0邀请赚钱", "one#invite")
-                        ),
-                        row(
-                                buttonText("⚙️群组频道", "one#group_channel"),
-                                buttonText("\uD83D\uDD17提交记录", "one#commit_record")
-                        )
-                )).build();
+        return buildSelfKeyboard(false);
+    }
+
+    public static InlineKeyboardMarkup buildSelfKeyboard(boolean isChannel) {
+        List<InlineKeyboardRow> rows = new ArrayList<>();
+        
+        // 在频道中也显示分享按钮，但使用不同的实现
+        rows.add(rowChosen("\uD83C\uDF81分享", "invite", isChannel));
+        
+        rows.add(row(
+                buttonText("\uD83D\uDCB5我的钱包", "one#wallet"),
+                buttonText("\uD83D\uDCB0邀请赚钱", "one#invite")
+        ));
+        rows.add(row(
+                buttonText("⚙️群组频道", "one#group_channel"),
+                buttonText("\uD83D\uDD17提交记录", "one#commit_record")
+        ));
+        
+        return InlineKeyboardMarkup.builder().keyboard(rows).build();
     }
 
 
@@ -719,24 +726,48 @@ public class KeyboardHelper {
     }
 
     public static InlineKeyboardRow rowChosen (String name, String defaultVal) {
+        return rowChosen(name, defaultVal, false);
+    }
+    
+    public static InlineKeyboardRow rowChosen (String name, String defaultVal, boolean isChannel) {
+        if (isChannel) {
+            // 在频道中，将分享按钮转换为普通的回调按钮
+            return new InlineKeyboardRow(InlineKeyboardButton.builder()
+                    .text(name)
+                    .callbackData("one#invite")
+                    .build());
+        }
+        
         return new InlineKeyboardRow(InlineKeyboardButton.builder()
                 .text(name)
                 .switchInlineQueryChosenChat(SwitchInlineQueryChosenChat.builder()
                         .allowGroupChats(true)
                         .allowUserChats(true)
-                        .allowChannelChats(true)
+                        .allowChannelChats(false) // 禁用频道支持
                         .build())
                 .switchInlineQuery(defaultVal)
                 .build());
     }
 
     public static InlineKeyboardButton chosenButton (String name, String defaultVal) {
+        return chosenButton(name, defaultVal, false);
+    }
+    
+    public static InlineKeyboardButton chosenButton (String name, String defaultVal, boolean isChannel) {
+        if (isChannel) {
+            // 在频道中，将分享按钮转换为普通的回调按钮
+            return InlineKeyboardButton.builder()
+                    .text(name)
+                    .callbackData("one#invite")
+                    .build();
+        }
+        
         return InlineKeyboardButton.builder()
                 .text(name)
                 .switchInlineQueryChosenChat(SwitchInlineQueryChosenChat.builder()
                         .allowGroupChats(true)
                         .allowUserChats(true)
-                        .allowChannelChats(true)
+                        .allowChannelChats(false) // 禁用频道支持
                         .build())
                 .switchInlineQuery(defaultVal)
                 .build();
